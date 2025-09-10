@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 /**
- * Pancerny timer:
+ * Stabilny timer:
  * - tick co 100 ms,
- * - niezależny „terminator” gwarantujący końcowy sygnał (0,false),
+ * - niezależny terminator gwarantujący końcowy sygnał (0,false),
  * - zawsze stopuje poprzednie zadania przed startem nowego,
- * - odporność na wyjątki (nie zabije wątku schedulera).
+ * - odporność na wyjątki (nie uwali wątku).
  */
 @Component
 public class RoundTimer {
@@ -25,7 +25,6 @@ public class RoundTimer {
     private final Object lock = new Object();
     private ScheduledFuture<?> ticker;     // cykliczne ticki
     private ScheduledFuture<?> terminator; // jednorazowe domknięcie
-
     private static final long TICK_MS = 100L;
 
     public void start(int totalMs, BiConsumer<Integer, Boolean> sink){
@@ -34,12 +33,12 @@ public class RoundTimer {
             return;
         }
         synchronized (lock){
-            stop(); // zawsze twardy reset
+            stop(); // twardy reset
 
             final long start = System.nanoTime();
             final AtomicBoolean finished = new AtomicBoolean(false);
 
-            // Ticker co 100ms
+            // Ticker
             ticker = exec.scheduleAtFixedRate(() -> {
                 try {
                     int elapsed = (int)((System.nanoTime() - start)/1_000_000L);
@@ -47,13 +46,12 @@ public class RoundTimer {
                     boolean active = remaining > 0;
                     safeSink(sink, remaining, active);
                     if (!active && finished.compareAndSet(false, true)) {
-                        // domknięcie na wszelki wypadek
                         cancelInternal();
                     }
                 } catch (Throwable ignored) {}
             }, 0, TICK_MS, TimeUnit.MILLISECONDS);
 
-            // Terminator — odpali się nawet gdyby ticker nie zdążył
+            // Terminator – domyka nawet gdyby ostatni tik nie zdążył
             terminator = exec.schedule(() -> {
                 try {
                     if (finished.compareAndSet(false, true)){
@@ -62,7 +60,7 @@ public class RoundTimer {
                 } finally {
                     cancelInternal();
                 }
-            }, totalMs + 50L, TimeUnit.MILLISECONDS); // +50ms marginesu
+            }, totalMs + 50L, TimeUnit.MILLISECONDS); // +50 ms marginesu
         }
     }
 
