@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1 z 10 — Prowadzący</title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <style>
+        .grid5{ grid-template-columns: repeat(5,1fr) }
+        .hAvatar{ width:120px; height:120px; border-radius:14px; border:1px solid #24324c; background:#0e1524; display:grid; place-items:center; overflow:hidden }
+        .hAvatar img{ width:100%; height:100%; object-fit:contain }
+        .who{ font-size:20px; font-weight:700 }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="step">
+        <h3>1) Rozpocznij / kolejne pytanie</h3>
+        <div class="row">
+            <button id="btnStart" style="background:var(--accent); color:white">Rozpocznij (S)</button>
+            <span class="mini">Ustawi fazę na <b>READING</b>, zagra <b>intro</b> i pokaże baner.</span>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>2) Po przeczytaniu pytania</h3>
+        <div class="row">
+            <button id="btnReadDone" disabled>Przeczytałem (R)</button>
+            <span class="mini">Odblokuje „Znam odpowiedź!” u zawodników (faza <b>BUZZING</b>).</span>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>3) Zgłoszenie i odpowiedź</h3>
+        <div class="row" style="gap:10px">
+            <span class="badge" id="phase">Faza: —</span>
+            <span class="badge" id="winner">Brak zgłoszenia</span>
+            <span class="badge" id="current">Odpowiada: —</span>
+        </div>
+
+        <div class="row" style="align-items:stretch; margin-top:10px">
+            <div class="hAvatar"><img id="av" alt=""></div>
+            <div style="flex:1">
+                <div class="who" id="who">Nikt nie odpowiada</div>
+                <div class="row" style="gap:10px; align-items:center; margin-top:6px">
+                    <span><b id="tt">00.0</b> s</span>
+                    <div class="progressWrap" style="position:relative; inset:auto; flex:1">
+                        <div id="pb" class="progressBar"></div>
+                    </div>
+                    <button id="btnGood"  title="✓ (G)" disabled>✓ Dobra</button>
+                    <button id="btnWrong" title="✗ (B)" disabled>✗ Zła</button>
+                </div>
+                <div class="mini" id="hint">Po „Znam odpowiedź!” zobaczysz stanowisko, imię i czas reakcji. Licznik 10 s ruszy automatycznie.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Opcjonalnie: wskaż adresata (bez buzzera)</h3>
+        <div id="grid" class="grid grid5"></div>
+        <div class="mini">Kliknij gracza, aby ustawić go jako odpowiadającego.</div>
+    </div>
+</div>
+
+<!-- MODAL akceptacji wyboru (host) -->
+<div id="approveBackdrop" class="modalBackdrop">
+    <div class="modal">
+        <h3>Akceptacja wyboru</h3>
+        <div id="approveText" style="margin-bottom:10px">—</div>
+        <div class="row">
+            <button id="btnReject">Odrzuć</button>
+            <button id="btnApprove" style="background:var(--ok); color:#06210f">Akceptuj</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script type="module" src="/js/host.js"></script>
+</body>
+</html>

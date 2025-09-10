@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1 z 10 — Ekran</title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <style>
+        .gridPlayers{ grid-template-columns: repeat(5, 1fr) }
+        .name{ font-weight:700; text-align:center; margin-bottom:6px }
+        .avatar{ display:grid; place-items:center }
+        .avatar img{ width:72px; height:72px; object-fit:contain; filter:drop-shadow(0 2px 10px rgba(0,0,0,.35)) }
+        .meta{ display:flex; justify-content:space-between; align-items:center; font-size:13px; opacity:.9 }
+        .lives{ display:flex; gap:6px }
+        .judge{ position:absolute; right:8px; bottom:8px; font-size:28px; opacity:0; transform:scale(.9); transition:.25s }
+        .judge.show{ opacity:1; transform:scale(1) }
+        .good{ color:var(--ok) } .bad{ color:var(--bad) }
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <button id="unlock">Odblokuj dźwięk</button>
+</div>
+
+<div id="gridWrap" class="gridWrap">
+    <div class="wrap">
+        <div id="grid" class="grid gridPlayers"></div>
+    </div>
+</div>
+
+<!-- SCENA centralna -->
+<div id="stage" class="stage">
+    <div class="name" id="stageName"></div>
+    <div class="row">
+        <div class="avatar"><img id="stageAv" alt=""></div>
+        <div style="flex:1">
+            <div class="badge" id="stageSeat"></div>
+            <div style="height:8px"></div>
+            <div class="progressWrap" style="position:relative; inset:auto;">
+                <div id="stagePb" class="progressBar"></div>
+            </div>
+        </div>
+    </div>
+    <div id="stageJudge" class="judge"></div>
+</div>
+
+<div class="centerOverlay"><div id="banner" class="banner">Prowadzący czyta pytanie…</div></div>
+<div class="progressWrap"><div id="pb" class="progressBar"></div></div>
+
+<!-- Audio -->
+<audio id="sndIntro" src="/sounds/intro.mp3" preload="auto"></audio>
+<audio id="sndGood"  src="/sounds/good.mp3"  preload="auto"></audio>
+<audio id="sndWrong" src="/sounds/wrong.mp3" preload="auto"></audio>
+<audio id="sndBoom"  src="/sounds/boom.mp3"  preload="auto"></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script type="module" src="/js/display.js"></script>
+</body>
+</html>

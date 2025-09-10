@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1 z 10 — Operator</title>
+    <link rel="stylesheet" href="/css/base.css" />
+</head>
+<body>
+<div class="wrap">
+    <div class="card row" style="justify-content:space-between; gap:8px">
+        <div class="row" style="gap:8px">
+            <button id="btnBuzzStart">Buzzery (start)</button>
+            <button id="btnHostStart">Start rundy</button>
+            <button id="btnReadDone">Przeczytałem</button>
+            <button id="btnIntro">Intro</button>
+            <button id="btnStartQ">Start pytania</button>
+            <button id="btnBoom">Boom/Cisza</button>
+            <button id="btnSave">Zapisz wyniki</button>
+            <button id="btnReset">Reset</button>
+            <button id="btnNewGame">Nowa gra</button>
+        </div>
+        <div class="row">
+            <span class="badge" id="ph">Faza: —</span>
+            <span class="badge" id="ti">Timer: 0.0s</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="row" style="justify-content:space-between">
+            <div><b>Aktualny odpowiadający:</b> <span id="who">—</span></div>
+            <div><b>Reakcja:</b> <span id="reaction">—</span></div>
+        </div>
+        <div class="progressWrap" style="position:relative; top:auto; left:auto; right:auto; bottom:auto; margin-top:8px">
+            <div id="pb" class="progressBar"></div>
+        </div>
+        <div class="mini">W ANSWERING pasek pokazuje upływ 10 s. W BUZZING czekamy na „Znam odpowiedź!”.</div>
+    </div>
+
+    <div id="grid" class="grid" style="grid-template-columns:repeat(5,1fr)"></div>
+    <div id="approveBackdrop" class="modalBackdrop">
+        <div class="modal">
+            <h3>Akceptacja wyboru</h3>
+            <div id="approveText" style="margin-bottom:10px">—</div>
+            <div class="row">
+                <button id="btnReject">Odrzuć</button>
+                <button id="btnApprove" style="background:var(--ok); color:#06210f">Akceptuj</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script type="module" src="/js/operator.js"></script>
+</body>
+</html>

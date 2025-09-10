@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1 z 10 — Zawodnik</title>
+    <link rel="stylesheet" href="/css/base.css" />
+</head>
+<body>
+<div class="playerPanel">
+    <div class="playerBox" id="step1">
+        <div class="row"><input id="slot" class="input" type="number" min="1" max="10" placeholder="Numer stanowiska (1–10)"></div>
+        <div class="row"><input id="name" class="input" type="text" placeholder="Imię i nazwisko"></div>
+        <button id="next1" style="width:100%">Dalej</button>
+        <div class="mini center">Najpierw wpisz stanowisko i imię, potem wybierzesz avatar.</div>
+    </div>
+
+    <div class="playerBox" id="step2" style="display:none">
+        <div class="row">
+            <select id="gender" class="input">
+                <option value="MALE">Mężczyzna</option>
+                <option value="FEMALE">Kobieta</option>
+            </select>
+        </div>
+        <button id="next2" style="width:100%">Zapisz i czekaj</button>
+        <div class="mini center">Zapisujemy Twoje dane i czekamy na prowadzącego.</div>
+    </div>
+
+    <div class="playerBox" id="step3" style="display:none">
+        <div class="playerGrid">
+            <div class="playerAvatar"><img id="av" src="/img/male.png" alt=""></div>
+            <div>
+                <div class="row" style="gap:8px">
+                    <span class="badge" id="seat">Stanowisko —</span>
+                    <span class="badge" id="phase">Faza: —</span>
+                </div>
+                <div class="playerStats">
+                    <div class="playerStat">Życia <b id="lives">3</b></div>
+                    <div class="playerStat">Punkty <b id="score">0</b></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="center" style="margin:14px 0 6px">
+            <div id="status" class="mini">Czekaj na rozpoczęcie…</div>
+        </div>
+
+        <button id="know" style="width:100%" disabled>Znam odpowiedź!</button>
+        <div class="playerBar"><i id="pb"></i></div>
+
+        <!-- overlay po eliminacji -->
+        <div id="outOverlay" style="display:none; margin-top:12px" class="card">
+            <div class="center"><b>Odpadasz</b> — dzięki za grę!</div>
+            <div class="mini center" id="outStats"></div>
+        </div>
+
+        <!-- POPUP wyboru przeciwnika -->
+        <div id="chooseBackdrop" class="modalBackdrop">
+            <div class="modal">
+                <h3>Wybierz przeciwnika</h3>
+                <div id="chooseGrid" class="grid"></div>
+                <div class="mini">Wybieraj spośród aktywnych graczy. Operator zatwierdzi wybór.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script type="module" src="/js/player.js"></script>
+</body>
+</html>

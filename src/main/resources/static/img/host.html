@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>1 z 10 — Panel Prowadzącego (pełny)</title>
+    <style>
+        :root { --bg:#070a12; --card:#111827; --line:#223047; --accent:#3557ff; --muted:#9fb0d1; }
+        * { box-sizing: border-box; }
+        body { margin:0; background:var(--bg); color:#eef3ff; font-family:system-ui,Segoe UI,Roboto,Arial; }
+        .wrap { max-width:980px; margin:0 auto; padding:18px; display:flex; flex-direction:column; gap:12px; }
+        .step { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+        .step h3 { margin:0 0 8px 0; font-size:18px; font-weight:700; }
+        .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        button { background:var(--accent); color:white; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; font-weight:600; }
+        button[disabled]{ background:#26315a; cursor:not-allowed; }
+        .big { font-size:20px; padding:12px 18px; }
+        .muted { color:var(--muted); font-size:12px; }
+        .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; }
+        .cardbtn { background:#0e1524; border:1px solid #253556; border-radius:12px; padding:10px; text-align:center; color:#dfe8ff; cursor:pointer; }
+        .cardbtn[disabled]{ opacity:.5; cursor:not-allowed; }
+
+        .status { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .badge { background:#0f1a33; border:1px solid #2a3f6b; color:#cfe2ff; padding:6px 10px; border-radius:999px; font-size:12px; }
+
+        .answerBox { display:grid; grid-template-columns: 120px 1fr; gap:12px; align-items:center; }
+        .avatar { width:100%; aspect-ratio:1; border-radius:14px; background:#0d1423; display:grid; place-items:center; font-size:42px; border:1px solid #223454; }
+        .who { font-size:20px; font-weight:700; }
+        .timerRow { display:flex; align-items:center; gap:10px; }
+        .timerText { font-size:24px; font-weight:700; letter-spacing:0.5px; }
+        .progressWrap { width:100%; height:12px; background:#13203a; border-radius:999px; overflow:hidden; border:1px solid #24406f; }
+        .progressBar { height:100%; width:0%; background:#49d17b; transition:width .1s linear; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="step">
+        <h3>1) Rozpocznij rundę</h3>
+        <div class="row">
+            <button id="btnStart" class="big">Rozpocznij</button>
+            <span class="muted">Ustawi fazę na <b>READING</b> i na ekranie głównym pokaże baner „Prowadzący czyta pytanie…”.</span>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>2) Po przeczytaniu pytania</h3>
+        <div class="row">
+            <button id="btnReadDone" class="big" disabled>Przeczytałem</button>
+            <span class="muted">Odblokuje przycisk „Znam odpowiedź” na telefonach graczy (faza <b>BUZZING</b>).</span>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>3) Zgłoszenie zawodnika i odpowiedź</h3>
+        <div class="status">
+            <span class="badge" id="phase">Faza: —</span>
+            <span class="badge" id="winner">Brak zgłoszenia</span>
+        </div>
+        <div style="height:12px"></div>
+        <div class="answerBox">
+            <div class="avatar" id="av">?</div>
+            <div>
+                <div class="who" id="who">Nikt nie odpowiada</div>
+                <div class="timerRow" style="margin-top:6px;">
+                    <span class="timerText"><span id="tt">00.0</span> s</span>
+                    <div class="progressWrap"><div class="progressBar" id="pb"></div></div>
+                </div>
+                <div class="muted" id="hint">Gdy gracz kliknie „Znam odpowiedź”, zobaczysz tu stanowisko, imię i czas reakcji.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Opcjonalnie: wskaż adresata (bez buzzera)</h3>
+        <div id="grid" class="grid"></div>
+        <div class="muted" style="margin-top:6px;">Kliknij gracza, aby ustawić go jako odpowiadającego (użyteczne, gdy prowadzący wskazuje osobę).</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    const btnStart = document.getElementById('btnStart');
+    const btnReadDone = document.getElementById('btnReadDone');
+    const phaseEl = document.getElementById('phase');
+    const winnerEl = document.getElementById('winner');
+    const whoEl = document.getElementById('who');
+    const ttEl = document.getElementById('tt');
+    const pb = document.getElementById('pb');
+    const av = document.getElementById('av');
+    const grid = document.getElementById('grid');
+    const TOTAL = 10000;
+
+    const sock = new SockJS('/ws');
+    const stomp = Stomp.over(sock); stomp.debug = () => {};
+    let st = null; let timer = {remainingMs:0, active:false};
+
+    stomp.connect({}, () => {
+      stomp.subscribe('/topic/state', msg => { st = JSON.parse(msg.body); renderState(st); });
+      stomp.subscribe('/topic/events', msg => handleEvent(JSON.parse(msg.body)));
+      stomp.subscribe('/topic/timer', msg => handleTimer(JSON.parse(msg.body)));
+    });
+
+    function send(dest, body){ stomp.send(dest, {}, JSON.stringify(body||{})); }
+
+    btnStart.onclick = () => send('/app/host/start');
+    btnReadDone.onclick = () => send('/app/host/readDone');
+
+    function renderState(s){
+      // przyciski
+      btnStart.disabled = !(s.phase === 'IDLE' || s.phase === 'READING');
+      btnReadDone.disabled = !(s.phase === 'READING');
+
+      // badge fazy
+      phaseEl.textContent = 'Faza: ' + s.phase;
+
+      // grid graczy
+      grid.innerHTML = '';
+      s.players.forEach(p => {
+        const b = document.createElement('button');
+        b.className = 'cardbtn';
+        b.textContent = `${p.id}. ${p.name||''}`;
+        b.disabled = p.eliminated || s.phase === 'BUZZING' || s.timerActive;
+        b.onclick = () => send('/app/setAnswering', {playerId: p.id});
+        grid.appendChild(b);
+      });
+
+      // kto odpowiada
+      if (s.answeringId) {
+        const p = s.players.find(x => x.id === s.answeringId);
+        if (p) {
+          whoEl.textContent = `Odpowiada: #${p.id} — ${p.name||''}`;
+          av.textContent = p.gender === 'FEMALE' ? '👩' : '👨';
+        }
+      } else {
+        whoEl.textContent = 'Nikt nie odpowiada';
+        av.textContent = '?';
+      }
+    }
+
+    function handleEvent(ev){
+      if (ev.type === 'ROUND_WINNER'){
+        winnerEl.textContent = `Zgłosił się #${ev.playerId} (czas reakcji ${(Number(ev.value||0)/1000).toFixed(1)} s)`;
+      }
+      if (ev.type === 'RESULTS_SAVED'){
+        winnerEl.textContent = `Wyniki zapisane: ${ev.value}`;
+      }
+    }
+
+    function handleTimer(t){
+      timer = t;
+      const ms = t.remainingMs||0, active = !!t.active;
+      ttEl.textContent = (ms/1000).toFixed(1);
+      const pct = Math.max(0, Math.min(1, (TOTAL - ms)/TOTAL));
+      pb.style.width = (pct*100).toFixed(1) + '%';
+      pb.style.background = active ? '#49d17b' : (ms===0 ? '#ff5d6c' : '#49d17b');
+    }
+</script>
+</body>
+</html>

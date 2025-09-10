@@ -1,0 +1,326 @@
+:root{
+  --bg:#0a0d13; --fg:#eaf2ff; --card:#121826; --line:#233042; --accent:#3557ff;
+  --ok:#49d17b; --bad:#ff5d6c; --muted:#9fb0d1; --hl:#4aa3ff;
+}
+*{ box-sizing:border-box }
+html,body{ height:100% }
+body{ margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,Segoe UI,Roboto,Arial }
+.wrap{ max-width:1400px; margin:0 auto; padding:18px }
+
+/* Buttons / Inputs */
+button{
+  background:#22314a; color:#e7f1ff; border:1px solid #2e4467; border-radius:12px;
+  padding:10px 14px; cursor:pointer; font-weight:700; transition:.2s transform ease;
+}
+button:hover{ background:#2a3f6b }
+button:active{ transform:translateY(1px) }
+button[disabled]{ background:#1a2336; cursor:not-allowed }
+.input, select{
+  background:#0f1625; color:#e7f1ff; border:1px solid #233042; border-radius:10px; padding:10px 12px
+}
+
+.grid{ display:grid; gap:12px }
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; position:relative
+}
+.badge{ display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #2a3f6b; background:#0f1a33; color:#cfe2ff; font-size:12px }
+.step{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:12px }
+.mini{ font-size:12px; color:var(--muted) }
+.center{ text-align:center }
+.answering{ outline:2px solid var(--hl); box-shadow:0 0 0 4px rgba(74,163,255,.25) inset }
+
+/* Banner + progress (TV-like) */
+.topbar{ position:fixed; left:12px; top:12px; z-index:5; display:flex; gap:8px }
+.centerOverlay{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:6 }
+.banner{
+  background:linear-gradient(135deg,#1f2a44,#101522); border:1px solid #2b3950;
+  padding:22px 28px; border-radius:16px; font-size:28px; box-shadow:0 10px 40px rgba(0,0,0,.35);
+  opacity:0; transform:translateY(16px); transition:.35s; text-align:center
+}
+.banner.show{ opacity:1; transform:translateY(0) }
+
+.progressWrap{ position:fixed; left:0; right:0; bottom:0; height:12px; background:rgba(255,255,255,.06); z-index:5 }
+.progressBar{ height:100%; width:0%; background:var(--ok); transition:width .1s linear }
+
+/* Stage (display) */
+.stage{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9); opacity:0;
+  background:var(--card); border:1px solid var(--line); border-radius:18px; padding:18px; width:min(520px,94vw);
+  box-shadow:0 20px 80px rgba(0,0,0,.45); z-index:7; display:none; transition:.35s }
+.stage.show{ display:block; opacity:1; transform:translate(-50%,-50%) scale(1) }
+.stage .name{ font-size:22px; font-weight:800; margin-bottom:8px }
+.stage .row{ display:flex; gap:10px; align-items:center }
+.stage .avatar{ width:120px; height:120px; border-radius:14px; border:1px solid #24324c; background:#0e1524; display:grid; place-items:center; overflow:hidden }
+.stage .avatar img{ width:100%; height:100%; object-fit:contain }
+.stage .judge{ position:absolute; right:12px; bottom:12px; font-size:40px; opacity:0; transform:scale(.9); transition:.25s }
+.stage .judge.show{ opacity:1; transform:scale(1) }
+.good{ color:var(--ok) } .bad{ color:var(--bad) }
+
+/* Grid wrapper that slides down when stage is shown */
+.gridWrap{ transition:transform .35s ease }
+.gridWrap.below{ transform:translateY(180px) }
+
+/* Hearts SVG helpers */
+.heart{ width:18px; height:18px; filter: drop-shadow(0 0 4px rgba(255,0,0,.3)) }
+.dead{ opacity:.25; filter:grayscale(1) }
+
+/* Animations */
+@keyframes pulseScore { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+@keyframes shakeLife { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+@keyframes fadeOutUp { to{ opacity:0; transform:translateY(-8px) } }
+.scorePulse{ animation:pulseScore .5s ease }
+.lifeShake{ animation:shakeLife .6s ease }
+.fadeOutUp{ animation:fadeOutUp .6s ease forwards }
+
+/* Player specific responsive panel */
+.playerPanel{ width:min(560px,94vw); margin:22px auto }
+.playerBox{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px }
+.playerGrid{ display:grid; grid-template-columns:92px 1fr; gap:14px; align-items:center }
+.playerAvatar{ width:92px; height:92px; border-radius:14px; border:1px solid #2a3b5f; background:#0f1625; display:grid; place-items:center; overflow:hidden }
+.playerAvatar img{ width:100%; height:100%; object-fit:contain }
+.playerStats{ display:flex; gap:10px; margin-top:8px }
+.playerStat{ flex:1; background:#0f1625; border:1px solid #2a3b5f; border-radius:12px; padding:10px; text-align:center }
+.playerStat b{ display:block; font-size:22px; margin-top:4px }
+.playerBar{ margin-top:12px; height:12px; background:#13203a; border:1px solid #24406f; border-radius:999px; overflow:hidden }
+.playerBar>i{ display:block; height:100%; width:0%; background:var(--ok); transition:width .1s linear }
+
+/* Mobile tweaks */
+@media (max-width:680px){
+  .stage .row{ flex-direction:column; align-items:flex-start }
+  .stage .avatar{ width:100px; height:100px }
+  .playerGrid{ grid-template-columns:72px 1fr }
+  .playerAvatar{ width:72px; height:72px }
+}
+
+/* Modal */
+.modalBackdrop{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:20 }
+.modal{ background:var(--card); border:1px solid var(--line); border-radius:16px; width:min(640px,94vw); padding:16px; box-shadow:0 12px 60px rgba(0,0,0,.45) }
+.modal h3{ margin:0 0 10px 0 }
+
+/* ✅ responsywna siatka w popupie wyboru */
+.modal .grid{
+  display:grid;
+  gap:10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+/* ✅ kafelek o stałej wysokości + elipsa w tytule */
+.modal .item{
+  background:#0f1625;
+  border:1px solid #2a3b5f;
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  min-height:84px;           /* równa wysokość wszystkich */
+  font-size:14px;
+}
+.modal .item > div:first-child{
+  font-weight:700;
+  white-space:nowrap;        /* nie łamie wiersza */
+  overflow:hidden;
+  text-overflow:ellipsis;    /* … gdy za długie */
+  width:100%;
+}
+.modal .item .mini{
+  white-space:nowrap;
+  opacity:.85;
+}
+
+.modal .row{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px }
+.modalBackdrop.show{ display:flex }
+
+/* === LOCKED state for player "Znam odpowiedź!" === */
+#know{ position:relative }
+#know.locked,
+#know.locked[disabled]{
+  background:#142036;           /* ciemniejszy niż zwykły disabled */
+  border-color:#2a3b5f;
+  color:#9fb0d1;
+  cursor:not-allowed;
+  padding-left:40px;            /* miejsce na ikonę */
+  box-shadow:inset 0 0 0 1px rgba(74,163,255,.06);
+  animation: lockPulse 1.6s ease-out infinite;
+}
+
+/* Ikona kłódki jako maska SVG — wygląda identycznie na wszystkich platformach */
+#know.locked::before{
+  content:"";
+  position:absolute;
+  left:14px; top:50%;
+  width:18px; height:18px;
+  transform:translateY(-50%);
+  background:#9fb0d1;
+  -webkit-mask: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">\
+<path fill=\"black\" d=\"M12 1a5 5 0 0 1 5 5v3h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3v3h6V6a3 3 0 0 0-3-3Z\"/>\
+</svg>') no-repeat center / contain;
+  mask: url('data:image/svg+xml;utf8,\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">\
+<path fill=\"black\" d=\"M12 1a5 5 0 0 1 5 5v3h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3v3h6V6a3 3 0 0 0-3-3Z\"/>\
+</svg>') no-repeat center / contain;
+  opacity:.95;
+}
+
+/* Delikatny puls, żeby było czytelne, że „czekamy” (cooldown) */
+@keyframes lockPulse{
+  0%{ box-shadow: inset 0 0 0 0 rgba(159,176,209,.28) }
+  100%{ box-shadow: inset 0 0 0 10px rgba(159,176,209,0) }
+}
+
+/* === PING wokół avatara gracza w momencie odpowiedzi === */
+#av {
+  border-radius: 16px;              /* zaokrąglenie, żeby ring ładnie siadał */
+  transition: filter .2s ease;
+}
+
+/* miękki pulsujący ring */
+#av.ping {
+  animation: pingRing 1.4s cubic-bezier(0,0,.2,1) infinite;
+  box-shadow: 0 0 0 0 rgba(74,163,255,.55);   /* startowy pierścień */
+  outline: 2px solid rgba(74,163,255,.45);    /* delikatna poświata */
+  outline-offset: 0;
+  filter: drop-shadow(0 8px 20px rgba(74,163,255,.18));
+}
+
+@keyframes pingRing {
+  0%   { box-shadow: 0 0 0 0 rgba(74,163,255,.55) }
+  70%  { box-shadow: 0 0 0 18px rgba(74,163,255,0) }
+  100% { box-shadow: 0 0 0 0 rgba(74,163,255,0) }
+}
+
+/* trochę mniejszy ring na bardzo małych ekranach */
+@media (max-width: 440px){
+  #av.ping { outline-width: 1.5px }
+  @keyframes pingRing {
+    0%   { box-shadow: 0 0 0 0 rgba(74,163,255,.55) }
+    70%  { box-shadow: 0 0 0 12px rgba(74,163,255,0) }
+    100% { box-shadow: 0 0 0 0 rgba(74,163,255,0) }
+  }
+}
+
+/* === Wyróżnienia gracza === */
+/* mocny highlight karty, gdy odpowiadam */
+body.me-answering #step3 {
+  outline: 2px solid rgba(74,163,255,.7);
+  box-shadow: 0 0 0 6px rgba(74,163,255,.12), 0 18px 60px rgba(0,0,0,.55);
+  border-radius: 16px;
+}
+
+/* złota poświata gdy "JESTEŚ PIERWSZY!" */
+body.me-won #step3 {
+  outline: 2px solid rgba(255,210,74,.9);
+  box-shadow: 0 0 0 6px rgba(255,210,74,.18), 0 18px 60px rgba(0,0,0,.55);
+}
+
+/* subtelne „oczekiwanie” po kliknięciu znam odp. */
+body.me-pending #step3 {
+  outline: 2px dashed rgba(160,180,210,.35);
+  box-shadow: 0 0 0 4px rgba(160,180,210,.06);
+}
+
+/* ring na avatarze – włączany klasą .ping (dodawane z JS) */
+#av { border-radius: 16px; transition: filter .2s ease; }
+#av.ping {
+  animation: pingRing 1.4s cubic-bezier(0,0,.2,1) infinite;
+  box-shadow: 0 0 0 0 rgba(74,163,255,.55);
+  outline: 2px solid rgba(74,163,255,.45);
+  outline-offset: 0;
+  filter: drop-shadow(0 8px 20px rgba(74,163,255,.18));
+}
+@keyframes pingRing {
+  0%   { box-shadow: 0 0 0 0 rgba(74,163,255,.55) }
+  70%  { box-shadow: 0 0 0 18px rgba(74,163,255,0) }
+  100% { box-shadow: 0 0 0 0 rgba(74,163,255,0) }
+}
+@media (max-width: 440px){
+  #av.ping { outline-width: 1.5px }
+  @keyframes pingRing {
+    0%   { box-shadow: 0 0 0 0 rgba(74,163,255,.55) }
+    70%  { box-shadow: 0 0 0 12px rgba(74,163,255,0) }
+    100% { box-shadow: 0 0 0 0 rgba(74,163,255,0) }
+  }
+}
+
+/* przycisk "Znam odpowiedź!" – stany */
+#know.locked { position: relative; }
+#know.locked::after { content: " 🔒"; opacity:.75; }
+
+body.me-pending #know {
+  pointer-events: none;
+}
+body.me-pending #know::after {
+  content: " ⏳";
+}
+
+body.me-won #know {
+  background: linear-gradient(180deg, #1f3f80, #173468);
+  border-color: #3c64b1;
+  color: #e8f0ff;
+}
+
+body.me-answering #know {
+  background: linear-gradient(180deg, #0f2d1c, #0a1e14);
+  border-color: #1e4730;
+  color: #d6ffe9;
+}
+
+/* === Odznaka roli (Wybierasz / Odpowiadasz / Wybrano Cię) === */
+.role-badge{
+  position:absolute; top:-12px; right:-12px;
+  padding:6px 12px; border-radius:9999px; font-size:12px; font-weight:800;
+  background:#0c1730; color:#cfe0ff; border:1px solid #203452;
+  box-shadow: 0 12px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+  transform: translateY(-10px); opacity:0; pointer-events:none;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s ease;
+}
+.role-badge.show{ transform: translateY(0); opacity:1; }
+.role-badge.ok{ background:#0f2d1c; color:#d6ffe9; border-color:#1e4730; }
+.role-badge.warn{ background:#2a2140; color:#e6dbff; border-color:#4c3e7c; }
+.role-badge.info{ background:#10233f; color:#e0ecff; border-color:#254977; }
+.role-badge.bad{ background:#2e1518; color:#ffd6db; border-color:#5a2b33; }
+
+/* Highlighty ról */
+body.me-choosing #step3{
+  outline:2px dashed rgba(124,108,255,.55);
+  box-shadow: 0 0 0 6px rgba(124,108,255,.12);
+  border-radius:16px;
+}
+body.me-picked #step3{
+  outline:2px solid rgba(170,126,255,.75);
+  box-shadow: 0 0 0 6px rgba(170,126,255,.15), 0 18px 60px rgba(0,0,0,.55);
+  border-radius:16px;
+}
+
+/* istniejące highlighty z wcześniejszej wersji nadal działają:
+   body.me-won, body.me-answering, body.me-pending oraz #av.ping */
+
+/* === BAN na to pytanie (po złej odp. / timeout przy BUZZING) === */
+body.me-banned #step3{
+  position: relative;
+  outline: 2px solid rgba(255,76,76,.9);
+  box-shadow: 0 0 0 6px rgba(255,76,76,.18), 0 18px 60px rgba(0,0,0,.55);
+  border-radius: 16px;
+  animation: bannedPulse 1.2s cubic-bezier(.2,.8,.2,1) infinite;
+}
+@keyframes bannedPulse{
+  0%   { box-shadow: 0 0 0 6px rgba(255,76,76,.18), 0 18px 60px rgba(0,0,0,.55) }
+  70%  { box-shadow: 0 0 0 18px rgba(255,76,76,0),  0 18px 60px rgba(0,0,0,.55) }
+  100% { box-shadow: 0 0 0 6px rgba(255,76,76,.18), 0 18px 60px rgba(0,0,0,.55) }
+}
+
+/* badge mamy już, tu tylko dopracujmy wariant “bad” */
+.role-badge.bad{
+  background:#2e1518; color:#ffd6db; border-color:#5a2b33;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+}
+
+/* przycisk gdy mam bana */
+body.me-banned #know{
+  filter: grayscale(1) brightness(.85);
+  cursor: not-allowed;
+}
+
