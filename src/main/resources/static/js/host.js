@@ -1,130 +1,130 @@
 import { connect } from '/js/ws.js';
 
-const btnStart    = document.getElementById('btnStart');    // Start/Kolejne pytanie
+const btnStart    = document.getElementById('btnStart');
+const btnRead     = document.getElementById('btnRead');
 const btnReadDone = document.getElementById('btnReadDone');
 const btnGood     = document.getElementById('btnGood');
-const btnWrong    = document.getElementById('btnWrong');
+const btnBad      = document.getElementById('btnBad');
+const btnNext     = document.getElementById('btnNext');
+const btnReset    = document.getElementById('btnReset');
+const btnNew      = document.getElementById('btnNew');
 
-const phaseEl  = document.getElementById('phase');
-const winnerEl = document.getElementById('winner');
-const currentEl= document.getElementById('current');
-const whoEl    = document.getElementById('who');
-const ttEl     = document.getElementById('tt');
-const pb       = document.getElementById('pb');
-const avImg    = document.getElementById('av');
-const grid     = document.getElementById('grid');
+const phaseEl     = document.getElementById('phase');
+const statPlayers = document.getElementById('statPlayers');
 
-const approveBackdrop = document.getElementById('approveBackdrop');
-const approveText     = document.getElementById('approveText');
-const btnApprove      = document.getElementById('btnApprove');
-const btnReject       = document.getElementById('btnReject');
-let pending = {fromId:null,toId:null};
+const ansAv   = document.getElementById('ansAv');
+const ansName = document.getElementById('ansName');
+const ansSeat = document.getElementById('ansSeat');
+const ansTime = document.getElementById('ansTime');
+const ansJudge= document.getElementById('ansJudge');
 
-let st = null, timer = {remainingMs:0, active:false};
-let lockNext = false;
-const TOTAL = 10000;
+const plist   = document.getElementById('plist');
+
+let state = null;
+let ansStartTs = 0;
 
 const bus = connect({
-  onState: s => { st = s; renderState(); },
-  onTimer: t => { timer = t; renderTimer(); },
-  onEvent: ev => {
-    if (ev.type === 'ROUND_WINNER'){
-      const ms = (ev.reactionMs ?? parseInt(ev.value||'0',10)) || 0;
-      winnerEl.textContent = `Zgłosił się: #${ev.playerId} — ${(ms/1000).toFixed(1)} s`;
-    } else if (ev.type === 'RESULTS_SAVED'){
-      alert('Wyniki zapisane: ' + ev.value);
-    } else if (ev.type === 'NEW_GAME'){
-      winnerEl.textContent='Brak zgłoszenia'; currentEl.textContent='Odpowiada: —';
-      whoEl.textContent='Nikt nie odpowiada'; avImg.src=''; pb.style.width='0%';
-      lockNext = false; renderState();
-    } else if (ev.type === 'TARGET_PROPOSED'){
-      pending.fromId = ev.playerId;
-      pending.toId   = parseInt(ev.value||'0',10);
-      const from = st?.players?.find(p=>p.id===pending.fromId);
-      const to   = st?.players?.find(p=>p.id===pending.toId);
-      approveText.textContent = `${from?.id}. ${from?.name||''} ➜ ${to?.id}. ${to?.name||''}`;
-      approveBackdrop.classList.add('show');
-    } else if (ev.type === 'TARGET_ACCEPTED' || ev.type === 'TARGET_REJECTED'){
-      approveBackdrop.classList.remove('show');
-      pending = {fromId:null,toId:null};
-    } else if (ev.type === 'CUE' && ev.value === 'BOOM'){
-      lockNext = true; renderState();
-    } else if (ev.type === 'BOOM_DONE' || (ev.type==='LOCK_NEXT' && ev.value==='OFF')){
-      lockNext = false; renderState();
-    } else if (ev.type === 'LOCK_NEXT' && ev.value==='ON'){
-      lockNext = true; renderState();
-    }
-  }
+  onState: s => { state = s; render(); },
+  onEvent: ev => handleEvent(ev),
+  onTimer: t => handleTimer(t),
 });
 
-// Start/Kolejne pytanie – decyduj po fazie
-btnStart.onclick = () => {
-  if (!st) return;
-  if (st.phase === 'IDLE') bus.send('/app/host/start', {});
-  else if (st.phase === 'READING') bus.send('/app/host/next', {});
-};
+function send(dest, body={}){ try{ bus.send(dest, body);}catch(e){ console.error(e); } }
 
-btnReadDone.onclick = () => bus.send('/app/host/readDone', {});
-btnGood.onclick     = () => judge(true);
-btnWrong.onclick    = () => judge(false);
-
-btnApprove.onclick  = () => bus.send('/app/approveTarget', {accept:true});
-btnReject.onclick   = () => bus.send('/app/approveTarget', {accept:false});
-
-function judge(ok){
-  if (!st || !st.answeringId) return;
-  bus.send('/app/judge', {playerId: st.answeringId, correct: ok});
-}
-
-function renderState(){
-  const s = st; if(!s) return;
-
-  // Etykieta startu
-  btnStart.textContent = (s.phase === 'READING') ? 'Kolejne pytanie (S)' : 'Rozpocznij (S)';
-
-  // Blokada podczas INTRO oraz BOOM
-  const inIntro = s.phase === 'INTRO';
-  btnStart.disabled = !(s.phase==='IDLE' || s.phase==='READING') || inIntro || lockNext;
-
-  btnReadDone.disabled = !(s.phase==='READING');
-
-  const hasAnswering = !!s.answeringId && s.phase === 'ANSWERING';
-  btnGood.disabled = !hasAnswering;
-  btnWrong.disabled = !hasAnswering;
-
-  phaseEl.textContent  = 'Faza: ' + s.phase;
-  const p = s.players.find(x => x.id === s.answeringId);
-  currentEl.textContent = 'Odpowiada: ' + (p ? (p.id + '. ' + (p.name || '')) : '—');
-  whoEl.textContent = p ? (p.id + '. ' + (p.name||'')) : 'Nikt nie odpowiada';
-  avImg.src = p ? (p.gender === 'FEMALE' ? '/img/female.png' : '/img/male.png') : '';
-
-  grid.innerHTML = '';
-  s.players.forEach(pl => {
-    const b = document.createElement('button');
-    b.className = 'card' + (pl.id === s.answeringId ? ' answering' : '');
-    b.disabled = pl.eliminated || s.phase === 'BUZZING' || s.phase === 'COOLDOWN' || timer.active;
-    b.innerHTML = `<div style="font-weight:700">${pl.id}. ${escapeHtml(pl.name||'')}</div>
-                   <div class="mini">Życia: ${pl.lives} • Punkty: ${pl.score} ${pl.eliminated?'• ❌ OUT':''}</div>`;
-    b.onclick = () => bus.send('/app/setAnswering', {playerId: pl.id});
-    grid.appendChild(b);
-  });
-}
-
-function renderTimer(){
-  const ms = timer.remainingMs || 0;
-  ttEl.textContent = (ms/1000).toFixed(1);
-  const pct = Math.max(0, Math.min(1, (TOTAL - ms)/TOTAL));
-  pb.style.width = (pct*100).toFixed(1) + '%';
-  pb.style.background = timer.active ? 'var(--ok)' : (ms===0 ? 'var(--bad)' : 'var(--ok)');
-}
+/* ====== UI actions ====== */
+btnStart.addEventListener('click',     ()=> send('/app/startRound'));
+btnRead.addEventListener('click',      ()=> send('/app/readingStart'));
+btnReadDone.addEventListener('click',  ()=> send('/app/readingDone')); // BUZZING
+btnGood.addEventListener('click',      ()=> judge('CORRECT'));
+btnBad.addEventListener('click',       ()=> judge('WRONG'));
+btnNext.addEventListener('click',      ()=> send('/app/nextQuestion'));
+btnReset.addEventListener('click',     ()=> send('/app/reset'));
+btnNew.addEventListener('click',       ()=> send('/app/newGame'));
 
 document.addEventListener('keydown', (e)=>{
-  if (['INPUT','SELECT','TEXTAREA'].includes(e.target?.tagName)) return;
-  const k = e.key.toLowerCase();
-  if (k==='s' && !btnStart.disabled) btnStart.click();
-  if (k==='r' && !btnReadDone.disabled) btnReadDone.click();
-  if (k==='g' && !btnGood.disabled) btnGood.click();
-  if (k==='b' && !btnWrong.disabled) btnWrong.click();
+  if (e.repeat) return;
+  if (e.key.toLowerCase() === 's') btnStart.click();
+  if (e.key.toLowerCase() === 'r') btnReadDone.click();
+  if (e.key.toLowerCase() === 'g') btnGood.click();
+  if (e.key.toLowerCase() === 'b') btnBad.click();
 });
 
-function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function judge(kind){
+  if (!state?.answeringId) return;
+  send('/app/judge', { playerId: state.answeringId, value: kind });
+}
+
+/* ====== render ====== */
+function isJoined(p){
+  const nm = (p?.name||'').trim();
+  if (!nm) return false;
+  if (nm.toLowerCase() === (`gracz ${p.id}`).toLowerCase()) return false;
+  return true;
+}
+
+function render(){
+  const st = state; if (!st) return;
+
+  const joined = (st.players||[]).filter(isJoined);
+  statPlayers.textContent = joined.length;
+  phaseEl.textContent = st.phase;
+
+  /* current answering */
+  const p = st.players?.find(x=>x.id===st.answeringId);
+  if (p){
+    ansAv.src   = (p.gender==='FEMALE') ? '/img/female.png' : '/img/male.png';
+    ansName.textContent = `${p.id}. ${(p.name||'').trim()}`;
+    ansSeat.textContent = `Stanowisko ${p.id}`;
+  } else {
+    ansAv.src = '/img/host.png';
+    ansName.textContent = '—';
+    ansSeat.textContent = 'Stanowisko —';
+  }
+
+  /* list */
+  plist.innerHTML = '';
+  joined.forEach(pp=>{
+    const row = document.createElement('div');
+    row.className = 'playerRow' + (st.answeringId===pp.id ? ' active':'');
+
+    row.innerHTML = `
+      <div class="info">
+        <div class="name">${pp.id}. ${(pp.name||'').trim()}</div>
+        <div class="sub">Życia: ${pp.lives} • Punkty: ${pp.score}</div>
+      </div>
+      <div class="cta">Ustaw</div>
+    `;
+    row.addEventListener('click', ()=> send('/app/setAnswering', { playerId: pp.id }));
+    plist.appendChild(row);
+  });
+
+  // blokady przycisków zależnie od fazy
+  const ph = st.phase;
+  btnStart.disabled    = (ph!=='IDLE' && ph!=='INTRO');
+  btnRead.disabled     = (ph!=='READING' && ph!=='SELECTING');
+  btnReadDone.disabled = (ph!=='READING');
+  btnGood.disabled     = (ph!=='ANSWERING');
+  btnBad.disabled      = (ph!=='ANSWERING');
+  btnNext.disabled     = !(ph==='IDLE' || ph==='SELECTING'); // po ciszy i wyborze — kolejne pytanie
+}
+
+/* ====== events & timer ====== */
+function handleEvent(ev){
+  if (!ev) return;
+  if (ev.type === 'PHASE'){
+    if (ev.value === 'ANSWERING') ansStartTs = performance.now();
+  }
+  if (ev.type === 'JUDGE'){
+    ansJudge.textContent = ev.value==='CORRECT' ? '✓' : '✗';
+    ansJudge.className   = 'judge show ' + (ev.value==='CORRECT'?'good':'bad');
+    setTimeout(()=> ansJudge.className='judge', 1000);
+  }
+}
+function handleTimer(t){
+  if (state?.phase === 'ANSWERING'){
+    const left = Math.max(0, t.remainingMs||0);
+    ansTime.textContent = `Czas: ${((10_000-left)/1000).toFixed(1)} s`;
+  } else {
+    ansTime.textContent = 'Czas: 0.0 s';
+  }
+}
