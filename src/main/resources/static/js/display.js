@@ -4,7 +4,6 @@ import { connect } from '/js/ws.js';
 const hudPlayers = document.getElementById('statPlayers');
 const hudQ       = document.getElementById('statQuestions');
 const hudPhase   = document.getElementById('statPhase'); // sama wartość
-// jeżeli masz w HTML gotowy „pill” z etykietą, tylko wpisujemy value:
 function setPhasePill(v){ if (hudPhase) hudPhase.textContent = v || '—'; }
 
 const gridWrap = document.getElementById('gridWrap');
@@ -64,10 +63,12 @@ function ensureUnlockModal(){
     try { await sounds.BOOM ?.play();  sounds.BOOM .pause();  sounds.BOOM .currentTime =0; } catch {}
     audioUnlocked = true; wrap.remove();
   });
-  document.getElementById('unlockNo').addEventListener('click', ()=>{ audioUnlocked = false; wrap.remove(); });
+  document.getElementById('unlockNo').addEventListener('click', ()=>{
+    audioUnlocked = false; wrap.remove();
+  });
 }
 
-/* ===== Centralne komunikaty (w tym BUZZING callout) ===== */
+/* ===== Centralne komunikaty (host/baner BUZZING) ===== */
 let centerBox = document.getElementById('centerBox');
 if (!centerBox){
   centerBox = document.createElement('div');
@@ -94,12 +95,11 @@ function showCenter(title, sub='', buzz=false){
   centerBox.classList.add('show');
 }
 function hideCenter(){ centerBox.classList.remove('show'); centerCard.classList.remove('buzz'); }
-
 function showBuzzingCallout(){
   showCenter('Gracze! Zgłaszamy się…', 'Kliknij „Znam odpowiedź!” na swoim urządzeniu.', true);
 }
 
-/* ===== 3…2…1 overlay + fallback (gdy brak ticka) ===== */
+/* ===== 3…2…1 overlay + lokalny fallback (niezależny od ticków) ===== */
 let cd = document.getElementById('cd');
 if (!cd){
   cd = document.createElement('div');
@@ -118,8 +118,7 @@ if (!cd){
         background:rgba(5,10,20,.85); border:1px solid #20304b; display:grid; place-items:center;">
         <div id="cdNum" style="font-size:min(18vmin, 170px); line-height:1; font-weight:800; color:#dbe7ff; text-shadow:0 8px 30px rgba(0,0,0,.45)">3</div>
       </div>
-    </div>
-  `;
+    </div>`;
   document.body.appendChild(cd);
 }
 const cdRing = cd.querySelector('#cdRing');
@@ -167,6 +166,7 @@ async function safePlayWithAck(audio, ackEndpoint){
     if (!audioUnlocked){ await audio.play(); await audio.pause(); audio.currentTime=0; }
     audio.currentTime=0; await audio.play();
   } catch {
+    // jeśli audio zablokowane, nie blokuj gry
     setTimeout(()=>{ try{ bus.send(ackEndpoint, {});}catch{} }, 400);
     return;
   }
@@ -192,7 +192,7 @@ function avatarFor(p, mood){
 /* ===== Layout (szerokość, wysokość, skala siatki) ===== */
 function computeLayout(n, containerWidth, containerHeight){
   const sidePad = 56, gap = 16;
-  const maxW = 340, minW = 220;
+  const maxW = 360, minW = 240;   // trochę większe domyślne karty
 
   if (n <= 0) return { rows:0, scale:1, widthTop:0, widthBottom:0, height:0 };
 
@@ -213,7 +213,8 @@ function computeLayout(n, containerWidth, containerHeight){
       ? cardHTop
       : (Math.max(cardHTop, cardHBot) * 2 + gap);
 
-  const maxH = Math.max(220, Math.round(containerHeight * 0.42));
+  // Limit zajęcia wysokości przez siatkę do ok. 42% ekranu
+  const maxH = Math.max(240, Math.round(containerHeight * 0.42));
   const scale = Math.max(0.6, Math.min(1, maxH / desiredH));
 
   return { rows, colsTop, colsBottom, widthTop, widthBottom, height: desiredH, scale };
@@ -241,7 +242,7 @@ function render(){
   } else if (st.phase === 'COOLDOWN') {
     hideCenter(); hideBanner(); startLocalCooldown(COOLDOWN_MS);
   } else if (st.phase === 'BUZZING') {
-    hideCooldown(); showBuzzingCallout(); // zamiast zwykłego banera
+    hideCooldown(); showBuzzingCallout(); // zamiast suchego banera
   } else if (st.phase === 'ANSWERING') {
     hideCenter(); banner.classList.remove('show');
   } else {
@@ -429,6 +430,7 @@ function handleEvent(ev){
       if (chosen){
         showStage(chosen, 'READING');
         showCenter(`Następny odpowiada: ${normName(chosen)||('Gracz '+chosen.id)}`,'');
+
         setTimeout(hideCenter, 1200);
       }
     }
@@ -454,7 +456,7 @@ function handleTimer(t){
     const pct = Math.max(0, Math.min(1, (TOTAL_ANS_MS - ms)/TOTAL_ANS_MS));
     pb.style.width = (pct*100).toFixed(1)+'%';
 
-    // Kolor paska: H od ~130 (zielony) do 0 (czerwony) + „żyjący” gradient
+    // Kolor paska: H 130 (zielony) → 0 (czerwony) + „żyjący” gradient
     const hue = Math.max(0, Math.min(130, 130 - 130*pct));
     const hue2 = Math.max(0, hue-24);
     pb.style.background = `linear-gradient(90deg, hsl(${hue} 85% 52%), hsl(${hue2} 90% 50%))`;
@@ -467,8 +469,10 @@ function handleTimer(t){
     stageCd.classList.add('hidden');
   }
 
+  // COOLDOWN: wspieraj zarówno tick z backendu, jak i fallback lokalny
   if (state?.phase === 'COOLDOWN'){
     if (typeof ms === 'number' && active){
+      // priorytet – tick z serwera
       stopLocalCooldown();
       cd.style.display = 'flex';
       const sec = Math.max(1, Math.ceil(ms/1000));

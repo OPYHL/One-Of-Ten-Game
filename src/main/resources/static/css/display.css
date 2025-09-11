@@ -137,8 +137,8 @@ body{
 
 /* ================= Karta gracza ================= */
 .card{
-  --w: 320px;         /* JS może nadpisać; domyślne nieco większe */
-  --h: 250px;
+  --w: 340px;
+  --h: 260px;
   width:var(--w);
   height:var(--h);
   background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.04));
@@ -146,7 +146,7 @@ body{
   border-radius:20px;
   position:relative;
   display:grid;
-  grid-template-rows:52px 1fr;      /* mniejsza „czapka” */
+  grid-template-rows:52px 1fr;
   gap:0;
   padding:14px 18px 18px;
   box-shadow:0 18px 56px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04);
@@ -180,7 +180,7 @@ body{
   color:var(--accent); opacity:.42; filter:drop-shadow(0 4px 10px rgba(59,109,246,.45));
 }
 
-/* Nazwa (2 linie, mniejszy odstęp) */
+/* Nazwa (2 linie) */
 .card .name{
   height:52px; display:grid; place-items:center;
   padding:0 10px;
@@ -189,30 +189,30 @@ body{
   display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
 }
 
-/* Avatar – dopasowany do wysokości karty, bliżej nazwy */
+/* Avatar */
 .card .avatar{
-  height:calc(var(--h) - 112px); /* header ~52 + strefa dolna ~60 */
+  height:calc(var(--h) - 112px);
   display:grid; align-items:end; justify-items:center;
   margin-top:-2px; pointer-events:none;
 }
 .card .avatar img{
-  height:min(150px, calc(var(--h) - 118px));
+  height:min(160px, calc(var(--h) - 118px));
   width:auto; object-fit:contain;
   filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
 }
 
-/* Punkty (medal + wartość) w lewym dolnym rogu */
+/* Punkty */
 .card .ptsBox{
   position:absolute; left:14px; bottom:12px; display:flex; align-items:center; gap:8px;
 }
 .card .ptsBox .medal{
-  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 35% 30%,#ffd27a,#ffb34d 60%,#e5922e);
   box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.3);
 }
 .card .ptsBox .medal svg{width:14px;height:14px;fill:#6a3a00}
 .card .ptsBox .value{
-  font-weight:1000; font-size:1.22rem; letter-spacing:.2px;
+  font-weight:1000; font-size:1.26rem; letter-spacing:.2px;
   color:var(--score);
   text-shadow:0 0 10px rgba(64,189,255,.35),0 0 22px rgba(64,189,255,.18);
   font-variant-numeric:tabular-nums;
@@ -224,11 +224,11 @@ body{
   100%{transform:scale(1);filter:brightness(1)}
 }
 
-/* Serduszka w prawym dolnym rogu – większe i bez wyjeżdżania poza kartę */
+/* Serduszka – większe i bez wyjeżdżania */
 .card .livesBox{
   position:absolute; right:14px; bottom:12px; display:flex; gap:10px;
 }
-.card .livesBox .heart{width:26px;height:26px;fill:#ff4b5e;opacity:.98;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}
+.card .livesBox .heart{width:28px;height:28px;fill:#ff4b5e;opacity:.98;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}
 .card .livesBox .heart.dead{fill:#69748a;opacity:.70}
 .lifeShake{animation:lifeShake .55s ease}
 @keyframes lifeShake{
@@ -242,9 +242,8 @@ body{
 #timebar{position:absolute;left:0;right:0;bottom:0;height:10px;background:rgba(255,255,255,.06)}
 #pb{
   width:0%;height:100%;
-  /* „żyjący” gradient – JS może podmieniać barwy wraz z upływem czasu */
-  background:linear-gradient(90deg,#2bd97f,#12c7ff);
-  background-size:200% 100%;
+  background:linear-gradient(90deg,#19d38a,#12c7ff,#ffd85e,#ff7a3d,#ff4b5e);
+  background-size:300% 100%;
   animation:barWave 1.4s linear infinite;
   transition:width .08s linear, filter .12s ease;
   filter:saturate(1.05);
@@ -257,3 +256,60 @@ body{
 /* Animacja dołączania karty */
 @keyframes cardJoin{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .cardJoin{animation:cardJoin .32s cubic-bezier(.2,.8,.2,1)}
+
+/* === FIX: karta niższa, avatar nie ucina się, układ prostokątny === */
+.card{
+  /* prostokąt zamiast „kwadratu” */
+  height: clamp(180px, 21vh, 220px);
+  width: min(22rem, 24vw);
+  padding: 12px 16px 18px;
+  overflow: visible;             /* nie ucinaj zawartości (serduszka/awatar) */
+}
+
+.card .name{
+  /* mniej „powietrza” nad avatarem */
+  height: auto;
+  margin: 0 0 6px 0;
+  line-height: 1.1;
+}
+
+.card .avatar{
+  /* avatar wypełnia przestrzeń między nazwą a stopką (pkt/serca) */
+  height: calc(100% - 64px);     /* ok. 64 px na nazwę + stopkę */
+  min-height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.card .avatar img{
+  max-height: 100%;
+  width: auto;
+  object-fit: contain;
+  transform: none;               /* usuń dociśnięcie w dół, które powodowało cięcie */
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.45));
+}
+
+/* serduszka & punkty – zostają przy dolnej krawędzi i nie wychodzą poza kartę */
+.card .ptsBox{ left: 14px; bottom: 12px; }
+.card .livesBox{ right: 14px; bottom: 12px; }
+
+/* Odstępy między kartami graczy */
+#grid, #playersGrid, .players-grid{
+  gap: 24px 20px; /* najpierw odstęp w pionie (row-gap), potem w poziomie (column-gap) */
+  /* jeśli masz flexa zamiast grida, też zadziała: */
+  row-gap: 20x;
+  column-gap: 20px;
+}
+
+/* Jeżeli karty mają swoje marginesy – wyzeruj je, by gap działał „czysto” */
+.card{ margin: 0; }
+
+/* Odstęp całego bloku graczy od krawędzi ekranu */
+#gridWrap{ padding: 12px 24px; }  /* lewa/prawa „rama” */
+
+@media (max-width: 900px){
+  #grid, #playersGrid, .players-grid{ gap: 16px 14px; }
+}
+
