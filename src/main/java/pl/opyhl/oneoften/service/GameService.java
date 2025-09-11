@@ -62,10 +62,22 @@ public class GameService {
     }
 
     /* ================== metadane graczy ================== */
-    public synchronized void setName(int id, String name){
-        get(id).ifPresent(p -> p.setName(name));
-        pushState();
+    public synchronized void setName(int playerId, String name) {
+        Player p = players.stream()
+                .filter(x -> x.getId() == playerId)
+                .findFirst()
+                .orElseGet(() -> {
+                    Player np = new Player(playerId, name);
+                    np.setLives(3);
+                    players.add(np);
+                    return np;
+                });
+        p.setName(name != null ? name.trim() : "");
+        bus.publish(new Event("PLAYER_JOINED", p.getId(), p.getName(), null));
+        bus.state(getState());
     }
+
+
     public synchronized void setGender(int id, String gender){
         get(id).ifPresent(p -> p.setGender("FEMALE".equalsIgnoreCase(gender) ? Gender.FEMALE : Gender.MALE));
         pushState();
@@ -103,7 +115,12 @@ public class GameService {
         pushState(); bus.publish(new Event("NEW_GAME", null, null, null));
     }
 
-    private void freshPlayers(){ for (int i=1;i<=10;i++) players.add(new Player(i,"Gracz "+i)); }
+    private void freshPlayers(){
+        for (int i = 1; i <= 10; i++) {
+            Player p = new Player(i, null); // lub "" – brak nazwy = niewidoczny w getState()
+            players.add(p);
+        }
+    }
 
     /* ================= flow prowadzącego ================= */
     public synchronized void hostStartRound(){
@@ -352,6 +369,108 @@ public class GameService {
         }
     }
 
+    public synchronized Player registerOrUpdatePlayer(int seat, String name, Gender gender) {
+        // 1) Normalizacja wejścia
+        seat = Math.max(1, Math.min(10, seat));
+        final String nm = name == null ? "" : name.trim();
+        final Gender g  = (gender == null ? Gender.MALE : gender);
+
+        // 2) Szukamy istniejących rekordów
+        final int finalSeat = seat;
+        Player bySeat = players.stream()
+                .filter(x -> x.getId() == finalSeat)
+                .findFirst()
+                .orElse(null);
+
+        Player byName = null;
+        if (!nm.isEmpty()) {
+            final String nmLower = nm.toLowerCase(Locale.ROOT);
+            byName = players.stream()
+                    .filter(x -> {
+                        String xn = Optional.ofNullable(x.getName()).orElse("");
+                        // porównanie case-insensitive do *oryginalnego* nm (nie nmLower do nmLower)
+                        return xn.equalsIgnoreCase(nm);
+                    })
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        // 3) Decyzja: utworzyć / przenieść / scalić / zaktualizować
+        Player p;
+
+        if (bySeat == null && byName == null) {
+            // 3.1) Nowy zawodnik – wolne miejsce i brak kolizji po nazwie
+            p = new Player(seat, name);
+            p.setLives(3);
+            p.setEliminated(false);
+            if (!nm.isEmpty()) p.setName(nm);
+            p.setGender(g);
+            players.add(p);
+
+        } else if (bySeat == null && byName != null) {
+            // 3.2) Ten sam zawodnik (po nazwie) przenosi się na inne miejsce
+            Player moved = new Player(seat, name);
+            moved.setName(!nm.isEmpty() ? nm : Optional.ofNullable(byName.getName()).orElse(""));
+            moved.setGender(g != null ? g : byName.getGender());
+            moved.setLives(Math.max(1, byName.getLives() > 0 ? byName.getLives() : 3));
+            moved.setEliminated(false);
+
+            players.remove(byName);
+            players.add(moved);
+            p = moved;
+
+        } else if (bySeat != null && byName != null && bySeat != byName) {
+            // 3.3) Konflikt: na miejscu ktoś już siedzi, a mamy też wpis o tej samej nazwie gdzie indziej
+            // Priorytet ma miejsce. Jeśli siedzący ma placeholder/bezimienny – nadajemy mu nm.
+            if (!nm.isEmpty() && isPlaceholderName(bySeat.getName(), bySeat.getId())) {
+                bySeat.setName(nm);
+            }
+            bySeat.setGender(g);
+            bySeat.setEliminated(false);
+            if (bySeat.getLives() <= 0) bySeat.setLives(3);
+
+            // Usuwamy duplikat po nazwie
+            players.remove(byName);
+            p = bySeat;
+
+        } else {
+            // 3.4) Standardowa aktualizacja (po seat ALBO po name)
+            p = (bySeat != null ? bySeat : byName);
+            if (!nm.isEmpty()) p.setName(nm);
+            p.setGender(g);
+            p.setEliminated(false);
+            if (p.getLives() <= 0) p.setLives(3);
+        }
+
+        // 4) Porządek po miejscu
+        players.sort(Comparator.comparingInt(Player::getId));
+
+        // 5) Event „PLAYER_JOINED” – tylko jeśli to realne imię (nie placeholder)
+        if (!isPlaceholderName(p.getName(), p.getId())) {
+            // U Ciebie Event ma sygnaturę: new Event(type, playerId, value, reactionMs)
+            bus.publish(new Event("PLAYER_JOINED", p.getId(), p.getName(), null));
+        }
+
+        // 6) Nowy snapshot dla wszystkich klientów
+        bus.state(getState());
+
+        return p;
+    }
+
+    private static boolean isPlaceholderName(String name, int seat) {
+        if (name == null) return true;
+        String t = name.trim();
+        if (t.isEmpty()) return true;
+        String lower = t.toLowerCase(Locale.ROOT);
+        if (lower.equals("gracz " + seat)) return true;
+        return lower.matches("gracz\\s*\\d+");
+    }
+
+    public static Gender parseGender(String s){
+        if (s == null) return Gender.MALE;
+        return s.equalsIgnoreCase("FEMALE") || s.equalsIgnoreCase("KOBIETA") ? Gender.FEMALE : Gender.MALE;
+    }
+
     /** Zapis wyników do CSV + event dla frontu (RESULTS_SAVED). */
     public synchronized void saveResults(){
         try{
@@ -389,9 +508,12 @@ public class GameService {
     }
 
 
-    public synchronized GameState getState(){
-        players.sort(Comparator.comparingInt(Player::getId));
-        return new GameState(players, answeringId, startBuzzOpen, phase, timerActive, timerRemainingMs);
+    public GameState getState() {
+        List<Player> visible = players.stream()
+                .filter(p -> p.getName() != null && !p.getName().isBlank())
+                .sorted(Comparator.comparingInt(Player::getId))
+                .toList();
+        return new GameState(visible, answeringId, startBuzzOpen, phase, timerActive, timerRemainingMs);
     }
 
     private Optional<Player> get(int id){ return players.stream().filter(p -> p.getId()==id).findFirst(); }

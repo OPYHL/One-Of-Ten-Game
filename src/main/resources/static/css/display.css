@@ -1,0 +1,145 @@
+:root{
+  --bg:#0b1020;
+  --panel:#111a2c;
+  --panel-2:#0d1526;
+  --line:#23324d;
+  --text:#eaf2ff;
+  --muted:#9cb2d9;
+  --accent:#3b6df6;
+  --ok:#59d38f;
+  --bad:#ff5c6a;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%; overflow:hidden}
+body{
+  margin:0; background:radial-gradient(1200px 800px at 50% 20%, #101a31 0%, #0b1020 60%, #09101e 100%);
+  color:var(--text); font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+}
+
+/* Banner */
+.banner{
+  position:fixed; left:50%; top:18px; transform:translateX(-50%);
+  padding:10px 16px; background:rgba(255,255,255,.06); color:var(--text);
+  border:1px solid rgba(255,255,255,.15); border-radius:12px;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);
+  opacity:0; pointer-events:none; transition:.25s ease;
+}
+.banner.show{opacity:1}
+
+/* Stage (środek) */
+.stage{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:10; pointer-events:none;}
+.stage.show{display:flex}
+.stage-card{
+  display:flex; align-items:center; gap:16px;
+  padding:16px 20px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 30px 60px rgba(0,0,0,.35);
+}
+.stage-avatar{width:min(18vmin, 120px); max-width:120px; max-height:120px; height:auto; object-fit:contain; display:block}
+.stage-name{font-weight:700; font-size:20px}
+.stage-seat{color:var(--muted); font-size:14px}
+.judge{margin-left:12px; font-weight:800; font-size:28px; opacity:.0; transform:scale(.9); transition:.2s ease}
+.judge.show{opacity:1; transform:scale(1)}
+.judge.good{color:var(--ok)} .judge.bad{color:var(--bad)}
+
+/* Dock z graczami – NA DOLE w dwóch rzędach maks. */
+.grid-wrap{
+  position:fixed; left:0; right:0; bottom:0;
+  padding:14px 18px 20px; z-index:5;
+  background:linear-gradient( to top, rgba(9,16,30,.85) 0%, rgba(9,16,30,.45) 60%, rgba(9,16,30,0) 100% );
+}
+.grid{
+  --cols: 5;
+  --cardW: 220px;
+  display:grid; gap:14px; justify-content:center;
+  grid-template-columns: repeat(var(--cols), var(--cardW));
+  max-width: calc(var(--cardW) * var(--cols) + 14px * (var(--cols) - 1));
+  margin:0 auto;
+}
+.card{
+  width:var(--cardW); padding:14px; background:#121a2f;
+  border:1px solid #22314d; border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.38);
+}
+.card.answering{outline:2px solid var(--accent); box-shadow:0 0 0 7px rgba(59,109,246,.15), 0 10px 30px rgba(0,0,0,.48)}
+.card.eliminated{opacity:.5; filter:saturate(.25)}
+.card.new{animation:popIn .35s ease-out}
+@keyframes popIn{0%{transform:scale(.9);opacity:0}100%{transform:scale(1);opacity:1}}
+
+.name{font-weight:800; margin-bottom:10px; letter-spacing:.02em}
+.avatar{display:grid; place-items:center; height:68px}
+.avatar img{height:68px}
+.meta{display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:14px; color:#9cb2d9}
+.lives{display:flex; gap:6px}
+.heart{width:18px; height:18px}
+.heart.dead{filter:grayscale(1) brightness(.65) opacity(.55)}
+
+.scorePulse{animation:score .6s ease}
+@keyframes score{0%{color:#fff}50%{color:#6cf19b}100%{color:#eaf2ff}}
+.lifeShake{animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}50%{transform:translateX(2px)}75%{transform:translateX(-1px)}}
+
+/* Pasek pytania u dołu ekranu (pokazuje się tylko przy ANSWERING) */
+.qstrip{
+  position:fixed; left:50%; bottom:120px; transform:translateX(-50%);
+  display:none; z-index:8;
+}
+.qstrip.show{display:block}
+.qstrip-inner{
+  width:min(900px, 86vw); padding:10px 14px; background:var(--panel);
+  border:1px solid var(--line); border-radius:14px; box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+.qstrip-label{font-size:12px; letter-spacing:.12em; color:var(--muted)}
+.qstrip-text{font-weight:600; margin-top:2px; margin-bottom:8px}
+.pb-wrap{height:6px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden}
+.pb{height:100%; width:0%; background:var(--ok)}
+
+/* Prowadzący */
+.host-dock{
+  position:fixed; z-index:7; display:flex; align-items:center; gap:12px;
+  padding:12px 16px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35); opacity:0; transition:.2s ease;
+}
+.host-dock.show{opacity:1}
+.host-dock.mini{left:16px; bottom:134px} /* tuż nad paskiem pytania */
+.host-dock.center{left:50%; top:20%; transform:translateX(-50%)}
+.host-dock.center .host-avatar{width:80px; height:80px}
+.host-dock.center .host-name{font-size:22px}
+.host-dock.center .host-status{font-size:16px}
+.host-avatar{width:48px; height:48px}
+.host-name{font-weight:800}
+.host-status{font-size:14px; color:var(--muted)}
+
+/* Modal audio + FAB */
+.modal{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.55), rgba(0,0,0,.85));
+}
+.modal.show{display:flex}
+.modal-card{
+  width:min(520px, 92vw); padding:20px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5);
+}
+.modal-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:14px}
+.btn{padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.08); color:var(--text); cursor:pointer}
+.btn.primary{background:var(--accent); border-color:transparent; color:#fff}
+.btn.ghost{background:transparent}
+.audio-fab{
+  position:fixed; right:18px; top:18px; z-index:70; display:none;
+  width:44px; height:44px; border-radius:50%; border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12); color:#eaf2ff; font-size:20px; cursor:pointer;
+}
+
+/* Cooldown 3-2-1 */
+#cd{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:25; pointer-events:none;
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.55), rgba(0,0,0,.85));}
+.cd-ring{
+  width:min(32vmin, 280px); height:min(32vmin, 280px); border-radius:50%;
+  background:conic-gradient(var(--accent) 0%, transparent 0%); display:grid; place-items:center;
+  box-shadow:0 0 0 0 rgba(80,140,255,0);
+}
+.cd-core{
+  width:86%; height:86%; border-radius:50%; background:rgba(5,10,20,.85); border:1px solid #20304b;
+  display:grid; place-items:center;
+}
+.cd-num{font-size:min(18vmin, 150px); font-weight:900; color:#eaf2ff; text-shadow:0 10px 35px rgba(0,0,0,.55), 0 0 20px rgba(80,140,255,.25)}

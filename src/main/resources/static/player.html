@@ -1,72 +1,170 @@
 <!doctype html>
 <html lang="pl">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8"/>
     <title>1 z 10 — Zawodnik</title>
-    <link rel="stylesheet" href="/css/base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <style>
+        :root{
+          --bg:#0b1020; --panel:#111a2c; --panel-2:#0d1526;
+          --line:#23324d; --text:#eaf2ff; --muted:#9cb2d9;
+          --accent:#3b6df6; --ok:#59d38f; --bad:#ff5c6a; --warn:#f0b44b;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{margin:0; background:radial-gradient(1200px 800px at 50% 20%, #101a31 0%, #0b1020 60%, #09101e 100%); color:var(--text); font:16px/1.55 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+        .wrap{max-width:920px; margin:24px auto; padding:0 16px}
+
+        .card{background:var(--panel); border:1px solid var(--line); border-radius:18px; box-shadow:0 22px 60px rgba(0,0,0,.35)}
+        .p16{padding:16px} .p20{padding:20px}
+        .title{font-size:22px; font-weight:900; margin:0 0 2px}
+        .muted{color:var(--muted)}
+
+        /* Join form */
+        .grid2{display:grid; gap:14px; grid-template-columns:1fr 1fr}
+        .inp{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-weight:600}
+        .inp.bump{animation:bump .35s ease}
+        @keyframes bump{50%{transform:translateY(-2px)}}
+        .gbox{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+        .gopt{padding:14px; border-radius:14px; border:1px solid var(--line); background:var(--panel-2); cursor:pointer; display:grid; place-items:center; gap:8px; transition:.15s}
+        .gopt:hover{transform:translateY(-1px)}
+        .gopt.selected{outline:2px solid var(--accent); box-shadow:0 0 0 6px rgba(59,109,246,.15)}
+
+        .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+        .btn{padding:12px 16px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.08); color:var(--text); font-weight:900; cursor:pointer; transition:.15s; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+        .btn:hover{transform:translateY(-1px)}
+        .btn.primary{background:linear-gradient(180deg,#507af9,#3b6df6); border-color:transparent; color:#fff}
+        .btn:disabled{opacity:.45; cursor:not-allowed}
+
+        /* Game card */
+        #gameCard{display:none}
+        #gameCard.show{display:block}
+        #joinCard.hide{display:none}
+        .hdr{display:flex; align-items:center; gap:14px}
+        .av{width:76px; height:76px; border-radius:14px; background:var(--panel-2); border:1px solid var(--line); display:grid; place-items:center; overflow:hidden}
+        .av img{max-width:90%; max-height:90%}
+        .badge{padding:4px 10px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.06); color:var(--muted); font-weight:700}
+        .stats{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+        .kpi{background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px; text-align:center}
+        .kpi b{display:block; font-size:22px; margin-top:2px}
+
+        /* „Znam odpowiedź!” */
+        #btnKnow.locked::after{content:' 🔒'; font-weight:700}
+
+        /* Role badge */
+        .role-badge{position:absolute; top:-12px; right:-12px; padding:8px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.08); color:var(--text); font-weight:900; box-shadow:0 12px 30px rgba(0,0,0,.25); opacity:0; transform:translateY(-10px); transition:.2s}
+        .role-badge.show{opacity:1; transform:translateY(0)}
+        .role-badge.ok{background:rgba(89,211,143,.14); border-color:#2f9d6e}
+        .role-badge.bad{background:rgba(255,92,106,.15); border-color:#a6444d}
+        .role-badge.warn{background:rgba(240,180,75,.15); border-color:rgba(240,180,75,.35)}
+
+        /* Choose popup */
+        #chooseBackdrop{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60; background:radial-gradient(ellipse at center, rgba(0,0,0,.55), rgba(0,0,0,.85))}
+        #chooseBackdrop.show{display:flex}
+        .dialog{width:min(560px, 92vw); background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:0 30px 80px rgba(0,0,0,.5)}
+        .chooseGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+        .chooseGrid .item{background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:left; cursor:pointer; transition:.15s; color:var(--text)}
+        .chooseGrid .item:hover{transform:translateY(-1px)}
+        .chooseGrid .item .title{font-weight:800}
+        .chooseGrid .item.wait{cursor:default; text-align:center}
+
+        /* OUT overlay */
+        #outOverlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:70; display:grid; place-items:center}
+        #outOverlay .sheet{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px 22px; text-align:center}
+    </style>
 </head>
 <body>
-<div class="playerPanel">
-    <div class="playerBox" id="step1">
-        <div class="row"><input id="slot" class="input" type="number" min="1" max="10" placeholder="Numer stanowiska (1–10)"></div>
-        <div class="row"><input id="name" class="input" type="text" placeholder="Imię i nazwisko"></div>
-        <button id="next1" style="width:100%">Dalej</button>
-        <div class="mini center">Najpierw wpisz stanowisko i imię, potem wybierzesz avatar.</div>
-    </div>
+<main class="wrap">
 
-    <div class="playerBox" id="step2" style="display:none">
-        <div class="row">
-            <select id="gender" class="input">
-                <option value="MALE">Mężczyzna</option>
-                <option value="FEMALE">Kobieta</option>
-            </select>
-        </div>
-        <button id="next2" style="width:100%">Zapisz i czekaj</button>
-        <div class="mini center">Zapisujemy Twoje dane i czekamy na prowadzącego.</div>
-    </div>
+    <!-- KARTA DOŁĄCZANIA -->
+    <section id="joinCard" class="card p20" data-card="join">
+        <h1 class="title">Dołącz do gry</h1>
+        <p class="muted" style="margin-top:0">Wybierz stanowisko, wpisz imię i wybierz avatar.</p>
 
-    <div class="playerBox" id="step3" style="display:none">
-        <div class="playerGrid">
-            <div class="playerAvatar"><img id="av" src="/img/male.png" alt=""></div>
+        <form id="joinForm" data-role="join">
+            <div class="grid2" style="margin-top:12px">
+                <div>
+                    <label class="muted">Stanowisko (1–10)</label>
+                    <input id="seat" class="inp" type="number" min="1" max="10" placeholder="np. 3" />
+                </div>
+                <div>
+                    <label class="muted">Imię i nazwisko</label>
+                    <input id="name" class="inp" type="text" placeholder="np. Jan Kowalski" />
+                </div>
+            </div>
+
+            <div style="margin-top:14px">
+                <label class="muted">Płeć / avatar</label>
+                <div id="gender" class="gbox" data-gender-box>
+                    <div class="gopt selected" data-val="MALE">
+                        <img src="/img/male.png" alt="" style="height:70px; display:block; margin:4px auto 6px">
+                        <div class="muted" style="text-align:center">Mężczyzna</div>
+                    </div>
+                    <div class="gopt" data-val="FEMALE">
+                        <img src="/img/female.png" alt="" style="height:70px; display:block; margin:4px auto 6px">
+                        <div class="muted" style="text-align:center">Kobieta</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="justify-content:flex-end; margin-top:16px">
+                <button id="joinBtn" type="submit" class="btn primary">Dołącz</button>
+            </div>
+        </form>
+
+        <p class="muted" style="margin-top:12px">Po dołączeniu prowadzący będzie mógł rozpocząć rundę.</p>
+    </section>
+
+    <!-- KARTA GRY (po dołączeniu) -->
+    <section id="gameCard" class="card p20">
+        <div class="hdr">
+            <div class="av"><img id="av" alt=""></div>
             <div>
-                <div class="row" style="gap:8px">
-                    <span class="badge" id="seat">Stanowisko —</span>
-                    <span class="badge" id="phase">Faza: —</span>
-                </div>
-                <div class="playerStats">
-                    <div class="playerStat">Życia <b id="lives">3</b></div>
-                    <div class="playerStat">Punkty <b id="score">0</b></div>
+                <div id="nameBadge" class="title">—</div>
+                <div class="row" style="margin-top:4px">
+                    <span id="seatBadge"   class="badge">Stanowisko —</span>
+                    <span id="phasePill"   class="badge">Faza: —</span>
                 </div>
             </div>
         </div>
 
-        <div class="center" style="margin:14px 0 6px">
-            <div id="status" class="mini">Czekaj na rozpoczęcie…</div>
+        <div class="stats" style="margin-top:14px">
+            <div class="kpi">Życia<b id="lives">3</b></div>
+            <div class="kpi">Punkty<b id="score">0</b></div>
         </div>
 
-        <button id="know" style="width:100%" disabled>Znam odpowiedź!</button>
-        <div class="playerBar"><i id="pb"></i></div>
-
-        <!-- overlay po eliminacji -->
-        <div id="outOverlay" style="display:none; margin-top:12px" class="card">
-            <div class="center"><b>Odpadasz</b> — dzięki za grę!</div>
-            <div class="mini center" id="outStats"></div>
-        </div>
-
-        <!-- POPUP wyboru przeciwnika -->
-        <div id="chooseBackdrop" class="modalBackdrop">
-            <div class="modal">
-                <h3>Wybierz przeciwnika</h3>
-                <div id="chooseGrid" class="grid"></div>
-                <div class="mini">Wybieraj spośród aktywnych graczy. Operator zatwierdzi wybór.</div>
+        <div class="card p16" style="margin-top:14px; background:var(--panel-2)">
+            <div id="status" class="muted">Czekaj na kolejne pytanie…</div>
+            <div class="row" style="margin-top:12px">
+                <button id="btnKnow" class="btn primary"><span>Znam odpowiedź!</span></button>
             </div>
         </div>
+    </section>
+
+</main>
+
+<!-- Overlay OUT -->
+<div id="outOverlay">
+    <div class="sheet">
+        <h2 style="margin:0 0 6px">Dziękujemy za grę!</h2>
+        <div id="outStats" class="muted">Wynik: 0 pkt • Poprawne: 0/0</div>
     </div>
 </div>
 
+<!-- Popup wyboru przeciwnika -->
+<div id="chooseBackdrop">
+    <div class="dialog">
+        <h3 style="margin:0 0 8px">Wybierz przeciwnika</h3>
+        <div id="chooseGrid" class="chooseGrid"></div>
+    </div>
+</div>
+
+<!-- SockJS/STOMP (wymagane przez /js/ws.js) -->
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<!-- Logika gracza -->
 <script type="module" src="/js/player.js"></script>
 </body>
 </html>

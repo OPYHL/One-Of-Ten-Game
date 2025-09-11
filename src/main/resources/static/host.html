@@ -1,81 +1,137 @@
 <!doctype html>
 <html lang="pl">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8"/>
     <title>1 z 10 — Prowadzący</title>
-    <link rel="stylesheet" href="/css/base.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
     <style>
-        .grid5{ grid-template-columns: repeat(5,1fr) }
-        .hAvatar{ width:120px; height:120px; border-radius:14px; border:1px solid #24324c; background:#0e1524; display:grid; place-items:center; overflow:hidden }
-        .hAvatar img{ width:100%; height:100%; object-fit:contain }
-        .who{ font-size:20px; font-weight:700 }
+        :root{
+          --bg:#0b1020; --panel:#111a2c; --panel-2:#0d1526;
+          --line:#23324d; --text:#eaf2ff; --muted:#9cb2d9;
+          --accent:#3b6df6; --ok:#59d38f; --bad:#ff5c6a; --warn:#f0b44b;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+          margin:0; background:radial-gradient(1200px 800px at 50% 20%, #101a31 0%, #0b1020 60%, #09101e 100%);
+          color:var(--text); font:16px/1.55 system-ui,Segoe UI,Roboto,Arial,sans-serif;
+        }
+
+        /* App-bar */
+        .appbar{
+          display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center;
+          padding:14px 18px; position:sticky; top:0; z-index:5;
+          background:linear-gradient(180deg, rgba(9,16,30,.92), rgba(9,16,30,.7));
+          border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter: blur(10px);
+        }
+        .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+        .pill{padding:6px 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:rgba(255,255,255,.06)}
+        .btn{
+          padding:11px 16px; border-radius:14px; border:1px solid var(--line);
+          background:rgba(255,255,255,.08); color:var(--text); cursor:pointer;
+          font-weight:700; letter-spacing:.2px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+          transition:.15s ease-in-out; user-select:none;
+        }
+        .btn:hover{transform:translateY(-1px)}
+        .btn.primary{background:linear-gradient(180deg, #507af9, #3b6df6); border-color:transparent; color:#fff}
+        .btn.good{background:rgba(89,211,143,.14); border-color:#2f9d6e}
+        .btn.bad{background:rgba(255,92,106,.15); border-color:#a6444d}
+        .btn:disabled{opacity:.45; cursor:not-allowed; filter:saturate(.6)}
+        .kbd{font:12px/1.2 ui-monospace,Menlo,Consolas,monospace; opacity:.85; margin-left:6px}
+
+        /* Layout */
+        .wrap{max-width:1200px; margin:18px auto 28px; padding:0 18px; display:grid; grid-template-columns:410px 1fr; gap:18px}
+        .panel{
+          background:var(--panel); border:1px solid var(--line); border-radius:18px;
+          box-shadow:0 22px 60px rgba(0,0,0,.35); padding:16px 16px 18px;
+        }
+        .panel h2{margin:0 0 10px; font-size:18px; letter-spacing:.2px}
+        .muted{color:var(--muted)}
+
+        /* Current answering */
+        .current{display:grid; grid-template-columns:104px 1fr; gap:14px; align-items:center}
+        .avatar{width:104px; height:104px; border-radius:16px; background:#0d1526; border:1px solid var(--line); display:grid; place-items:center; overflow:hidden}
+        .avatar img{max-height:94%; max-width:94%}
+        .big{font-weight:900; font-size:18px}
+        .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+        .tag{padding:2px 8px; border-radius:999px; background:rgba(240,180,75,.15); border:1px solid rgba(240,180,75,.35); color:#ffdca3; font-weight:700}
+        .pb-wrap{height:9px; background:rgba(255,255,255,.07); border-radius:999px; overflow:hidden; margin-top:12px}
+        #pb{height:100%; width:0%; background:var(--ok)}
+
+        /* Players grid */
+        #grid{display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));}
+        #grid .card{
+          text-align:left; padding:12px 14px; border-radius:14px;
+          background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+          cursor:pointer; transition:.15s ease; display:flex; flex-direction:column; gap:6px;
+        }
+        #grid .card:hover{transform:translateY(-1px)}
+        #grid .card.answering{outline:2px solid var(--accent); box-shadow:0 0 0 6px rgba(59,109,246,.15)}
+        #grid .mini{color:var(--muted); font-size:13px}
+
+        /* Approve modal */
+        #approveBackdrop{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60; background:radial-gradient(ellipse at center, rgba(0,0,0,.55), rgba(0,0,0,.85))}
+        #approveBackdrop.show{display:flex}
+        .dialog{width:min(520px, 92vw); background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:0 30px 80px rgba(0,0,0,.5)}
+        .dialog .actions{display:flex; gap:10px; justify-content:flex-end; margin-top:14px}
     </style>
 </head>
 <body>
+
+<!-- APP BAR -->
+<div class="appbar">
+    <div class="controls">
+        <button id="btnStart" class="btn primary" disabled>Rozpocznij <span class="kbd">(S)</span></button>
+        <button id="btnReadDone" class="btn">Przeczytałem <span class="kbd">(R)</span></button>
+        <button id="btnGood" class="btn good">✓ Dobra <span class="kbd">(G)</span></button>
+        <button id="btnWrong" class="btn bad">✗ Zła <span class="kbd">(B)</span></button>
+        <span class="pill" id="playersCounter">Gracze: 0</span>
+    </div>
+    <div><span class="pill" id="phase">Faza: —</span></div>
+</div>
+
+<!-- CONTENT -->
 <div class="wrap">
-    <div class="step">
-        <h3>1) Rozpocznij / kolejne pytanie</h3>
-        <div class="row">
-            <button id="btnStart" style="background:var(--accent); color:white">Rozpocznij (S)</button>
-            <span class="mini">Ustawi fazę na <b>READING</b>, zagra <b>intro</b> i pokaże baner.</span>
-        </div>
-    </div>
-
-    <div class="step">
-        <h3>2) Po przeczytaniu pytania</h3>
-        <div class="row">
-            <button id="btnReadDone" disabled>Przeczytałem (R)</button>
-            <span class="mini">Odblokuje „Znam odpowiedź!” u zawodników (faza <b>BUZZING</b>).</span>
-        </div>
-    </div>
-
-    <div class="step">
-        <h3>3) Zgłoszenie i odpowiedź</h3>
-        <div class="row" style="gap:10px">
-            <span class="badge" id="phase">Faza: —</span>
-            <span class="badge" id="winner">Brak zgłoszenia</span>
-            <span class="badge" id="current">Odpowiada: —</span>
-        </div>
-
-        <div class="row" style="align-items:stretch; margin-top:10px">
-            <div class="hAvatar"><img id="av" alt=""></div>
-            <div style="flex:1">
-                <div class="who" id="who">Nikt nie odpowiada</div>
-                <div class="row" style="gap:10px; align-items:center; margin-top:6px">
-                    <span><b id="tt">00.0</b> s</span>
-                    <div class="progressWrap" style="position:relative; inset:auto; flex:1">
-                        <div id="pb" class="progressBar"></div>
-                    </div>
-                    <button id="btnGood"  title="✓ (G)" disabled>✓ Dobra</button>
-                    <button id="btnWrong" title="✗ (B)" disabled>✗ Zła</button>
+    <div class="panel">
+        <h2>Odpowiada teraz</h2>
+        <div class="current">
+            <div class="avatar"><img id="av" alt=""></div>
+            <div>
+                <div class="big" id="current">Odpowiada: —</div>
+                <div class="row muted">
+                    <span id="who">Nikt nie odpowiada</span>
+                    <span class="tag" id="winner">Brak zgłoszenia</span>
                 </div>
-                <div class="mini" id="hint">Po „Znam odpowiedź!” zobaczysz stanowisko, imię i czas reakcji. Licznik 10 s ruszy automatycznie.</div>
+                <div class="pb-wrap"><div id="pb"></div></div>
             </div>
         </div>
+        <p class="muted" style="margin-top:12px">Skróty: <b>S</b> — start/kolejne pytanie, <b>R</b> — przeczytałem, <b>G</b> — dobra, <b>B</b> — zła.</p>
     </div>
 
-    <div class="step">
-        <h3>Opcjonalnie: wskaż adresata (bez buzzera)</h3>
-        <div id="grid" class="grid grid5"></div>
-        <div class="mini">Kliknij gracza, aby ustawić go jako odpowiadającego.</div>
+    <div class="panel">
+        <h2>Gracze (kliknij, by ustawić odpowiadającego)</h2>
+        <div id="grid"></div>
     </div>
 </div>
 
-<!-- MODAL akceptacji wyboru (host) -->
-<div id="approveBackdrop" class="modalBackdrop">
-    <div class="modal">
-        <h3>Akceptacja wyboru</h3>
-        <div id="approveText" style="margin-bottom:10px">—</div>
-        <div class="row">
-            <button id="btnReject">Odrzuć</button>
-            <button id="btnApprove" style="background:var(--ok); color:#06210f">Akceptuj</button>
+<!-- Modal akceptacji wyboru -->
+<div id="approveBackdrop">
+    <div class="dialog">
+        <h3>Akceptacja wyboru przeciwnika</h3>
+        <p id="approveText" class="big">—</p>
+        <div class="actions">
+            <button id="btnReject" class="btn bad">Odrzuć</button>
+            <button id="btnApprove" class="btn good">Akceptuj</button>
         </div>
     </div>
 </div>
 
+<!-- SockJS/STOMP -->
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<!-- Logika -->
 <script type="module" src="/js/host.js"></script>
 </body>
 </html>
