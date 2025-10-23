@@ -1,0 +1,116 @@
+{
+  "ŁATWE": {
+    "GEOGRAFIA": [
+      {
+        "id": "E-G-1",
+        "question": "Jakie jest stolica Polski?",
+        "answer": "Warszawa"
+      },
+      {
+        "id": "E-G-2",
+        "question": "Które morze oblewa północne wybrzeże Polski?",
+        "answer": "Morze Bałtyckie"
+      }
+    ],
+    "HISTORIA": [
+      {
+        "id": "E-H-1",
+        "question": "W którym roku odbyła się bitwa pod Grunwaldem?",
+        "answer": "1410"
+      },
+      {
+        "id": "E-H-2",
+        "question": "Jak nazywał się pierwszy król Polski koronowany w 1025 roku?",
+        "answer": "Bolesław Chrobry"
+      }
+    ],
+    "MATEMATYKA": [
+      {
+        "id": "E-M-1",
+        "question": "Ile to jest 7 + 5?",
+        "answer": "12"
+      },
+      {
+        "id": "E-M-2",
+        "question": "Jaki jest wynik działania 9 · 3?",
+        "answer": "27"
+      }
+    ]
+  },
+  "ŚREDNIE": {
+    "WIEDZA OGÓLNA": [
+      {
+        "id": "M-GK-1",
+        "question": "Jak nazywa się najwyższy szczyt w Tatrach po polskiej stronie?",
+        "answer": "Rysy"
+      },
+      {
+        "id": "M-GK-2",
+        "question": "Jakie zwierzę widnieje w godle Polski?",
+        "answer": "Orzeł biały"
+      }
+    ],
+    "MATEMATYKA": [
+      {
+        "id": "M-M-1",
+        "question": "Ile to jest pierwiastek kwadratowy z 144?",
+        "answer": "12"
+      },
+      {
+        "id": "M-M-2",
+        "question": "Ile stopni ma kąt prosty?",
+        "answer": "90"
+      }
+    ],
+    "GEOGRAFIA": [
+      {
+        "id": "M-G-1",
+        "question": "Przez które miasto przepływa Wisła?",
+        "answer": "Kraków"
+      },
+      {
+        "id": "M-G-2",
+        "question": "Na którym kontynencie leży Egipt?",
+        "answer": "Afryka"
+      }
+    ]
+  },
+  "TRUDNE": {
+    "HISTORIA": [
+      {
+        "id": "H-H-1",
+        "question": "Jak nazywał się autor „Trenów”?",
+        "answer": "Jan Kochanowski"
+      },
+      {
+        "id": "H-H-2",
+        "question": "W którym roku uchwalono Konstytucję 3 maja?",
+        "answer": "1791"
+      }
+    ],
+    "GEOGRAFIA": [
+      {
+        "id": "H-G-1",
+        "question": "Jak nazywa się najdłuższa rzeka w Azji?",
+        "answer": "Jangcy"
+      },
+      {
+        "id": "H-G-2",
+        "question": "Który kraj ma największą liczbę wysp na świecie?",
+        "answer": "Szwecja"
+      }
+    ],
+    "WIEDZA OGÓLNA": [
+      {
+        "id": "H-GK-1",
+        "question": "Jak nazywa się noblistka, która dwukrotnie otrzymała Nagrodę Nobla w dziedzinie fizyki i chemii?",
+        "answer": "Maria Skłodowska-Curie"
+      },
+      {
+        "id": "H-GK-2",
+        "question": "Jak nazywa się najdłuższa kość w ciele człowieka?",
+        "answer": "Kość udowa"
+      }
+    ]
+  }
+}
