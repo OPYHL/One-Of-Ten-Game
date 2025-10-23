@@ -243,6 +243,23 @@ public class GameService {
         }
     }
 
+    public synchronized void playCue(String cue){
+        if (cue == null) return;
+        String normalized = cue.trim();
+        if (normalized.isEmpty()) return;
+        String upper = normalized.toUpperCase(Locale.ROOT);
+        switch (upper) {
+            case "INTRO":
+            case "START_Q":
+            case "BOOM":
+                bus.publish(new Event("CUE", null, upper, null));
+                break;
+            default:
+                bus.publish(new Event("CUE", null, normalized, null));
+                break;
+        }
+    }
+
     /* ========== start gry: pierwszy z buzzera ========== */
     public synchronized void openBuzzersStart(){
         startBuzzOpen = true; pushState(); bus.publish(new Event("BUZZ_OPEN", null, null, null));
