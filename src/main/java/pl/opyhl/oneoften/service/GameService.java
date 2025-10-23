@@ -134,7 +134,7 @@ public class GameService {
         activeQuestion = new ActiveQuestion(detail.getId(), detail.getDifficulty(), detail.getCategory(), detail.getQuestion(), detail.getAnswer(), detail.getOrder(), false);
         questionStartTimestamp = 0L;
         pushState();
-        bus.publish(new Event("QUESTION_SELECTED", null, detail.getId(), detail.getQuestion()));
+        bus.publish(new Event("QUESTION_SELECTED", null, detail.getId(), null));
     }
 
     public synchronized void updateAnswerTimer(int seconds){
