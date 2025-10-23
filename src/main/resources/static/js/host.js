@@ -31,27 +31,46 @@ const bus = connect({
 
 function send(dest, body={}){ try{ bus.send(dest, body);}catch(e){ console.error(e); } }
 
+function startOrNext(){
+  if (!state) return;
+  const phase = state.phase;
+  if (phase === 'IDLE') {
+    send('/app/host/start');
+  } else if (phase === 'READING' || phase === 'SELECTING') {
+    send('/app/host/next');
+  }
+}
+
+function handleReadingStart(){
+  if (!state) return;
+  const phase = state.phase;
+  if (phase === 'READING' || phase === 'SELECTING') {
+    send('/app/host/next');
+  }
+}
+
 /* ====== UI actions ====== */
-btnStart.addEventListener('click',     ()=> send('/app/startRound'));
-btnRead.addEventListener('click',      ()=> send('/app/readingStart'));
-btnReadDone.addEventListener('click',  ()=> send('/app/readingDone')); // BUZZING
-btnGood.addEventListener('click',      ()=> judge('CORRECT'));
-btnBad.addEventListener('click',       ()=> judge('WRONG'));
-btnNext.addEventListener('click',      ()=> send('/app/nextQuestion'));
+btnStart.addEventListener('click',     startOrNext);
+btnRead.addEventListener('click',      handleReadingStart);
+btnReadDone.addEventListener('click',  ()=> send('/app/host/readDone'));
+btnGood.addEventListener('click',      ()=> judge(true));
+btnBad.addEventListener('click',       ()=> judge(false));
+btnNext.addEventListener('click',      ()=> send('/app/host/next'));
 btnReset.addEventListener('click',     ()=> send('/app/reset'));
 btnNew.addEventListener('click',       ()=> send('/app/newGame'));
 
 document.addEventListener('keydown', (e)=>{
   if (e.repeat) return;
-  if (e.key.toLowerCase() === 's') btnStart.click();
-  if (e.key.toLowerCase() === 'r') btnReadDone.click();
-  if (e.key.toLowerCase() === 'g') btnGood.click();
-  if (e.key.toLowerCase() === 'b') btnBad.click();
+  const key = e.key.toLowerCase();
+  if (key === 's') startOrNext();
+  if (key === 'r') btnReadDone.click();
+  if (key === 'g') judge(true);
+  if (key === 'b') judge(false);
 });
 
-function judge(kind){
+function judge(ok){
   if (!state?.answeringId) return;
-  send('/app/judge', { playerId: state.answeringId, value: kind });
+  send('/app/judge', { playerId: state.answeringId, correct: !!ok });
 }
 
 /* ====== render ====== */
@@ -100,7 +119,7 @@ function render(){
 
   // blokady przycisków zależnie od fazy
   const ph = st.phase;
-  btnStart.disabled    = (ph!=='IDLE' && ph!=='INTRO');
+  btnStart.disabled    = !(ph==='IDLE' || ph==='READING' || ph==='SELECTING');
   btnRead.disabled     = (ph!=='READING' && ph!=='SELECTING');
   btnReadDone.disabled = (ph!=='READING');
   btnGood.disabled     = (ph!=='ANSWERING');
