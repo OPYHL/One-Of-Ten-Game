@@ -3,10 +3,18 @@ package pl.opyhl.oneoften.service;
 import org.springframework.stereotype.Service;
 import pl.opyhl.oneoften.events.Event;
 import pl.opyhl.oneoften.events.EventBus;
+import pl.opyhl.oneoften.model.ActiveQuestion;
 import pl.opyhl.oneoften.model.GamePhase;
+import pl.opyhl.oneoften.model.GameSettings;
 import pl.opyhl.oneoften.model.GameState;
+import pl.opyhl.oneoften.model.HostDashboard;
+import pl.opyhl.oneoften.model.HostMetrics;
 import pl.opyhl.oneoften.model.Player;
 import pl.opyhl.oneoften.model.Player.Gender;
+import pl.opyhl.oneoften.model.config.HostConfig;
+import pl.opyhl.oneoften.model.config.OperatorConfig;
+import pl.opyhl.oneoften.model.config.TimerSlider;
+import pl.opyhl.oneoften.model.question.QuestionDetail;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -29,6 +37,13 @@ public class GameService {
 
     private final EventBus bus;
     private final RoundTimer timer;
+    private final QuestionBank questionBank;
+    private final OperatorConfigService configService;
+    private final GameSettings settings;
+    private final HostMetrics metrics = new HostMetrics();
+
+    private ActiveQuestion activeQuestion = null;
+    private long questionStartTimestamp = 0L;
 
     private final List<Player> players = new ArrayList<>();
 
@@ -54,23 +69,82 @@ public class GameService {
     });
     private ScheduledFuture<?> cooldownGuard = null;
 
-    public GameService(EventBus bus, RoundTimer timer) {
+    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService) {
         this.bus = bus;
         this.timer = timer;
+        this.questionBank = questionBank;
+        this.configService = configService;
+
+        OperatorConfig cfg = configService.getConfig();
+        TimerSlider answer = (cfg != null) ? cfg.getAnswer() : null;
+        TimerSlider cooldown = (cfg != null) ? cfg.getCooldown() : null;
+        int answerDefault = (answer != null && answer.getDefaultSeconds() > 0) ? answer.getDefaultSeconds() : 10;
+        int answerMin = (answer != null && answer.getMinSeconds() > 0) ? answer.getMinSeconds() : Math.max(1, answerDefault);
+        int answerMax = (answer != null && answer.getMaxSeconds() > 0) ? answer.getMaxSeconds() : Math.max(answerMin, answerDefault);
+        int answerStep = (answer != null && answer.getStepSeconds() > 0) ? answer.getStepSeconds() : 1;
+        int cooldownDefault = (cooldown != null && cooldown.getDefaultSeconds() > 0) ? cooldown.getDefaultSeconds() : 3;
+        settings = new GameSettings(
+                Math.max(1, answerDefault) * 1000,
+                Math.max(1, cooldownDefault) * 1000,
+                Math.max(1, answerMin) * 1000,
+                Math.max(Math.max(1, answerMin), answerMax) * 1000,
+                Math.max(1, answerStep) * 1000
+        );
+        metrics.setStartedAt(System.currentTimeMillis());
+        metrics.setAskedCount(0);
+        metrics.setTotalQuestionTimeMs(0);
+        metrics.setLastQuestionTimeMs(0);
+
         freshPlayers();
         pushState();
     }
 
     /* ================== metadane graczy ================== */
     public synchronized void setName(int id, String name){
-        get(id).ifPresent(p -> p.setName(name));
+        setName(id, name, false);
+    }
+
+    public synchronized void setName(int id, String name, boolean force){
+        get(id).ifPresent(p -> {
+            String trimmed = name == null ? "" : name.trim();
+            if (trimmed.isEmpty()){
+                p.setName("Gracz " + id);
+                p.setJoined(false);
+                return;
+            }
+            boolean placeholder = isPlaceholder(trimmed, id);
+            String current = Optional.ofNullable(p.getName()).orElse("").trim();
+            if (!force && p.isJoined() && !placeholder && !trimmed.equalsIgnoreCase(current)){
+                bus.publish(new Event("JOIN_REJECTED", id, current, null));
+                return;
+            }
+            p.setName(trimmed);
+            p.setJoined(!placeholder);
+        });
         pushState();
     }
     public synchronized void setGender(int id, String gender){
         get(id).ifPresent(p -> p.setGender("FEMALE".equalsIgnoreCase(gender) ? Gender.FEMALE : Gender.MALE));
         pushState();
     }
-    public synchronized void playCue(String cue){ bus.publish(new Event("CUE", null, cue, null)); }
+    public synchronized void selectQuestion(String difficulty, String category, String questionId){
+        Optional<QuestionDetail> opt = questionBank.find(difficulty, category, questionId);
+        if (opt.isEmpty()) return;
+        QuestionDetail detail = opt.get();
+        activeQuestion = new ActiveQuestion(detail.getId(), detail.getDifficulty(), detail.getCategory(), detail.getQuestion(), detail.getAnswer(), detail.getOrder(), false);
+        questionStartTimestamp = 0L;
+        pushState();
+        bus.publish(new Event("QUESTION_SELECTED", null, detail.getId(), detail.getQuestion()));
+    }
+
+    public synchronized void updateAnswerTimer(int seconds){
+        if (seconds <= 0) return;
+        int minSec = Math.max(1, settings.getAnswerMinMs() / 1000);
+        int maxSec = Math.max(minSec, settings.getAnswerMaxMs() / 1000);
+        int clamped = Math.min(maxSec, Math.max(minSec, seconds));
+        settings.setAnswerTimerMs(clamped * 1000);
+        pushState();
+    }
 
     /* ============== operator/host ręcznie ============== */
     public synchronized void setAnswering(int id){
@@ -90,6 +164,12 @@ public class GameService {
         stopTimer();
         phase = GamePhase.IDLE; currentChooserId = null; proposedTargetId = null;
         bannedThisQuestion.clear();
+        activeQuestion = null;
+        questionStartTimestamp = 0L;
+        metrics.setAskedCount(0);
+        metrics.setTotalQuestionTimeMs(0);
+        metrics.setLastQuestionTimeMs(0);
+        metrics.setStartedAt(System.currentTimeMillis());
         pushState(); bus.publish(new Event("RESET", null, null, null));
     }
 
@@ -100,15 +180,35 @@ public class GameService {
         answeringId = null; startBuzzOpen = false;
         phase = GamePhase.IDLE; currentChooserId = null; proposedTargetId = null;
         bannedThisQuestion.clear();
+        activeQuestion = null;
+        questionStartTimestamp = 0L;
+        metrics.setAskedCount(0);
+        metrics.setTotalQuestionTimeMs(0);
+        metrics.setLastQuestionTimeMs(0);
+        metrics.setStartedAt(System.currentTimeMillis());
         pushState(); bus.publish(new Event("NEW_GAME", null, null, null));
     }
 
-    private void freshPlayers(){ for (int i=1;i<=10;i++) players.add(new Player(i,"Gracz "+i)); }
+    private void freshPlayers(){
+        for (int i=1; i<=10; i++){
+            Player p = new Player(i, "Gracz " + i);
+            p.setJoined(false);
+            players.add(p);
+        }
+    }
 
     /* ================= flow prowadzącego ================= */
     public synchronized void hostStartRound(){
         phase = GamePhase.INTRO;
         answeringId = null;
+        currentChooserId = null;
+        proposedTargetId = null;
+        activeQuestion = null;
+        questionStartTimestamp = 0L;
+        metrics.setStartedAt(System.currentTimeMillis());
+        metrics.setAskedCount(0);
+        metrics.setTotalQuestionTimeMs(0);
+        metrics.setLastQuestionTimeMs(0);
         pushState();
         bus.publish(new Event("CUE", null, "INTRO", null));
         bus.publish(new Event("PHASE", null, "INTRO", null));
@@ -129,9 +229,10 @@ public class GameService {
     }
 
     public synchronized void hostReadDone(){
+        revealCurrentQuestion();
         if (answeringId != null){
             phase = GamePhase.ANSWERING;
-            startAnswerTimer(10_000);
+            startAnswerTimer(settings.getAnswerTimerMs());
             pushState();
             bus.publish(new Event("PHASE", null, "ANSWERING", null));
         } else {
@@ -139,6 +240,23 @@ public class GameService {
             pushState();
             bus.publish(new Event("PHASE", null, "BUZZING", null));
             bus.publish(new Event("BUZZ_OPEN", null, null, null));
+        }
+    }
+
+    public synchronized void playCue(String cue){
+        if (cue == null) return;
+        String normalized = cue.trim();
+        if (normalized.isEmpty()) return;
+        String upper = normalized.toUpperCase(Locale.ROOT);
+        switch (upper) {
+            case "INTRO":
+            case "START_Q":
+            case "BOOM":
+                bus.publish(new Event("CUE", null, upper, null));
+                break;
+            default:
+                bus.publish(new Event("CUE", null, normalized, null));
+                break;
         }
     }
 
@@ -165,7 +283,7 @@ public class GameService {
         Player p = get(id).orElse(null); if (p==null || p.isEliminated()) return;
         answeringId = id;
         phase = GamePhase.ANSWERING;
-        startAnswerTimer(10_000);
+        startAnswerTimer(settings.getAnswerTimerMs());
         pushState();
         bus.publish(new Event("ROUND_WINNER", id, null, null));
     }
@@ -179,6 +297,7 @@ public class GameService {
             p.setScore(p.getScore()+1);
             currentChooserId = id;
             proposedTargetId = null;
+            registerQuestionFinished();
             phase = GamePhase.SELECTING;
             pushState();
             bus.publish(new Event("JUDGE", id, "CORRECT", null));
@@ -226,6 +345,23 @@ public class GameService {
     }
 
     /* =================== timery =================== */
+    private void registerQuestionFinished(){
+        if (questionStartTimestamp > 0){
+            long duration = Math.max(0, System.currentTimeMillis() - questionStartTimestamp);
+            metrics.setAskedCount(metrics.getAskedCount() + 1);
+            metrics.setTotalQuestionTimeMs(metrics.getTotalQuestionTimeMs() + duration);
+            metrics.setLastQuestionTimeMs(duration);
+            questionStartTimestamp = 0L;
+        }
+    }
+
+    private void revealCurrentQuestion(){
+        if (activeQuestion != null && !activeQuestion.isRevealed()){
+            activeQuestion.setRevealed(true);
+            bus.publish(new Event("QUESTION_REVEALED", null, activeQuestion.getId(), null));
+        }
+    }
+
     private void startAnswerTimer(int totalMs){
         // twardy reset
         timer.stop();
@@ -323,12 +459,18 @@ public class GameService {
     private void beginReadingNewQuestion(){
         bannedThisQuestion.clear();
         phase = GamePhase.READING;
+        questionStartTimestamp = System.currentTimeMillis();
+        if (activeQuestion != null){
+            activeQuestion.setRevealed(false);
+        }
         pushState();
     }
 
     /** Zła odpowiedź / timeout. */
     private void applyWrongFor(int id){
         Player p = get(id).orElse(null); if (p == null) return;
+
+        registerQuestionFinished();
 
         // Punktacja/życia
         int lives = Math.max(0, p.getLives() - 1);
@@ -348,7 +490,7 @@ public class GameService {
         } else {
             // Tryb: otwarte zgłaszanie – BAN dla tego gracza i cooldown 3s
             bannedThisQuestion.add(id);
-            startCooldown(3_000);
+            startCooldown(settings.getCooldownMs());
         }
     }
 
@@ -391,7 +533,27 @@ public class GameService {
 
     public synchronized GameState getState(){
         players.sort(Comparator.comparingInt(Player::getId));
-        return new GameState(players, answeringId, startBuzzOpen, phase, timerActive, timerRemainingMs);
+        return new GameState(players, answeringId, startBuzzOpen, phase, timerActive, timerRemainingMs, buildHostDashboard(), settings);
+    }
+
+    private HostDashboard buildHostDashboard(){
+        ActiveQuestion aq = null;
+        if (activeQuestion != null){
+            aq = new ActiveQuestion(activeQuestion.getId(), activeQuestion.getDifficulty(), activeQuestion.getCategory(), activeQuestion.getQuestion(), activeQuestion.getAnswer(), activeQuestion.getOrder(), activeQuestion.isRevealed());
+        }
+        HostMetrics m = new HostMetrics(metrics.getStartedAt(), metrics.getAskedCount(), metrics.getTotalQuestionTimeMs(), metrics.getLastQuestionTimeMs());
+        HostConfig hostCfg = configService.getConfig() != null ? configService.getConfig().getHost() : null;
+        String hostName = hostCfg != null && hostCfg.getName() != null ? hostCfg.getName() : "Prowadzący";
+        String welcomeTitle = hostCfg != null && hostCfg.getWelcomeTitle() != null ? hostCfg.getWelcomeTitle() : "Witaj!";
+        String welcomeSub = hostCfg != null && hostCfg.getWelcomeSubtitle() != null ? hostCfg.getWelcomeSubtitle() : "Przygotuj się do gry.";
+        return new HostDashboard(aq, m, hostName, welcomeTitle, welcomeSub);
+    }
+
+    private boolean isPlaceholder(String value, int id){
+        if (value == null) return true;
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) return true;
+        return trimmed.equalsIgnoreCase("Gracz " + id);
     }
 
     private Optional<Player> get(int id){ return players.stream().filter(p -> p.getId()==id).findFirst(); }
