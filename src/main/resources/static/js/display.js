@@ -3,8 +3,8 @@ import { connect } from '/js/ws.js';
 /* ================= DOM ================= */
 const hudPlayers = document.getElementById('statPlayers');
 const hudQ       = document.getElementById('statQuestions');
-const hudPhase   = document.getElementById('statPhase'); // sama wartość
-function setPhasePill(v){ if (hudPhase) hudPhase.textContent = v || '—'; }
+const hudPhase   = document.getElementById('statPhase');
+const setPhasePill = v => { if (hudPhase) hudPhase.textContent = v || '—'; };
 
 const gridWrap = document.getElementById('gridWrap');
 const grid     = document.getElementById('grid');
@@ -17,7 +17,15 @@ const stageSeat  = document.getElementById('stageSeat');
 const stageJudge = document.getElementById('stageJudge');
 const stageCd    = document.getElementById('stageCountdown');
 
-const pb         = document.getElementById('pb');
+/* ===== Full-width timebar (tworzymy, jeśli brak) ===== */
+let timebarWrap = document.getElementById('timebarWrap');
+if (!timebarWrap){
+  timebarWrap = document.createElement('div');
+  timebarWrap.id = 'timebarWrap';
+  timebarWrap.innerHTML = `<div id="pb"></div>`;
+  document.body.appendChild(timebarWrap);
+}
+const pb = document.getElementById('pb');
 
 /* ================= AUDIO ================= */
 const sounds = {
@@ -39,6 +47,8 @@ const COOLDOWN_MS  = 3_000;
 let lastIds    = [];
 let lastScores = new Map();
 let lastLives  = new Map();
+
+let lastHud = { players:0, q:0, phase:'' };
 
 /* ===== Popup odblokowania dźwięku ===== */
 let audioUnlocked = false;
@@ -63,12 +73,10 @@ function ensureUnlockModal(){
     try { await sounds.BOOM ?.play();  sounds.BOOM .pause();  sounds.BOOM .currentTime =0; } catch {}
     audioUnlocked = true; wrap.remove();
   });
-  document.getElementById('unlockNo').addEventListener('click', ()=>{
-    audioUnlocked = false; wrap.remove();
-  });
+  document.getElementById('unlockNo').addEventListener('click', ()=>{ audioUnlocked=false; wrap.remove(); });
 }
 
-/* ===== Centralne komunikaty (host/baner BUZZING) ===== */
+/* ===== Centralne komunikaty ===== */
 let centerBox = document.getElementById('centerBox');
 if (!centerBox){
   centerBox = document.createElement('div');
@@ -92,14 +100,15 @@ function showCenter(title, sub='', buzz=false){
   centerTitle.textContent = title;
   centerSub.textContent   = sub||'';
   centerCard.classList.toggle('buzz', !!buzz);
+  centerCard.classList.toggle('xl',  !!buzz);   // większa wersja dla BUZZING
   centerBox.classList.add('show');
 }
-function hideCenter(){ centerBox.classList.remove('show'); centerCard.classList.remove('buzz'); }
+function hideCenter(){ centerBox.classList.remove('show'); centerCard.classList.remove('buzz','xl'); }
 function showBuzzingCallout(){
-  showCenter('Gracze! Zgłaszamy się…', 'Kliknij „Znam odpowiedź!” na swoim urządzeniu.', true);
+  showCenter('Gracze, zgłaszamy się!', 'Kliknij „Znam odpowiedź!” na swoim urządzeniu.', true);
 }
 
-/* ===== 3…2…1 overlay + lokalny fallback (niezależny od ticków) ===== */
+/* ===== 3…2…1 overlay + lokalny fallback ===== */
 let cd = document.getElementById('cd');
 if (!cd){
   cd = document.createElement('div');
@@ -138,19 +147,13 @@ function startLocalCooldown(ms = COOLDOWN_MS){
     const prog = 100 - Math.round((left/ms)*100);
     cdRing.style.background = `conic-gradient(var(--accent) ${prog}%, transparent ${prog}%)`;
     if (left <= 0){
-      hideCooldown();
-      showBuzzingCallout();
-      cdRAF = null;
-      return;
+      hideCooldown(); showBuzzingCallout(); cdRAF = null; return;
     }
     cdRAF = requestAnimationFrame(tick);
   };
   cdRAF = requestAnimationFrame(tick);
 }
-function stopLocalCooldown(){
-  if (cdRAF){ cancelAnimationFrame(cdRAF); cdRAF = null; }
-  cdEndTime = 0;
-}
+function stopLocalCooldown(){ if (cdRAF){ cancelAnimationFrame(cdRAF); cdRAF=null; } cdEndTime=0; }
 
 /* ================= BUS ================= */
 const bus = connect({
@@ -166,7 +169,6 @@ async function safePlayWithAck(audio, ackEndpoint){
     if (!audioUnlocked){ await audio.play(); await audio.pause(); audio.currentTime=0; }
     audio.currentTime=0; await audio.play();
   } catch {
-    // jeśli audio zablokowane, nie blokuj gry
     setTimeout(()=>{ try{ bus.send(ackEndpoint, {});}catch{} }, 400);
     return;
   }
@@ -174,10 +176,10 @@ async function safePlayWithAck(audio, ackEndpoint){
 }
 
 /* ============== Helpers ============== */
-function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-function normName(p){ return (p?.name||'').trim(); }
-function looksLikePlaceholder(p){ const nm = normName(p); return !nm || nm.toLowerCase()===`gracz ${p.id}`; }
-function isJoined(p){ return typeof p.joined === 'boolean' ? p.joined : !looksLikePlaceholder(p); }
+const escapeHtml = s => (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+const normName   = p => (p?.name||'').trim();
+const looksLikePlaceholder = p => { const nm = normName(p); return !nm || nm.toLowerCase()===`gracz ${p.id}`; };
+const isJoined   = p => (typeof p.joined === 'boolean') ? p.joined : !looksLikePlaceholder(p);
 function avatarFor(p, mood){
   const base = (p.gender === 'FEMALE') ? 'female' : 'male';
   const map = {
@@ -189,12 +191,13 @@ function avatarFor(p, mood){
   return map[mood] || map.idle;
 }
 
-/* ===== Layout (szerokość, wysokość, skala siatki) ===== */
+/* ===== Layout siatki ===== */
 function computeLayout(n, containerWidth, containerHeight){
-  const sidePad = 56, gap = 16;
-  const maxW = 360, minW = 240;   // trochę większe domyślne karty
+  const gap = 18;
+  const sidePad = 56;
+  const maxW = 360, minW = 240;
 
-  if (n <= 0) return { rows:0, scale:1, widthTop:0, widthBottom:0, height:0 };
+  if (n <= 0) return { rows:0, scale:1, widthTop:0, widthBottom:0, height:0, gap };
 
   let rows = 1, colsTop = n, colsBottom = 0;
   if (n >= 6){ rows = 2; colsTop = Math.floor(n/2); colsBottom = n - colsTop; }
@@ -206,18 +209,16 @@ function computeLayout(n, containerWidth, containerHeight){
 
   const widthTop    = Math.max(minW, Math.min(maxW, wTop));
   const widthBottom = Math.max(minW, Math.min(maxW, wBot));
-  const cardHTop    = Math.round(widthTop * 0.72) + 86;
-  const cardHBot    = Math.round(widthBottom * 0.72) + 86;
+  const cardHTop    = Math.round(widthTop * 0.56) + 78;  // niższa karta
+  const cardHBot    = Math.round(widthBottom * 0.56) + 78;
 
-  const desiredH = rows===1
-      ? cardHTop
-      : (Math.max(cardHTop, cardHBot) * 2 + gap);
+  const desiredH = rows===1 ? cardHTop : (Math.max(cardHTop, cardHBot) * 2 + gap);
 
-  // Limit zajęcia wysokości przez siatkę do ok. 42% ekranu
-  const maxH = Math.max(240, Math.round(containerHeight * 0.42));
+  // siatka zajmuje ok. 40% wysokości ekranu
+  const maxH = Math.max(220, Math.round(containerHeight * 0.40));
   const scale = Math.max(0.6, Math.min(1, maxH / desiredH));
 
-  return { rows, colsTop, colsBottom, widthTop, widthBottom, height: desiredH, scale };
+  return { rows, colsTop, colsBottom, widthTop, widthBottom, height: desiredH, scale, gap };
 }
 
 /* ============== Render ============== */
@@ -225,16 +226,18 @@ function render(){
   const st = state; if (!st) return;
 
   const joined = (st.players||[]).filter(isJoined);
-  if (hudPlayers) hudPlayers.textContent = joined.length;
 
-  if (st.phase === 'READING' && lastPhase !== 'READING') askedCount++;
+  // HUD – animacje przy zmianie
+  if (hudPlayers && joined.length !== lastHud.players){ hudPlayers.textContent = joined.length; hudPlayers.parentElement.classList.add('bump'); setTimeout(()=>hudPlayers.parentElement.classList.remove('bump'), 260); lastHud.players = joined.length; }
+  if (st.phase !== lastHud.phase){ setPhasePill(st.phase); hudPhase?.parentElement.classList.add('bump'); setTimeout(()=>hudPhase?.parentElement.classList.remove('bump'), 260); lastHud.phase = st.phase; }
+  if (st.phase === 'READING' && lastPhase !== 'READING'){ askedCount++; }
+  if (hudQ && askedCount !== lastHud.q){ hudQ.textContent = askedCount; hudQ.parentElement.classList.add('bump'); setTimeout(()=>hudQ.parentElement.classList.remove('bump'), 260); lastHud.q = askedCount; }
   lastPhase = st.phase;
-  if (hudQ) hudQ.textContent = askedCount;
-  setPhasePill(st.phase);
 
   renderGrid(joined, st);
   lastIds = joined.map(p=>p.id);
 
+  // Komunikaty globalne
   if (st.phase === 'INTRO') {
     hideCenter(); showBanner('Intro…');
   } else if (st.phase === 'READING') {
@@ -242,7 +245,7 @@ function render(){
   } else if (st.phase === 'COOLDOWN') {
     hideCenter(); hideBanner(); startLocalCooldown(COOLDOWN_MS);
   } else if (st.phase === 'BUZZING') {
-    hideCooldown(); showBuzzingCallout(); // zamiast suchego banera
+    hideCooldown(); showBuzzingCallout();
   } else if (st.phase === 'ANSWERING') {
     hideCenter(); banner.classList.remove('show');
   } else {
@@ -252,6 +255,7 @@ function render(){
     );
   }
 
+  // Scena – pokaż tylko kiedy wiadomo kto
   const p = st.players?.find(x=>x.id===st.answeringId);
   if (p && (st.phase==='ANSWERING' || st.phase==='SELECTING' || st.phase==='READING')){
     showStage(p, st.phase);
@@ -270,8 +274,11 @@ function renderGrid(players, st){
   const L  = computeLayout(n, cw, ch);
 
   grid.style.setProperty('--scale', L.scale.toFixed(3));
+  grid.style.setProperty('--grid-gap-x', L.gap + 'px');
+  grid.style.setProperty('--grid-gap-y', L.gap + 'px');
+
   const scaledH = Math.round(L.height * L.scale);
-  gridWrap.style.height = (scaledH + 60) + 'px';
+  gridWrap.style.height = (scaledH + 42) + 'px';
 
   if (!L.rows){ return; }
 
@@ -301,7 +308,7 @@ function heartsSvg(dead){ return `<svg class="heart${dead?' dead':''}" viewBox="
 function cardFor(p, st, w){
   const el = document.createElement('div');
   el.className = 'card';
-  const h = Math.round(w * 0.72) + 86;
+  const h = Math.round(w * 0.56) + 78; // niższa karta
   el.style.setProperty('--w', w+'px');
   el.style.setProperty('--h', h+'px');
 
@@ -351,12 +358,13 @@ function cardFor(p, st, w){
   return el;
 }
 
-/* ============== Scena ============== */
+/* ============== Scena (środek) ============== */
 function showStage(p, phase){
   const name = normName(p);
   stageName.textContent = `${name || ''}`;
   stageSeat.textContent = `Stanowisko ${p.id}`;
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
+
   stage.classList.add('show');
   hideCenter();
   stageCd.classList.toggle('hidden', phase!=='ANSWERING');
@@ -406,7 +414,7 @@ function handleEvent(ev){
   }
   else if (ev.type === 'NEW_GAME') {
     showCenter('Nowa gra','Skonfiguruj zawodników i otwórz buzzery startowe');
-    pb.style.width='0%'; setTimeout(hideBanner,1500); askedCount=0;
+    pb.style.width='0%'; timebarWrap.classList.remove('show'); setTimeout(hideBanner,1500); askedCount=0;
   }
   else if (ev.type === 'ROUND_WINNER') {
     hideBanner();
@@ -430,7 +438,6 @@ function handleEvent(ev){
       if (chosen){
         showStage(chosen, 'READING');
         showCenter(`Następny odpowiada: ${normName(chosen)||('Gracz '+chosen.id)}`,'');
-
         setTimeout(hideCenter, 1200);
       }
     }
@@ -452,7 +459,9 @@ function handleEvent(ev){
 function handleTimer(t){
   const ms = t.remainingMs||0, active = !!t.active;
 
+  // Pasek 10 s – tylko ANSWERING
   if (state?.phase === 'ANSWERING'){
+    timebarWrap.classList.add('show');
     const pct = Math.max(0, Math.min(1, (TOTAL_ANS_MS - ms)/TOTAL_ANS_MS));
     pb.style.width = (pct*100).toFixed(1)+'%';
 
@@ -465,14 +474,15 @@ function handleTimer(t){
     stageCd.textContent = String(sec);
     stageCd.classList.remove('hidden');
   } else {
+    timebarWrap.classList.remove('show');
     pb.style.width = '0%';
     stageCd.classList.add('hidden');
   }
 
-  // COOLDOWN: wspieraj zarówno tick z backendu, jak i fallback lokalny
+  // Cooldown 3–2–1 (tick z backendu ma priorytet nad fallbackiem)
   if (state?.phase === 'COOLDOWN'){
+    timebarWrap.classList.remove('show');
     if (typeof ms === 'number' && active){
-      // priorytet – tick z serwera
       stopLocalCooldown();
       cd.style.display = 'flex';
       const sec = Math.max(1, Math.ceil(ms/1000));

@@ -1,315 +1,215 @@
+/* ===================== RESET / BASE ===================== */
 :root{
-  --bg1:#060b14; --bg2:#0b1424; --panel:#0f1a2e; --line:#23324d;
-  --text:#dbe7ff; --muted:#9cb2d9; --ok:#34d189; --bad:#ff5c6a; --accent:#3b6df6;
-  --score:#82e0ff;
+  --bg: #0b1220;
+  --panel: #0f1729;
+  --panel2:#0c1426;
+  --line: #22324d;
+  --text: #e7f0ff;
+  --muted:#9cb2d9;
+  --accent:#3b6df6;
+  --ok:#20c997;
+  --bad:#ff4757;
+
+  /* siatka graczy */
+  --grid-gap-x: 18px;
+  --grid-gap-y: 18px;
+
+  /* karta gracza – w/ h liczone też w JS */
+  --w: 320px;
+  --h: 190px; /* niższa baza */
 }
 
-/* Reset & base */
-*{box-sizing:border-box}
-html,body{height:100%}
+*{ box-sizing:border-box }
+html,body{ height:100% }
+html{
+  background:
+    radial-gradient(1200px 1200px at 50% 140%, rgba(22,38,70,.45) 0%, rgba(11,18,32,0) 65%),
+    var(--bg);
+}
 body{
-  margin:0;
-  background:radial-gradient(1200px 700px at 50% -220px,#0c1730 0%,#081022 45%,var(--bg1) 100%);
-  color:var(--text);
-  font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial;
-  overflow:hidden;
+  margin:0; color:var(--text);
+  font:600 16px/1.25 Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  letter-spacing:.2px;
 }
+img{ max-width:100%; display:block }
+.hidden{ display:none !important }
 
-/* ================= HUD (górny pasek) ================= */
+/* ======================== HUD ========================= */
 #hud{
-  position:fixed; inset:0 0 auto 0; height:74px;
-  display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
-  padding:10px 18px; z-index:20;
-  background:linear-gradient(180deg,rgba(6,11,20,.85),rgba(6,11,20,.35));
-  border-bottom:1px solid rgba(35,50,77,.35);
-  backdrop-filter:blur(6px);
+  position:fixed; inset:12px 12px auto 12px; display:flex; align-items:center; gap:16px; z-index:40;
 }
-.hud-left{display:flex;gap:10px;align-items:center;justify-self:start}
-.hud-center{display:grid;place-items:center}
-.hud-right{display:flex;gap:10px;align-items:center;justify-self:end;justify-content:flex-end}
-
+.hud-left,.hud-right{ display:flex; align-items:center; gap:8px }
+.hud-center{ flex:1; display:flex; justify-content:center }
 .pill{
-  display:inline-grid; grid-auto-flow:column; gap:8px; align-items:center;
-  padding:9px 12px; border-radius:14px; border:1px solid var(--line);
-  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.03));
-  box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.03);
-  font-weight:800; letter-spacing:.2px
+  display:inline-flex; gap:8px; align-items:center; padding:7px 10px;
+  background:linear-gradient(180deg, #0f1830 0%, #0e1628 100%);
+  border:1px solid #1c2a44; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.28);
+  transform-origin:50% 50%;
 }
-.pill .k{opacity:.75;font-size:.95rem}
-.pill .v{font-size:1.12rem}
-.pill.phase{ color:#cfe0ff; margin-left:auto; animation:glowPulse 2.6s ease-in-out infinite alternate; }
-@keyframes glowPulse{
-  from{box-shadow:0 12px 40px rgba(0,0,0,.35),0 0 0 0 rgba(59,109,246,.0)}
-  to{box-shadow:0 12px 40px rgba(0,0,0,.35),0 0 24px 6px rgba(59,109,246,.18)}
-}
+.pill .k{ color:#a9bce1; font-weight:700; opacity:.9; margin-right:6px }
+.pill .v{ background:#0b1324; border:1px solid #1a2942; border-radius:10px; padding:3px 8px; min-width:22px; text-align:center }
+.pill.phase .v{ background:#14203a; color:#d7e6ff; border-color:#213358 }
+.pill.bump{ animation: hudBump .34s ease }
+@keyframes hudBump{ 50%{ transform:scale(1.08) } }
 
-/* ================= Baner pod HUDem ================= */
+/* --------- baner (komunikaty nad siatką) ---------- */
 .banner{
-  padding:8px 16px; border:1px solid var(--line); border-radius:16px;
-  background:rgba(255,255,255,.05);
-  box-shadow:0 20px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);
-  font-weight:900; letter-spacing:.3px;
-  opacity:0; transform:translateY(-6px) scale(.98); transition:.25s cubic-bezier(.2,.8,.2,1)
+  transform:translateY(-16px);
+  min-width:min(980px,76vw);
+  padding:12px 16px; border-radius:14px;
+  background:linear-gradient(180deg,#101a31 0%, #0f172b 100%);
+  border:1px solid #213358; color:#dbe7ff;
+  box-shadow:0 18px 60px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.02);
+  opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
 }
-.banner.show{opacity:1;transform:translateY(0) scale(1)}
+.banner.show{ opacity:1; transform:none }
 
-/* ================= Centralne komunikaty / host ================= */
-#centerBox{ position:fixed; inset:110px 0 240px 0; display:none; place-items:center; z-index:14; }
-#centerBox.show{display:grid}
-.centerCard{
-  display:grid; grid-template-columns:120px 1fr; gap:18px; align-items:center;
-  width:min(880px,92vw); padding:18px 22px; border-radius:20px; border:1px solid var(--line);
-  background:rgba(13,21,38,.88); box-shadow:0 40px 120px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.03);
+/* ===================== SCENA (center) ===================== */
+#stage{
+  position:fixed; inset:130px 0 250px; display:grid; place-items:center; z-index:30; pointer-events:none;
+  opacity:0; transform:translateY(8px); transition:opacity .25s ease, transform .25s ease;
 }
-.centerCard .hostAv{
-  width:120px;height:120px;border-radius:16px;border:1px solid var(--line);
-  background:#101a2d; display:grid; place-items:center; overflow:hidden;
-}
-.centerCard .hostAv img{width:100%;height:100%;object-fit:contain}
-.centerCard .title{font-size:1.65rem;font-weight:1000;letter-spacing:.2px;margin:0}
-.centerCard .subtitle{margin:.25rem 0 0 0;color:#bed1f6}
-
-/* wariant BUZZING – puls */
-.centerCard.buzz .hostAv{
-  background:radial-gradient(60% 60% at 50% 35%,rgba(59,109,246,.18),rgba(16,26,45,.9));
-  animation:buzzPulse 1.8s ease-in-out infinite;
-}
-@keyframes buzzPulse{
-  0%{transform:scale(1)}
-  50%{transform:scale(1.04)}
-  100%{transform:scale(1)}
-}
-
-/* ================= Scena (gracz na środku) ================= */
-#stage{position:fixed; inset:90px 0 240px 0; display:grid; place-items:center; pointer-events:none; z-index:12}
+#stage.show{ opacity:1; transform:none }
 #stage .card{
-  position:relative;
-  width:min(860px,88vw);
-  display:grid; grid-template-columns:110px 1fr; grid-auto-rows:auto;
-  gap:16px; padding:18px 22px; border-radius:20px;
-  border:1px solid var(--line); background:rgba(13,21,38,.82);
-  box-shadow:0 40px 120px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.03);
-  opacity:0; transform:translateY(10px) scale(.98); transition:.28s cubic-bezier(.2,.8,.2,1)
+  width:min(1280px,84vw); min-height:230px;
+  background:linear-gradient(180deg, #0f182c, #0e1727);
+  border:1px solid #213358; border-radius:18px;
+  box-shadow:0 30px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
+  padding:22px 26px; display:grid; grid-template-columns:128px 1fr 64px; align-items:center; gap:22px;
+  pointer-events:auto;
 }
-#stage.show .card{opacity:1;transform:translateY(0) scale(1)}
 #stage .avatar.big{
-  width:110px;height:110px;border-radius:16px;overflow:hidden;
-  background:#101a2d;border:1px solid var(--line);display:grid;place-items:center
+  width:128px; height:128px; border-radius:14px; border:1px solid #22324d;
+  background:radial-gradient(120px 90px at 50% 30%, #16223d, #0e1728);
+  display:grid; place-items:center
 }
-#stage .avatar.big img{width:100%;height:100%;object-fit:contain}
-#stage .meta{display:grid;align-content:center}
-#stage .name{font-size:2rem;font-weight:1000;letter-spacing:.2px;line-height:1.15}
-#stage .seat-badge{
-  position:absolute;left:18px;top:16px;
-  padding:6px 11px;border-radius:999px;border:1px solid var(--line);
-  background:rgba(255,255,255,.07);color:#cfe0ff;font-weight:900;font-size:.95rem
-}
+#stage .avatar.big img{ width:96px; height:96px; object-fit:contain; filter:drop-shadow(0 10px 26px rgba(0,0,0,.45)) }
+#stage .meta{ display:flex; flex-direction:column; align-items:center; justify-content:center }
+#stage .meta .name{ font-size:42px; font-weight:900; letter-spacing:.5px; text-align:center }
+#stage .meta .seat{ margin-top:8px; color:#a9bce1; font-weight:800; text-align:center }
 #stage .countdown{
-  position:absolute;right:18px;bottom:16px;
-  min-width:46px;height:46px;border-radius:999px;display:grid;place-items:center;
-  font-weight:1000;font-size:1.2rem;background:radial-gradient(60% 60% at 50% 35%,rgba(255,255,255,.06),rgba(255,255,255,.02));
-  border:1px solid var(--line);box-shadow:0 25px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.03);
-  opacity:1;transform:scale(1);transition:.2s
+  width:56px; height:56px; border-radius:50%; display:grid; place-items:center;
+  border:1px solid #23324d; background:rgba(17,27,45,.65); font-weight:900; font-size:20px; color:#e6eeff;
+  box-shadow:0 10px 30px rgba(0,0,0,.35)
 }
-#stage .countdown.hidden{opacity:0;transform:scale(.9)}
 #stage .judge{
-  position:absolute;right:-16px;top:-16px;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
-  background:rgba(255,255,255,.06);border:1px solid var(--line);color:#fff;font-size:1.2rem;font-weight:1000;
-  opacity:0;transform:translateY(-6px);transition:.25s
+  position:absolute; inset:auto 22px 18px auto; font-weight:900; font-size:38px; opacity:0; transform:scale(.9);
+  transition:opacity .22s ease, transform .22s ease;
 }
-#stage .judge.show{opacity:1;transform:translateY(0)}
-#stage .judge.good{background:rgba(59,209,137,.2);border-color:#2f9d6e}
-#stage .judge.bad{background:rgba(255,92,106,.23);border-color:#a6444d}
+#stage .judge.show{ opacity:1; transform:none }
+#stage .judge.good{ color:#1fdf9e }
+#stage .judge.bad{ color:#ff5b6b }
 
-/* ================= Grid (dół ekranu) ================= */
+/* ===================== CENTER-CARD (info & buzzing) ===================== */
+#centerBox{
+  position:fixed; inset:0; display:grid; place-items:center; z-index:26; pointer-events:none;
+  opacity:0; transform:translateY(6px); transition:opacity .22s ease, transform .22s ease;
+}
+#centerBox.show{ opacity:1; transform:none }
+.centerCard{
+  pointer-events:auto;
+  width:min(1100px,86vw);
+  min-height:120px;
+  background:linear-gradient(180deg,#101a31,#0f1629);
+  border:1px solid #213358; border-radius:18px; padding:22px 26px;
+  display:grid; grid-template-columns:88px 1fr; gap:16px; align-items:center;
+  box-shadow:0 26px 100px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
+}
+.centerCard .hostAv{ width:88px; height:88px; border-radius:14px; border:1px solid #22324d; background:#0e1628; display:grid; place-items:center }
+.centerCard .hostAv img{ width:68px; height:68px; object-fit:contain; opacity:.92 }
+.centerCard .title{ margin:0; font:900 28px/1.15 Inter,system-ui,sans-serif; color:#e6eeff }
+.centerCard .subtitle{ margin-top:8px; color:#9cb2d9; font-weight:700 }
+.centerCard.buzz{ animation:glow 1.2s ease infinite alternate }
+.centerCard.xl{ min-height:160px }
+.centerCard.xl .title{ font-size:34px }
+.centerCard.xl .subtitle{ font-size:18px }
+@keyframes glow{
+  from{ box-shadow:0 26px 100px rgba(0,0,0,.55), 0 0 0 rgba(59,109,246,.0) inset }
+  to  { box-shadow:0 26px 100px rgba(0,0,0,.55), 0 0 24px rgba(59,109,246,.25) inset }
+}
+
+/* ==================== SIATKA GRACZY ==================== */
 #gridWrap{
-  position:fixed;left:0;right:0;bottom:0;z-index:10;
-  background:linear-gradient(180deg,rgba(6,11,20,0),rgba(6,11,20,.55) 50%,rgba(6,11,20,.92) 100%)
+  position:fixed; inset:auto 0 18px; padding:14px 24px 0; z-index:20;
+  background:linear-gradient(180deg, rgba(10,18,31,0) 0%, rgba(10,18,31,.55) 26%, rgba(10,18,31,.82) 86%);
 }
 #grid{
-  position:absolute;left:0;right:0;bottom:36px;
-  display:grid;gap:16px;padding:0 28px;
-  transform-origin:bottom center; transform:scale(var(--scale,1));
+  transform-origin:50% 100%;
+  transform:scale(var(--scale,1));
+  display:grid; gap:24px; justify-items:center; align-items:end;
 }
-#grid .row{display:grid;gap:16px;justify-content:center}
-#grid .row.top{align-self:end}
-#grid .row.bottom{align-self:end}
+.row{ display:grid; gap:var(--grid-gap-y) var(--grid-gap-x); justify-content:center }
+.row.top{ margin-bottom:var(--grid-gap-y) }
 
-/* ================= Karta gracza ================= */
 .card{
-  --w: 340px;
-  --h: 260px;
-  width:var(--w);
-  height:var(--h);
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.04));
-  border:1px solid var(--line);
-  border-radius:20px;
-  position:relative;
-  display:grid;
-  grid-template-rows:52px 1fr;
-  gap:0;
-  padding:14px 18px 18px;
-  box-shadow:0 18px 56px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04);
-  text-align:center;
-  overflow:hidden;
-  transition:transform .18s ease, box-shadow .18s ease, outline-color .2s ease;
+  width:var(--w); height:var(--h); position:relative;
+  background:linear-gradient(180deg, #0f182d 0%, #0f1727 100%);
+  border:1px solid #20314d; border-radius:18px;
+  box-shadow:0 18px 70px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.02);
+  padding:16px 16px 18px; overflow:hidden;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
 }
-.card:hover{transform:translateY(-2px)}
-.card.answering{
-  outline:2px solid var(--accent);
-  box-shadow:0 22px 70px rgba(59,109,246,.32),inset 0 1px 0 rgba(255,255,255,.05);
-  animation:answerPulse 1.6s ease-in-out infinite;
-}
-@keyframes answerPulse{
-  0%{outline-color:rgba(59,109,246,.7)}
-  50%{outline-color:rgba(59,109,246,.35)}
-  100%{outline-color:rgba(59,109,246,.7)}
-}
+.card.answering{ border-color:#2b58ff; box-shadow:0 26px 110px rgba(43,88,255,.26), 0 16px 60px rgba(0,0,0,.45) }
+.card.cardJoin{ animation:cardIn .35s ease }
+@keyframes cardIn{ from{ transform:translateY(12px) scale(.98); opacity:.0 } to{ transform:none; opacity:1 } }
 
-/* Numer stanowiska (badge) */
 .card .seat{
-  position:absolute;left:14px;top:12px;
-  width:44px;height:44px;border-radius:999px;display:grid;place-items:center;
-  border:1px solid var(--line);
-  background:radial-gradient(65% 65% at 50% 35%,rgba(255,255,255,.10),rgba(255,255,255,.04));
-  color:#eaf2ff;font-weight:1000;letter-spacing:.2px;
-  box-shadow:0 12px 28px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);
+  position:absolute; left:12px; top:12px; width:46px; height:46px; display:grid; place-items:center;
+  border-radius:50%; border:1px solid #23324d; color:#e8f1ff; background:rgba(20,30,50,.6);
+  font-weight:900; text-shadow:0 1px 0 rgba(0,0,0,.25)
 }
-.card .seat::after{
-  content:"★"; position:absolute; right:-8px; top:-7px; font-size:18px;
-  color:var(--accent); opacity:.42; filter:drop-shadow(0 4px 10px rgba(59,109,246,.45));
-}
+.card .name{ text-align:center; font:900 20px/1.1 Inter,system-ui,sans-serif; letter-spacing:.4px; margin-top:0 }
 
-/* Nazwa (2 linie) */
-.card .name{
-  height:52px; display:grid; place-items:center;
-  padding:0 10px;
-  font-size:1.18rem; font-weight:1000; letter-spacing:.2px; line-height:1.15;
-  text-wrap:balance; overflow:hidden;
-  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
-}
+.card .avatar{ position:absolute; left:0; right:0; top:54px; bottom:54px; display:grid; place-items:center; pointer-events:none }
+.card .avatar img{ width:min(66%, 220px); height:100%; object-fit:contain; filter:drop-shadow(0 12px 34px rgba(0,0,0,.45)); opacity:.98 }
 
-/* Avatar */
-.card .avatar{
-  height:calc(var(--h) - 112px);
-  display:grid; align-items:end; justify-items:center;
-  margin-top:-2px; pointer-events:none;
+.livesBox{
+  position:absolute; right:14px; bottom:12px; display:flex; gap:12px; align-items:center
 }
-.card .avatar img{
-  height:min(160px, calc(var(--h) - 118px));
-  width:auto; object-fit:contain;
-  filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
-}
+.heart{ width:26px; height:26px; fill:#ff4757; filter:drop-shadow(0 4px 10px rgba(255,71,87,.25)) }
+.heart.dead{ opacity:.28; filter:none }
 
-/* Punkty */
-.card .ptsBox{
-  position:absolute; left:14px; bottom:12px; display:flex; align-items:center; gap:8px;
+.ptsBox{
+  position:absolute; left:12px; bottom:10px; display:flex; align-items:center; gap:10px;
+  background:rgba(12,22,41,.6); border:1px solid #20314d; padding:6px 10px; border-radius:12px;
 }
-.card .ptsBox .medal{
-  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
-  background:radial-gradient(circle at 35% 30%,#ffd27a,#ffb34d 60%,#e5922e);
-  box-shadow:0 6px 18px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.3);
-}
-.card .ptsBox .medal svg{width:14px;height:14px;fill:#6a3a00}
-.card .ptsBox .value{
-  font-weight:1000; font-size:1.26rem; letter-spacing:.2px;
-  color:var(--score);
-  text-shadow:0 0 10px rgba(64,189,255,.35),0 0 22px rgba(64,189,255,.18);
-  font-variant-numeric:tabular-nums;
-}
-.scoreBump{animation:scoreBump .45s ease}
-@keyframes scoreBump{
-  0%{transform:scale(1);filter:brightness(1)}
-  35%{transform:scale(1.15);filter:brightness(1.25)}
-  100%{transform:scale(1);filter:brightness(1)}
-}
+.ptsBox .medal{ width:20px; height:20px; display:grid; place-items:center }
+.ptsBox .medal svg{ width:20px; height:20px; fill:#ffcc4d; filter:drop-shadow(0 3px 10px rgba(255,204,77,.4)) }
+.ptsBox .value{ font:900 16px/1 Inter,system-ui,sans-serif; color:#eaf2ff }
+.ptsBox .value.scoreBump{ animation:scoreBump .45s ease }
+@keyframes scoreBump{ 50%{ transform:scale(1.22) } }
 
-/* Serduszka – większe i bez wyjeżdżania */
-.card .livesBox{
-  position:absolute; right:14px; bottom:12px; display:flex; gap:10px;
+/* ==================== PASEK CZASU – FULL WIDTH ==================== */
+#timebarWrap{
+  position:fixed; left:0; right:0; bottom:0; height:12px; z-index:35; display:none;
+  background: #0a1426; border-top:1px solid #1c2945;
+  box-shadow:0 -8px 28px rgba(0,0,0,.35);
 }
-.card .livesBox .heart{width:28px;height:28px;fill:#ff4b5e;opacity:.98;filter:drop-shadow(0 3px 6px rgba(0,0,0,.35))}
-.card .livesBox .heart.dead{fill:#69748a;opacity:.70}
-.lifeShake{animation:lifeShake .55s ease}
-@keyframes lifeShake{
-  0%{transform:translateX(0)} 20%{transform:translateX(-3px)} 40%{transform:translateX(3px)}
-  60%{transform:translateX(-2px)} 100%{transform:translateX(0)}
-}
-
-.card.eliminated{filter:grayscale(1) brightness(.75);opacity:.65}
-
-/* ================= Pasek 10 s (dół) ================= */
-#timebar{position:absolute;left:0;right:0;bottom:0;height:10px;background:rgba(255,255,255,.06)}
+#timebarWrap.show{ display:block }
 #pb{
-  width:0%;height:100%;
-  background:linear-gradient(90deg,#19d38a,#12c7ff,#ffd85e,#ff7a3d,#ff4b5e);
-  background-size:300% 100%;
-  animation:barWave 1.4s linear infinite;
-  transition:width .08s linear, filter .12s ease;
-  filter:saturate(1.05);
-}
-@keyframes barWave{from{background-position:0% 0}to{background-position:200% 0}}
-
-/* ================= 3-2-1 cooldown ================= */
-#cd{pointer-events:none}
-
-/* Animacja dołączania karty */
-@keyframes cardJoin{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-.cardJoin{animation:cardJoin .32s cubic-bezier(.2,.8,.2,1)}
-
-/* === FIX: karta niższa, avatar nie ucina się, układ prostokątny === */
-.card{
-  /* prostokąt zamiast „kwadratu” */
-  height: clamp(180px, 21vh, 220px);
-  width: min(22rem, 24vw);
-  padding: 12px 16px 18px;
-  overflow: visible;             /* nie ucinaj zawartości (serduszka/awatar) */
+  height:100%; width:0%;
+  background:linear-gradient(90deg, hsl(130 85% 52%), hsl(106 90% 50%));
+  transition:width .12s linear;
+  box-shadow:0 0 26px rgba(32,201,151,.4) inset, 0 0 12px rgba(32,201,151,.25);
 }
 
-.card .name{
-  /* mniej „powietrza” nad avatarem */
-  height: auto;
-  margin: 0 0 6px 0;
-  line-height: 1.1;
+/* ==================== COOLDOWN 3–2–1 ==================== */
+#cdNum{ will-change:transform,opacity; transition:transform .15s ease, opacity .15s ease }
+
+/* ================ UTYLITY / MEDIA ================ */
+@media (max-width:1200px){
+  :root{ --grid-gap-x: 14px; --grid-gap-y: 14px }
+  #stage{ inset:110px 0 230px }
+  #stage .meta .name{ font-size:36px }
+  #centerBox .title{ font-size:26px }
 }
-
-.card .avatar{
-  /* avatar wypełnia przestrzeń między nazwą a stopką (pkt/serca) */
-  height: calc(100% - 64px);     /* ok. 64 px na nazwę + stopkę */
-  min-height: 120px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
+@media (max-width:760px){
+  #hud{ inset:8px }
+  .banner{ min-width:auto; width:96vw }
+  #stage{ inset:96px 0 200px }
+  #stage .card{ grid-template-columns:108px 1fr 56px }
+  #stage .avatar.big{ width:108px; height:108px }
+  #stage .meta .name{ font-size:28px }
+  .centerCard{ grid-template-columns:72px 1fr }
+  .centerCard .hostAv{ width:72px; height:72px }
 }
-
-.card .avatar img{
-  max-height: 100%;
-  width: auto;
-  object-fit: contain;
-  transform: none;               /* usuń dociśnięcie w dół, które powodowało cięcie */
-  filter: drop-shadow(0 10px 22px rgba(0,0,0,.45));
-}
-
-/* serduszka & punkty – zostają przy dolnej krawędzi i nie wychodzą poza kartę */
-.card .ptsBox{ left: 14px; bottom: 12px; }
-.card .livesBox{ right: 14px; bottom: 12px; }
-
-/* Odstępy między kartami graczy */
-#grid, #playersGrid, .players-grid{
-  gap: 24px 20px; /* najpierw odstęp w pionie (row-gap), potem w poziomie (column-gap) */
-  /* jeśli masz flexa zamiast grida, też zadziała: */
-  row-gap: 20x;
-  column-gap: 20px;
-}
-
-/* Jeżeli karty mają swoje marginesy – wyzeruj je, by gap działał „czysto” */
-.card{ margin: 0; }
-
-/* Odstęp całego bloku graczy od krawędzi ekranu */
-#gridWrap{ padding: 12px 24px; }  /* lewa/prawa „rama” */
-
-@media (max-width: 900px){
-  #grid, #playersGrid, .players-grid{ gap: 16px 14px; }
-}
-
