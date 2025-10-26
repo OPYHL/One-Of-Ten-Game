@@ -31,15 +31,13 @@ const questionLabel   = document.getElementById('questionLabel');
 const questionText    = document.getElementById('questionText');
 const questionAnswer  = document.getElementById('questionAnswer');
 
-const flowStatus = document.getElementById('flowStatus');
-const flowSteps  = document.getElementById('flowSteps');
-const flowAction = document.getElementById('flowAction');
-const flowHint   = document.getElementById('flowHint');
-
 const stagePhaseEl = document.getElementById('stagePhase');
 const stageTitleEl = document.getElementById('stageTitle');
 const stageSubEl   = document.getElementById('stageSub');
 const stageActionEl= document.getElementById('stageAction');
+const stageStepsEl = document.getElementById('stageSteps');
+
+const toastEl = document.getElementById('toast');
 
 const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeTitle    = document.getElementById('welcomeTitle');
@@ -68,6 +66,8 @@ let readingStarted = false;
 let currentQuestionId = null;
 let questionPrompted = false;
 let latestTimerRemainingMs = 0;
+let toastTimer = null;
+let toastHideTimer = null;
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -172,7 +172,10 @@ function startOrNext(){
   if (!state) return;
   const phase = state.phase;
   if (phase === 'IDLE') {
-    if (!hasReadyPlayers()) return;
+    if (!hasReadyPlayers()) {
+      showToast('Potrzebujemy co najmniej jednego gracza, aby rozpocząć.');
+      return;
+    }
     send('/app/host/start');
   } else if (phase === 'READING' || phase === 'SELECTING') {
     send('/app/host/next');
@@ -200,7 +203,10 @@ document.addEventListener('keydown', (e)=>{
 });
 
 function judge(ok){
-  if (!state?.answeringId) return;
+  if (!state?.answeringId) {
+    showToast('Nikt teraz nie odpowiada.');
+    return;
+  }
   send('/app/judge', { playerId: state.answeringId, correct: !!ok });
 }
 
@@ -240,7 +246,7 @@ function render(){
   updateQuestion(activeQuestion);
   updateWelcome(st, joinedCount);
   updateMetrics(st.hostDashboard?.metrics);
-  updateFlow(st);
+  updateStage(st);
   maybePromptQuestion(st, activeQuestion);
   updateTimerDisplay();
 
@@ -340,7 +346,7 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateFlow(st){
+function updateStage(st){
   if (!st) return;
   const phase = st.phase;
   const players = st.players || [];
@@ -348,137 +354,97 @@ function updateFlow(st){
   const activeQuestion = st.hostDashboard?.activeQuestion || null;
   const answering = st.answeringId ? players.find(x => x.id === st.answeringId) : null;
 
-  const steps = buildFlowSteps(st, activeQuestion, answering);
-  let status = 'Sterowanie';
-  let hint = '';
-  const actions = [];
-  let stageTitle = 'Sterowanie';
-  let stageMessage = '';
-  let stageBadge = '';
-  let stageActions = [];
+  const stage = {
+    badge: '',
+    title: '',
+    message: '',
+    actions: [],
+    steps: buildStageSteps(st, activeQuestion, answering),
+  };
 
   switch (phase){
     case 'IDLE':
       if (joinedCount === 0){
-        status = 'Czekamy na graczy';
-        hint = 'Poproś graczy o dołączenie przez player.html.';
-        stageTitle = 'Oczekiwanie na graczy';
-        stageMessage = 'Poproś zawodników, aby wpisali swoje dane i zajęli stanowiska.';
-        stageBadge = 'Oczekiwanie';
+        stage.badge = 'Oczekiwanie';
+        stage.title = 'Czekamy na graczy';
+        stage.message = 'Poproś zawodników o dołączenie i zajęcie stanowisk.';
       } else {
-        status = 'Gotowy do startu';
-        const readyHint = joinedCount === 1 ? 'Dołączył 1 gracz — rozpocznij program.' : `${joinedCount} graczy czeka na start.`;
-        hint = readyHint;
-        actions.push({ label: 'Rozpocznij', handler: startOrNext, variant: 'primary' });
-        stageTitle = 'Rozpocznij program';
-        stageMessage = readyHint;
-        stageBadge = 'Start';
-        stageActions = actions.slice();
+        const readyHint = joinedCount === 1 ? 'Dołączył 1 gracz — możesz zaczynać.' : `${joinedCount} graczy czeka na start.`;
+        stage.badge = 'Start';
+        stage.title = 'Gotowy do rozpoczęcia';
+        stage.message = readyHint;
+        stage.actions.push({ label: 'Rozpocznij', handler: startOrNext, variant: 'primary' });
       }
       break;
     case 'INTRO':
-      status = 'Intro programu';
+      stage.badge = 'Intro';
       if (!activeQuestion){
-        actions.push({ label: 'Wybierz pytanie', handler: openModal, variant: 'primary' });
-        hint = 'Podczas muzyki wybierz kategorię i numer pytania.';
-        stageTitle = 'Wybierz pytanie';
-        stageMessage = 'Katalog pytań otworzy się w nowym oknie.';
-        stageBadge = 'Intro';
-        stageActions = actions.slice();
+        stage.title = 'Wybierz pytanie';
+        stage.message = 'Podczas muzyki wskaż kategorię i numer pytania.';
+        stage.actions.push({ label: 'Wybierz pytanie', handler: openModal, variant: 'primary' });
       } else {
-        actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
-        hint = 'Intro nadal trwa — możesz jeszcze zmienić pytanie.';
-        stageTitle = 'Intro trwa';
-        stageMessage = 'Jeśli chcesz, wybierz inne pytanie zanim cisza opadnie.';
-        stageBadge = 'Intro';
-        stageActions = actions.slice();
+        stage.title = 'Intro trwa';
+        stage.message = 'Możesz jeszcze zmienić pytanie przed ciszą.';
+        stage.actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
       }
       break;
     case 'READING':
+      stage.badge = 'Czytanie';
       if (!activeQuestion){
-        status = 'Wybierz pytanie';
-        actions.push({ label: 'Przeglądaj pytania', handler: openModal, variant: 'primary' });
-        hint = 'Wskaż pytanie zanim zaczniesz czytać.';
-        stageTitle = 'Przygotuj pytanie';
-        stageMessage = 'Wybierz kategorię oraz numer pytania.';
-        stageBadge = 'Czytanie';
-        stageActions = actions.slice();
+        stage.title = 'Przygotuj pytanie';
+        stage.message = 'Wybierz kategorię oraz numer zanim zaczniesz czytać.';
+        stage.actions.push({ label: 'Przeglądaj pytania', handler: openModal, variant: 'primary' });
       } else if (!readingStarted){
-        status = 'Rozpocznij czytanie';
-        actions.push({ label: 'Czytam', handler: beginReading, variant: 'primary' });
-        actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
-        hint = 'Kliknij „Czytam”, gdy zaczynasz mówić na głos.';
-        stageTitle = 'Czas czytać';
-        stageMessage = 'Kliknij „Czytam”, gdy wypowiadasz treść pytania.';
-        stageBadge = 'Czytanie';
-        stageActions = actions.slice();
+        stage.title = 'Czas czytać';
+        stage.message = 'Gdy zaczynasz mówić na głos, kliknij „Czytam”.';
+        stage.actions.push({ label: 'Czytam', handler: beginReading, variant: 'primary' });
+        stage.actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
       } else {
-        status = 'Kończysz czytanie';
-        actions.push({ label: 'Przeczytałem', handler: completeReading, variant: 'primary' });
-        hint = 'Odsłoń pytanie na ekranie po przeczytaniu.';
-        stageTitle = 'Zakończ czytanie';
-        stageMessage = 'Odsłoń pytanie i pokaż je na ekranie publicznym.';
-        stageBadge = 'Czytanie';
-        stageActions = actions.slice();
+        stage.title = 'Odsłoń pytanie';
+        stage.message = 'Po lekturze kliknij „Przeczytałem”, aby pokazać treść na ekranie.';
+        stage.actions.push({ label: 'Przeczytałem', handler: completeReading, variant: 'primary' });
       }
       break;
     case 'BUZZING':
-      status = 'Oczekiwanie na zgłoszenie';
-      hint = 'Gracze wciskają przyciski, by się zgłosić.';
-      stageTitle = 'Czekamy na zgłoszenie';
-      stageMessage = 'Wypatruj gracza, który zgłosił się jako pierwszy.';
-      stageBadge = 'Zgłoszenia';
+      stage.badge = 'Zgłoszenia';
+      stage.title = 'Oczekiwanie na zgłoszenie';
+      stage.message = 'Gracze wciskają przyciski, aby się zgłosić.';
       break;
     case 'ANSWERING':
-      status = 'Gracz odpowiada';
       if (answering){
         const nm = (answering.name || '').trim();
         const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
-        hint = `Odpowiada ${label}.`;
-        stageTitle = `${label} odpowiada`;
-        stageMessage = 'Oceń wypowiedź i kliknij właściwy przycisk.';
-        stageBadge = `Gracz ${answering.id}`;
+        stage.badge = `Gracz ${answering.id}`;
+        stage.title = `${label} odpowiada`;
+        stage.message = 'Słuchaj uważnie i oceń odpowiedź.';
       } else {
-        hint = 'Oceń odpowiedź gracza.';
-        stageTitle = 'Oceń odpowiedź';
-        stageMessage = 'Kliknij „Dobra” lub „Zła”.';
-        stageBadge = 'Ocena';
+        stage.badge = 'Ocena';
+        stage.title = 'Oceń odpowiedź';
+        stage.message = 'Kliknij „Dobra” lub „Zła”, aby zamknąć pytanie.';
       }
-      actions.push({ label: '✓ Dobra odpowiedź', handler: ()=>judge(true), variant: 'good' });
-      actions.push({ label: '✗ Zła odpowiedź', handler: ()=>judge(false), variant: 'bad' });
-      stageActions = actions.slice();
+      stage.actions.push({ label: '✓ Dobra odpowiedź', handler: ()=>judge(true), variant: 'good' });
+      stage.actions.push({ label: '✗ Zła odpowiedź', handler: ()=>judge(false), variant: 'bad' });
       break;
     case 'SELECTING':
-      status = 'Wybór kolejnego gracza';
-      hint = 'Zwycięzca wskazuje przeciwnika. Poczekaj na potwierdzenie.';
-      stageTitle = 'Czekamy na wybór';
-      stageMessage = 'Zwycięzca wskazuje kolejnego odpowiadającego.';
-      stageBadge = 'Wybór';
+      stage.badge = 'Wybór';
+      stage.title = 'Czekamy na wybór gracza';
+      stage.message = 'Zwycięzca wskazuje kolejnego odpowiadającego — obserwuj ekran operatora.';
       break;
     case 'COOLDOWN':
-      status = 'Chwila przerwy';
-      hint = 'Za moment ponownie otworzymy zgłoszenia.';
-      stageTitle = 'Krótka przerwa';
-      stageMessage = 'Przygotuj kolejne pytanie na spokojnie.';
-      stageBadge = 'Przerwa';
+      stage.badge = 'Przerwa';
+      stage.title = 'Chwila przerwy';
+      stage.message = 'Za moment przygotujemy kolejne pytanie.';
       break;
     default:
-      status = 'Sterowanie';
-      hint = '';
-      stageTitle = 'Sterowanie';
-      stageMessage = 'Działania pojawią się w odpowiednim momencie.';
+      stage.badge = 'Sterowanie';
+      stage.title = 'Sterowanie';
+      stage.message = 'Działania pojawią się w odpowiednim momencie.';
   }
 
-  if (!stageBadge){ stageBadge = status; }
-  if (!stageActions.length){
-    const prioritized = actions.filter(act => ['primary','good','bad'].includes(act.variant));
-    stageActions = prioritized.length ? prioritized : actions.slice();
-  }
-
-  renderFlowState({ status, hint, actions, steps, stageTitle, stageMessage, stageBadge, stageActions });
+  renderStage(stage);
 }
 
-function buildFlowSteps(st, activeQuestion, answering){
+function buildStageSteps(st, activeQuestion, answering){
   const steps = [
     { number: 1, title: 'Wybierz pytanie', desc: 'Otwórz katalog pytań i wskaż numer.', status: 'pending' },
     { number: 2, title: 'Kliknij „Czytam”, gdy jesteś gotowy', desc: 'Rozpocznij czytanie pytania na głos.', status: 'pending' },
@@ -555,71 +521,6 @@ function buildFlowSteps(st, activeQuestion, answering){
   return steps;
 }
 
-function renderFlowState({ status, hint, actions, steps, stageTitle, stageMessage, stageBadge, stageActions }){
-  renderStage({ badge: stageBadge || status, title: stageTitle || status, message: stageMessage || hint, actions: stageActions || actions });
-  flowStatus.textContent = status;
-  renderFlowSteps(Array.isArray(steps) ? steps : []);
-  renderFlowActions(Array.isArray(actions) ? actions : []);
-  if (hint && hint.trim()){
-    flowHint.textContent = hint;
-    flowHint.classList.remove('hidden');
-  } else {
-    flowHint.textContent = '';
-    flowHint.classList.add('hidden');
-  }
-}
-
-function renderFlowSteps(steps){
-  flowSteps.innerHTML = '';
-  if (!steps.length){
-    const placeholder = document.createElement('li');
-    placeholder.className = 'flow-step';
-    placeholder.innerHTML = `
-      <div class="flow-step-number">–</div>
-      <div class="flow-step-body">
-        <div class="flow-step-title">Brak kroków</div>
-        <div class="flow-step-desc">Sterowanie pojawi się po rozpoczęciu gry.</div>
-      </div>
-    `;
-    flowSteps.appendChild(placeholder);
-    return;
-  }
-
-  steps.forEach((step, idx) => {
-    const li = document.createElement('li');
-    const status = step.status || 'pending';
-    li.className = `flow-step ${status}`;
-    const number = step.number ?? (idx + 1);
-    li.innerHTML = `
-      <div class="flow-step-number">${escapeHtml(String(number))}</div>
-      <div class="flow-step-body">
-        <div class="flow-step-title">${escapeHtml(step.title || '')}</div>
-        <div class="flow-step-desc">${escapeHtml(step.desc || '')}</div>
-      </div>
-    `;
-    flowSteps.appendChild(li);
-  });
-}
-
-function renderFlowActions(actions){
-  flowAction.innerHTML = '';
-  const hasActions = actions.length > 0;
-  flowAction.classList.toggle('empty', !hasActions);
-
-  if (!hasActions){
-    const placeholder = document.createElement('div');
-    placeholder.className = 'flow-placeholder';
-    placeholder.textContent = 'Brak akcji w tym kroku.';
-    flowAction.appendChild(placeholder);
-    return;
-  }
-
-  actions.forEach(act => {
-    const btn = createActionButton(act);
-    if (btn){ flowAction.appendChild(btn); }
-  });
-}
-
 function renderStage(stage){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl) return;
   stagePhaseEl.textContent = stage.badge || 'Sterowanie';
@@ -633,14 +534,48 @@ function renderStage(stage){
     placeholder.className = 'stage-placeholder';
     placeholder.textContent = 'Sterowanie pojawi się automatycznie w kolejnym kroku.';
     stageActionEl.appendChild(placeholder);
+  } else {
+    acts.forEach(act => {
+      const btn = createActionButton(act);
+      if (!btn) return;
+      btn.classList.add('stage-btn');
+      stageActionEl.appendChild(btn);
+    });
+  }
+
+  renderStageSteps(Array.isArray(stage.steps) ? stage.steps : []);
+}
+
+function renderStageSteps(steps){
+  if (!stageStepsEl) return;
+  stageStepsEl.innerHTML = '';
+  if (!steps.length){
+    const placeholder = document.createElement('li');
+    placeholder.className = 'stage-step';
+    placeholder.innerHTML = `
+      <div class="stage-step-number">–</div>
+      <div>
+        <div class="stage-step-title">Sterowanie</div>
+        <div class="stage-step-desc">Kroki pojawią się po rozpoczęciu gry.</div>
+      </div>
+    `;
+    stageStepsEl.appendChild(placeholder);
     return;
   }
 
-  acts.forEach(act => {
-    const btn = createActionButton(act);
-    if (!btn) return;
-    btn.classList.add('stage-btn');
-    stageActionEl.appendChild(btn);
+  steps.forEach((step, idx) => {
+    const li = document.createElement('li');
+    const status = step.status || 'pending';
+    li.className = `stage-step ${status}`;
+    const number = step.number ?? (idx + 1);
+    li.innerHTML = `
+      <div class="stage-step-number">${escapeHtml(String(number))}</div>
+      <div>
+        <div class="stage-step-title">${escapeHtml(step.title || '')}</div>
+        <div class="stage-step-desc">${escapeHtml(step.desc || '')}</div>
+      </div>
+    `;
+    stageStepsEl.appendChild(li);
   });
 }
 
@@ -707,17 +642,51 @@ function toggleActionButton(btn, visible){
   if (!visible){ btn.disabled = true; }
 }
 
+function showToast(message){
+  if (!toastEl) return;
+  if (toastTimer){ clearTimeout(toastTimer); toastTimer = null; }
+  if (toastHideTimer){ clearTimeout(toastHideTimer); toastHideTimer = null; }
+  toastEl.textContent = message;
+  toastEl.classList.remove('hidden');
+  requestAnimationFrame(()=> toastEl.classList.add('show'));
+  toastTimer = setTimeout(()=>{
+    toastEl.classList.remove('show');
+    toastHideTimer = setTimeout(()=>{
+      toastEl.classList.add('hidden');
+      toastHideTimer = null;
+    }, 300);
+    toastTimer = null;
+  }, 2600);
+}
+
 function beginReading(){
-  if (!state || state.phase !== 'READING') return;
-  if (!state.hostDashboard?.activeQuestion) return;
+  if (!state){ return; }
+  if (state.phase !== 'READING'){
+    showToast('Poczekaj na sygnał „Czytanie”.');
+    return;
+  }
+  if (!state.hostDashboard?.activeQuestion){
+    showToast('Najpierw wybierz pytanie.');
+    return;
+  }
+  if (readingStarted){ return; }
   readingStarted = true;
   send('/app/host/next');
-  updateFlow(state);
+  updateStage(state);
 }
 
 function completeReading(){
-  if (!state || state.phase !== 'READING') return;
+  if (!state){ return; }
+  if (state.phase !== 'READING'){
+    showToast('Nie jesteśmy w trakcie czytania.');
+    return;
+  }
+  if (!readingStarted){
+    showToast('Najpierw kliknij „Czytam”.');
+    return;
+  }
   send('/app/host/readDone');
+  updateStage(state);
 }
 
 /* ====== events & timer ====== */
@@ -732,6 +701,7 @@ function handleEvent(ev){
     readingStarted = false;
     questionLabel.classList.add('pulse');
     setTimeout(()=>questionLabel.classList.remove('pulse'), 600);
+    updateStage(state);
   }
 }
 function handleTimer(t){
@@ -772,6 +742,45 @@ function updateTimerDisplay(){
   } else {
     ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
   }
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+  const total = Math.max(0, state?.settings?.answerTimerMs || 0);
+  const isAnswering = state?.phase === 'ANSWERING';
+
+  if (total === 0){
+    timerRemainingEl.textContent = '0.0';
+    timerTotalEl.textContent = '/ 0.0 s';
+    timerFillEl.style.width = '0%';
+    timerBarEl.classList.remove('critical');
+    if (timerBoxEl){ timerBoxEl.classList.remove('critical'); }
+    ansTime.textContent = 'Czas odpowiedzi nie został ustawiony.';
+    return;
+  }
+
+  const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
+  timerRemainingEl.textContent = formatSecondsShort(remaining);
+  timerTotalEl.textContent = `/ ${formatSecondsShort(total)} s`;
+  const percent = total > 0 ? (remaining / total) * 100 : 0;
+  timerFillEl.style.width = `${percent}%`;
+  const critical = isAnswering && remaining <= Math.min(total, 2000);
+  timerBarEl.classList.toggle('critical', critical);
+  if (timerBoxEl){ timerBoxEl.classList.toggle('critical', critical); }
+
+  if (isAnswering){
+    ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
+  } else {
+    ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
+  }
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 }
 
 function truncate(text, max){
