@@ -30,7 +30,15 @@ let myLives = 3, myScore = 0, answeredTotal = 0, correctTotal = 0;
 let lastState = null;
 const TOTAL = 10000;
 
-// flaga: czekam na wynik po kliknięciu „Znam odpowiedź!”
+function isSeatJoined(p){
+  if (!p) return false;
+  if (typeof p.joined === 'boolean') return p.joined;
+  const nm = (p.name||'').trim();
+  if (!nm) return false;
+  return nm.toLowerCase() !== (`gracz ${p.id}`).toLowerCase();
+}
+
+// flaga: czekam na wynik po kliknięciu "Znam odpowiedź!"
 let pendingBuzz = false;
 
 /* ====== ROLE BADGE (odznaka roli) ====== */
@@ -328,6 +336,14 @@ btnNext1.onclick = () => {
   const nm = (nameInput.value||'').trim();
   if (!id || id<1 || id>10) { alert('Podaj numer 1–10'); return; }
   if (!nm) { alert('Podaj imię i nazwisko'); return; }
+  const existing = lastState?.players?.find(p => p.id === id && isSeatJoined(p));
+  if (existing){
+    const currentName = (existing.name||'').trim().toLowerCase();
+    if (!currentName || currentName !== nm.toLowerCase()){
+      alert('To stanowisko jest już zajęte. Wybierz inne.');
+      return;
+    }
+  }
   myId = id;
   bus.send('/app/setName', {playerId:id, name:nm});
   document.getElementById('step1').style.display='none';
