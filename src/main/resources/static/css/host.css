@@ -41,6 +41,18 @@ body{margin:0;background:linear-gradient(180deg,#0b1326,#060b16);color:var(--tex
 .metrics-card span{color:var(--muted);font-size:.9rem}
 .metrics-card strong{font-size:1.05rem}
 
+#current{display:grid;gap:18px}
+.stage-card{display:grid;gap:16px;padding:22px;border-radius:18px;border:1px solid rgba(59,109,246,.35);background:linear-gradient(135deg,rgba(59,109,246,.18),rgba(9,18,35,.82));box-shadow:0 18px 50px rgba(5,13,28,.45)}
+.stage-head{display:grid;gap:10px}
+.stage-pill{align-self:start;padding:6px 12px;border-radius:999px;background:rgba(59,109,246,.25);border:1px solid rgba(103,139,255,.55);font-weight:800;font-size:.78rem;letter-spacing:.35px;text-transform:uppercase;color:#e1e9ff}
+.stage-title{margin:0;font-size:1.7rem;font-weight:900;color:#f6fbff;letter-spacing:.4px}
+.stage-sub{margin:0;color:rgba(206,220,255,.85);font-size:1rem;line-height:1.45}
+.stage-action{display:flex;flex-wrap:wrap;gap:14px}
+.stage-action .btn{flex:1 1 220px;justify-content:center;padding:16px 20px;font-size:1.1rem;font-weight:800;border-radius:14px}
+.stage-action .btn.ghost{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+.stage-action .btn.good,.stage-action .btn.bad{flex-basis:calc(50% - 8px)}
+.stage-placeholder{font-size:.95rem;color:rgba(206,220,255,.7)}
+#current h3{margin:0;font-size:1.2rem;letter-spacing:.3px}
 #current .person{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:18px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.05)}
 #current .avatar{width:70px;height:70px;border-radius:50%;overflow:hidden;background:#0e1830;border:1px solid var(--line);display:grid;place-items:center}
 #current .avatar img{width:100%;height:100%;object-fit:contain}

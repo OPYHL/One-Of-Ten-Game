@@ -36,6 +36,11 @@ const flowSteps  = document.getElementById('flowSteps');
 const flowAction = document.getElementById('flowAction');
 const flowHint   = document.getElementById('flowHint');
 
+const stagePhaseEl = document.getElementById('stagePhase');
+const stageTitleEl = document.getElementById('stageTitle');
+const stageSubEl   = document.getElementById('stageSub');
+const stageActionEl= document.getElementById('stageAction');
+
 const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeTitle    = document.getElementById('welcomeTitle');
 const welcomeSubtitle = document.getElementById('welcomeSubtitle');
@@ -347,17 +352,28 @@ function updateFlow(st){
   let status = 'Sterowanie';
   let hint = '';
   const actions = [];
+  let stageTitle = 'Sterowanie';
+  let stageMessage = '';
+  let stageBadge = '';
+  let stageActions = [];
 
   switch (phase){
     case 'IDLE':
       if (joinedCount === 0){
         status = 'Czekamy na graczy';
         hint = 'Poproś graczy o dołączenie przez player.html.';
+        stageTitle = 'Oczekiwanie na graczy';
+        stageMessage = 'Poproś zawodników, aby wpisali swoje dane i zajęli stanowiska.';
+        stageBadge = 'Oczekiwanie';
       } else {
         status = 'Gotowy do startu';
         const readyHint = joinedCount === 1 ? 'Dołączył 1 gracz — rozpocznij program.' : `${joinedCount} graczy czeka na start.`;
         hint = readyHint;
         actions.push({ label: 'Rozpocznij', handler: startOrNext, variant: 'primary' });
+        stageTitle = 'Rozpocznij program';
+        stageMessage = readyHint;
+        stageBadge = 'Start';
+        stageActions = actions.slice();
       }
       break;
     case 'INTRO':
@@ -365,9 +381,17 @@ function updateFlow(st){
       if (!activeQuestion){
         actions.push({ label: 'Wybierz pytanie', handler: openModal, variant: 'primary' });
         hint = 'Podczas muzyki wybierz kategorię i numer pytania.';
+        stageTitle = 'Wybierz pytanie';
+        stageMessage = 'Katalog pytań otworzy się w nowym oknie.';
+        stageBadge = 'Intro';
+        stageActions = actions.slice();
       } else {
         actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
         hint = 'Intro nadal trwa — możesz jeszcze zmienić pytanie.';
+        stageTitle = 'Intro trwa';
+        stageMessage = 'Jeśli chcesz, wybierz inne pytanie zanim cisza opadnie.';
+        stageBadge = 'Intro';
+        stageActions = actions.slice();
       }
       break;
     case 'READING':
@@ -375,20 +399,35 @@ function updateFlow(st){
         status = 'Wybierz pytanie';
         actions.push({ label: 'Przeglądaj pytania', handler: openModal, variant: 'primary' });
         hint = 'Wskaż pytanie zanim zaczniesz czytać.';
+        stageTitle = 'Przygotuj pytanie';
+        stageMessage = 'Wybierz kategorię oraz numer pytania.';
+        stageBadge = 'Czytanie';
+        stageActions = actions.slice();
       } else if (!readingStarted){
         status = 'Rozpocznij czytanie';
         actions.push({ label: 'Czytam', handler: beginReading, variant: 'primary' });
         actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
         hint = 'Kliknij „Czytam”, gdy zaczynasz mówić na głos.';
+        stageTitle = 'Czas czytać';
+        stageMessage = 'Kliknij „Czytam”, gdy wypowiadasz treść pytania.';
+        stageBadge = 'Czytanie';
+        stageActions = actions.slice();
       } else {
         status = 'Kończysz czytanie';
         actions.push({ label: 'Przeczytałem', handler: completeReading, variant: 'primary' });
         hint = 'Odsłoń pytanie na ekranie po przeczytaniu.';
+        stageTitle = 'Zakończ czytanie';
+        stageMessage = 'Odsłoń pytanie i pokaż je na ekranie publicznym.';
+        stageBadge = 'Czytanie';
+        stageActions = actions.slice();
       }
       break;
     case 'BUZZING':
       status = 'Oczekiwanie na zgłoszenie';
       hint = 'Gracze wciskają przyciski, by się zgłosić.';
+      stageTitle = 'Czekamy na zgłoszenie';
+      stageMessage = 'Wypatruj gracza, który zgłosił się jako pierwszy.';
+      stageBadge = 'Zgłoszenia';
       break;
     case 'ANSWERING':
       status = 'Gracz odpowiada';
@@ -396,26 +435,47 @@ function updateFlow(st){
         const nm = (answering.name || '').trim();
         const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
         hint = `Odpowiada ${label}.`;
+        stageTitle = `${label} odpowiada`;
+        stageMessage = 'Oceń wypowiedź i kliknij właściwy przycisk.';
+        stageBadge = `Gracz ${answering.id}`;
       } else {
         hint = 'Oceń odpowiedź gracza.';
+        stageTitle = 'Oceń odpowiedź';
+        stageMessage = 'Kliknij „Dobra” lub „Zła”.';
+        stageBadge = 'Ocena';
       }
       actions.push({ label: '✓ Dobra odpowiedź', handler: ()=>judge(true), variant: 'good' });
       actions.push({ label: '✗ Zła odpowiedź', handler: ()=>judge(false), variant: 'bad' });
+      stageActions = actions.slice();
       break;
     case 'SELECTING':
       status = 'Wybór kolejnego gracza';
       hint = 'Zwycięzca wskazuje przeciwnika. Poczekaj na potwierdzenie.';
+      stageTitle = 'Czekamy na wybór';
+      stageMessage = 'Zwycięzca wskazuje kolejnego odpowiadającego.';
+      stageBadge = 'Wybór';
       break;
     case 'COOLDOWN':
       status = 'Chwila przerwy';
       hint = 'Za moment ponownie otworzymy zgłoszenia.';
+      stageTitle = 'Krótka przerwa';
+      stageMessage = 'Przygotuj kolejne pytanie na spokojnie.';
+      stageBadge = 'Przerwa';
       break;
     default:
       status = 'Sterowanie';
       hint = '';
+      stageTitle = 'Sterowanie';
+      stageMessage = 'Działania pojawią się w odpowiednim momencie.';
   }
 
-  renderFlowState({ status, hint, actions, steps });
+  if (!stageBadge){ stageBadge = status; }
+  if (!stageActions.length){
+    const prioritized = actions.filter(act => ['primary','good','bad'].includes(act.variant));
+    stageActions = prioritized.length ? prioritized : actions.slice();
+  }
+
+  renderFlowState({ status, hint, actions, steps, stageTitle, stageMessage, stageBadge, stageActions });
 }
 
 function buildFlowSteps(st, activeQuestion, answering){
@@ -495,7 +555,8 @@ function buildFlowSteps(st, activeQuestion, answering){
   return steps;
 }
 
-function renderFlowState({ status, hint, actions, steps }){
+function renderFlowState({ status, hint, actions, steps, stageTitle, stageMessage, stageBadge, stageActions }){
+  renderStage({ badge: stageBadge || status, title: stageTitle || status, message: stageMessage || hint, actions: stageActions || actions });
   flowStatus.textContent = status;
   renderFlowSteps(Array.isArray(steps) ? steps : []);
   renderFlowActions(Array.isArray(actions) ? actions : []);
@@ -554,16 +615,45 @@ function renderFlowActions(actions){
   }
 
   actions.forEach(act => {
-    if (!act || typeof act.handler !== 'function') return;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn';
-    if (act.variant){ btn.classList.add(act.variant); }
-    btn.textContent = act.label || 'Akcja';
-    if (act.disabled){ btn.disabled = true; }
-    btn.addEventListener('click', act.handler);
-    flowAction.appendChild(btn);
+    const btn = createActionButton(act);
+    if (btn){ flowAction.appendChild(btn); }
   });
+}
+
+function renderStage(stage){
+  if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl) return;
+  stagePhaseEl.textContent = stage.badge || 'Sterowanie';
+  stageTitleEl.textContent = stage.title || 'Sterowanie';
+  stageSubEl.textContent = stage.message || 'Sterowanie pojawi się po rozpoczęciu gry.';
+  stageActionEl.innerHTML = '';
+
+  const acts = Array.isArray(stage.actions) ? stage.actions : [];
+  if (!acts.length){
+    const placeholder = document.createElement('div');
+    placeholder.className = 'stage-placeholder';
+    placeholder.textContent = 'Sterowanie pojawi się automatycznie w kolejnym kroku.';
+    stageActionEl.appendChild(placeholder);
+    return;
+  }
+
+  acts.forEach(act => {
+    const btn = createActionButton(act);
+    if (!btn) return;
+    btn.classList.add('stage-btn');
+    stageActionEl.appendChild(btn);
+  });
+}
+
+function createActionButton(act){
+  if (!act || typeof act.handler !== 'function') return null;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn';
+  if (act.variant){ btn.classList.add(act.variant); }
+  btn.textContent = act.label || 'Akcja';
+  if (act.disabled){ btn.disabled = true; }
+  btn.addEventListener('click', act.handler);
+  return btn;
 }
 
 function maybePromptQuestion(st, activeQuestion){
@@ -682,6 +772,14 @@ function updateTimerDisplay(){
   } else {
     ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
   }
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 }
 
 function truncate(text, max){
