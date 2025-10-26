@@ -742,6 +742,61 @@ function updateTimerDisplay(){
   } else {
     ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
   }
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+  const total = Math.max(0, state?.settings?.answerTimerMs || 0);
+  const isAnswering = state?.phase === 'ANSWERING';
+
+  if (total === 0){
+    timerRemainingEl.textContent = '0.0';
+    timerTotalEl.textContent = '/ 0.0 s';
+    timerFillEl.style.width = '0%';
+    timerBarEl.classList.remove('critical');
+    if (timerBoxEl){ timerBoxEl.classList.remove('critical'); }
+    ansTime.textContent = 'Czas odpowiedzi nie został ustawiony.';
+    return;
+  }
+
+  const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
+  timerRemainingEl.textContent = formatSecondsShort(remaining);
+  timerTotalEl.textContent = `/ ${formatSecondsShort(total)} s`;
+  const percent = total > 0 ? (remaining / total) * 100 : 0;
+  timerFillEl.style.width = `${percent}%`;
+  const critical = isAnswering && remaining <= Math.min(total, 2000);
+  timerBarEl.classList.toggle('critical', critical);
+  if (timerBoxEl){ timerBoxEl.classList.toggle('critical', critical); }
+
+  if (isAnswering){
+    ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
+  } else {
+    ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
+  }
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 }
 
 function truncate(text, max){
