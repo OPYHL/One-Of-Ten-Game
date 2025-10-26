@@ -324,3 +324,6 @@ body.me-banned #know{
   cursor: not-allowed;
 }
 
+
+#timerCard .badge{min-width:72px; display:inline-flex; justify-content:center; font-weight:800;}
+#timerCard input[type=range]{width:100%; accent-color:var(--accent);}
