@@ -19,6 +19,7 @@ public class OperatorWsController {
     // Start
     @MessageMapping("/host/start")    public void hostStart(SimpleDto ignored){ game.hostStartRound(); }
     @MessageMapping("/host/next")     public void hostNext(SimpleDto ignored){ game.hostNextQuestion(); }
+    @MessageMapping("/host/readingStart") public void hostReadingStart(SimpleDto ignored){ game.hostReadingStart(); }
     @MessageMapping("/host/readDone") public void hostReadDone(SimpleDto ignored){ game.hostReadDone(); }
     @MessageMapping("/host/selectQuestion") public void selectQuestion(SelectQuestionDto dto){ game.selectQuestion(dto.getDifficulty(), dto.getCategory(), dto.getQuestionId()); }
 

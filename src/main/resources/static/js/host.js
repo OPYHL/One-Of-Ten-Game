@@ -1,6 +1,7 @@
 import { connect } from '/js/ws.js';
 
 const btnStart    = document.getElementById('btnStart');
+const btnIntroDone= document.getElementById('btnIntroDone');
 const btnQuestion = document.getElementById('btnQuestion');
 const btnRead     = document.getElementById('btnRead');
 const btnReadDone = document.getElementById('btnReadDone');
@@ -40,7 +41,7 @@ const stagePlaceholderEl = document.getElementById('stagePlaceholder');
 const stageStepsEl = document.getElementById('stageSteps');
 
 const stageButtons = {};
-[btnStart, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
+[btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
   if (!btn) return;
   stageButtons[btn.id] = {
     el: btn,
@@ -68,18 +69,25 @@ const metricCount   = document.getElementById('metricCount');
 const metricAverage = document.getElementById('metricAverage');
 const metricLast    = document.getElementById('metricLast');
 
+const targetOverlay = document.getElementById('targetOverlay');
+const targetMessage = document.getElementById('targetMessage');
+const btnTargetApprove = document.getElementById('btnTargetApprove');
+const btnTargetReject  = document.getElementById('btnTargetReject');
+
 let state = null;
 let catalog = null;
 let activeDifficulty = null;
 let activeCategory = null;
 let runtimeTimer = null;
 let lastMetrics = null;
-let readingStarted = false;
 let currentQuestionId = null;
 let questionPrompted = false;
 let latestTimerRemainingMs = 0;
 let toastTimer = null;
 let toastHideTimer = null;
+let autoAdvanceIntroPending = false;
+let readingStartPending = false;
+let targetProposal = null;
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -160,11 +168,15 @@ function buildQuestionList(){
 
 function confirmQuestion(q){
   if (!activeDifficulty || !activeCategory) return;
+  const inIntro = state?.phase === 'INTRO';
   send('/app/host/selectQuestion', {
     difficulty: activeDifficulty.id,
     category: activeCategory.id,
     questionId: q.id,
   });
+  if (inIntro){
+    autoAdvanceIntroPending = true;
+  }
   closeModal();
 }
 
@@ -195,8 +207,22 @@ function startOrNext(){
   }
 }
 
+function proceedToReadingPhase(){
+  if (!state) return;
+  if (state.phase !== 'INTRO') {
+    showToast('Przejście do czytania będzie dostępne po rozpoczęciu gry.');
+    return;
+  }
+  if (!state.hostDashboard?.activeQuestion){
+    showToast('Najpierw wybierz pytanie z katalogu.');
+    return;
+  }
+  send('/app/introDone');
+}
+
 /* ====== UI actions ====== */
 btnStart.addEventListener('click',     startOrNext);
+if (btnIntroDone) btnIntroDone.addEventListener('click', proceedToReadingPhase);
 btnRead.addEventListener('click',      beginReading);
 btnReadDone.addEventListener('click',  completeReading);
 btnGood.addEventListener('click',      ()=> judge(true));
@@ -205,6 +231,8 @@ btnNext.addEventListener('click',      ()=> send('/app/host/next'));
 btnReset.addEventListener('click',     ()=> send('/app/reset'));
 btnNew.addEventListener('click',       ()=> send('/app/newGame'));
 welcomeCta.addEventListener('click', startOrNext);
+if (btnTargetApprove) btnTargetApprove.addEventListener('click', ()=> respondTarget(true));
+if (btnTargetReject)  btnTargetReject.addEventListener('click', ()=> respondTarget(false));
 
 document.addEventListener('keydown', (e)=>{
   if (e.repeat) return;
@@ -223,6 +251,11 @@ function judge(ok){
   send('/app/judge', { playerId: state.answeringId, correct: !!ok });
 }
 
+function respondTarget(accept){
+  hideTargetOverlay();
+  send('/app/approveTarget', { accept: !!accept });
+}
+
 /* ====== render ====== */
 function isJoined(p){
   if (!p) return false;
@@ -237,6 +270,9 @@ function render(){
 
   const joined = (st.players||[]).filter(isJoined);
   const joinedCount = joined.length;
+  if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
+    hideTargetOverlay();
+  }
   statPlayers.textContent = joinedCount;
   phaseEl.textContent = st.phase;
   const answerMs = st.settings?.answerTimerMs || 0;
@@ -246,13 +282,20 @@ function render(){
   const activeId = activeQuestion?.id || null;
   if (activeId !== currentQuestionId){
     currentQuestionId = activeId;
-    readingStarted = false;
+    readingStartPending = false;
   }
-  if (st.phase !== 'READING'){
-    readingStarted = false;
+  const inReadingPhase = st.phase === 'READING';
+  if (!inReadingPhase){
+    readingStartPending = false;
+  }
+  if (activeQuestion && !activeQuestion.preparing){
+    readingStartPending = false;
   }
   if (st.phase !== 'ANSWERING'){
     latestTimerRemainingMs = answerMs;
+  }
+  if (st.phase !== 'INTRO'){
+    autoAdvanceIntroPending = false;
   }
 
   updateQuestion(activeQuestion);
@@ -261,6 +304,7 @@ function render(){
   const answeringPlayer = st.players?.find(x=>x.id===st.answeringId);
   updateStage(st, joinedCount, activeQuestion, answeringPlayer);
   maybePromptQuestion(st, activeQuestion);
+  tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
 
   /* current answering */
@@ -336,6 +380,8 @@ function updateMetrics(metrics){
 function updateStage(st, joinedCount, activeQuestion, answering){
   if (!st) return;
   const phase = st.phase;
+  const isPreparing = !!activeQuestion?.preparing;
+  const readingActive = phase === 'READING' && activeQuestion && !activeQuestion.preparing;
   const stage = {
     badge: 'Sterowanie',
     title: 'Sterowanie',
@@ -370,8 +416,9 @@ function updateStage(st, joinedCount, activeQuestion, answering){
         stage.message = 'Podczas muzyki wskaż kategorię i numer pytania.';
         stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz pytanie', variant: 'primary' });
       } else {
-        stage.title = 'Intro trwa';
-        stage.message = 'Możesz jeszcze zmienić pytanie przed ciszą.';
+        stage.title = 'Intro gotowe';
+        stage.message = 'Gdy muzyka ucichnie, kliknij „Rozpocznij czytanie”, aby przejść dalej.';
+        stage.buttons.push({ id: 'btnIntroDone', label: 'Rozpocznij czytanie', variant: 'primary' });
         stage.buttons.push({ id: 'btnQuestion', label: 'Zmień pytanie', variant: 'ghost' });
       }
       break;
@@ -382,10 +429,10 @@ function updateStage(st, joinedCount, activeQuestion, answering){
         stage.title = 'Przygotuj pytanie';
         stage.message = 'Wybierz kategorię oraz numer zanim zaczniesz czytać.';
         stage.buttons.push({ id: 'btnQuestion', label: 'Przeglądaj pytania', variant: 'primary' });
-      } else if (!readingStarted){
+      } else if (isPreparing){
         stage.title = 'Czas czytać';
         stage.message = 'Gdy zaczynasz mówić na głos, kliknij „Czytam”.';
-        stage.buttons.push({ id: 'btnRead', label: 'Czytam', variant: 'primary' });
+        stage.buttons.push({ id: 'btnRead', label: 'Czytam', variant: 'primary', disabled: readingStartPending });
         stage.buttons.push({ id: 'btnQuestion', label: 'Zmień pytanie', variant: 'ghost' });
       } else {
         stage.title = 'Odsłoń pytanie';
@@ -418,10 +465,19 @@ function updateStage(st, joinedCount, activeQuestion, answering){
     }
     case 'SELECTING': {
       stage.badge = 'Wybór';
-      stage.title = 'Czekamy na wybór gracza';
-      stage.message = 'Zwycięzca wskazuje kolejnego odpowiadającego — obserwuj ekran operatora.';
-      stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary' });
-      stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz kolejne pytanie', variant: 'ghost' });
+      if (targetProposal){
+        const chooser = st.players?.find(p=>p.id===targetProposal.fromId);
+        const target = st.players?.find(p=>p.id===targetProposal.toId);
+        stage.title = 'Potwierdź wybór gracza';
+        stage.message = `${formatPlayerLabel(chooser)} wskazał ${formatPlayerLabel(target)}.`;
+        stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary', disabled: true });
+        stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz kolejne pytanie', variant: 'ghost' });
+      } else {
+        stage.title = 'Czekamy na wybór gracza';
+        stage.message = 'Zwycięzca wskazuje kolejnego odpowiadającego — obserwuj ekran operatora.';
+        stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary' });
+        stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz kolejne pytanie', variant: 'ghost' });
+      }
       break;
     }
     case 'COOLDOWN': {
@@ -449,6 +505,8 @@ function buildStageSteps(st, activeQuestion, answering){
 
   const phase = st.phase;
   const hasQuestion = !!activeQuestion;
+  const isPreparing = !!activeQuestion?.preparing;
+  const readingActive = phase === 'READING' && hasQuestion && !isPreparing;
 
   if (!hasQuestion){
     if (phase === 'INTRO' || phase === 'READING'){
@@ -469,12 +527,15 @@ function buildStageSteps(st, activeQuestion, answering){
 
   if (hasQuestion){
     if (phase === 'READING'){
-      if (!readingStarted){
+      if (isPreparing){
         steps[1].status = 'active';
         steps[2].status = 'pending';
-      } else {
+      } else if (readingActive) {
         steps[1].status = 'done';
         steps[2].status = 'active';
+      } else {
+        steps[1].status = 'done';
+        steps[2].status = 'done';
       }
     } else if (phase !== 'INTRO' && phase !== 'IDLE'){
       steps[1].status = 'done';
@@ -485,7 +546,7 @@ function buildStageSteps(st, activeQuestion, answering){
   if (!hasQuestion){
     steps[1].status = steps[1].status === 'done' ? 'done' : 'pending';
     steps[2].status = steps[2].status === 'done' ? 'done' : 'pending';
-  } else if (phase === 'READING' && !readingStarted){
+  } else if (phase === 'READING' && isPreparing){
     steps[2].status = steps[2].status === 'active' ? 'active' : 'pending';
   }
 
@@ -508,7 +569,9 @@ function buildStageSteps(st, activeQuestion, answering){
   } else if (phase === 'SELECTING' || phase === 'COOLDOWN'){
     steps[4].status = 'done';
     if (phase === 'SELECTING'){
-      steps[4].desc = 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
+      steps[4].desc = targetProposal
+        ? 'Zwycięzca wskazał gracza — potwierdź wybór.'
+        : 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
     }
   }
 
@@ -597,6 +660,14 @@ function maybePromptQuestion(st, activeQuestion){
   }
 }
 
+function tryAutoAdvanceIntro(st, activeQuestion){
+  if (!autoAdvanceIntroPending) return;
+  if (!st || st.phase !== 'INTRO') return;
+  if (!activeQuestion) return;
+  autoAdvanceIntroPending = false;
+  proceedToReadingPhase();
+}
+
 function hasReadyPlayers(){
   if (!state) return false;
   return (state.players || []).some(isJoined);
@@ -646,19 +717,40 @@ function showToast(message){
   }, 2600);
 }
 
+function showTargetOverlay(fromPlayer, toPlayer){
+  if (!targetOverlay || !targetMessage) return;
+  const fromLabel = formatPlayerLabel(fromPlayer);
+  const toLabel = formatPlayerLabel(toPlayer);
+  targetMessage.textContent = `${fromLabel} wskazuje ${toLabel}. Potwierdź wybór poniżej.`;
+  targetOverlay.classList.remove('hidden');
+  requestAnimationFrame(()=> targetOverlay.classList.add('show'));
+}
+
+function hideTargetOverlay(){
+  if (!targetOverlay) return;
+  targetOverlay.classList.remove('show');
+  setTimeout(()=> targetOverlay?.classList.add('hidden'), 220);
+  targetProposal = null;
+}
+
 function beginReading(){
   if (!state){ return; }
   if (state.phase !== 'READING'){
     showToast('Poczekaj na sygnał „Czytanie”.');
     return;
   }
-  if (!state.hostDashboard?.activeQuestion){
+  const active = state.hostDashboard?.activeQuestion;
+  if (!active){
     showToast('Najpierw wybierz pytanie.');
     return;
   }
-  if (readingStarted){ return; }
-  readingStarted = true;
-  send('/app/host/next');
+  if (!active.preparing){
+    showToast('To pytanie jest już w trakcie czytania.');
+    return;
+  }
+  if (readingStartPending){ return; }
+  readingStartPending = true;
+  send('/app/host/readingStart');
   updateStage(state);
 }
 
@@ -668,7 +760,8 @@ function completeReading(){
     showToast('Nie jesteśmy w trakcie czytania.');
     return;
   }
-  if (!readingStarted){
+  const active = state.hostDashboard?.activeQuestion;
+  if (!active || active.preparing){
     showToast('Najpierw kliknij „Czytam”.');
     return;
   }
@@ -685,10 +778,32 @@ function handleEvent(ev){
     setTimeout(()=> ansJudge.className='judge', 1000);
   }
   if (ev.type === 'QUESTION_SELECTED'){
-    readingStarted = false;
+    readingStartPending = false;
     questionLabel.classList.add('pulse');
     setTimeout(()=>questionLabel.classList.remove('pulse'), 600);
+    if (state?.phase === 'INTRO'){
+      autoAdvanceIntroPending = true;
+    }
     updateStage(state);
+  }
+  if (ev.type === 'TARGET_PROPOSED'){
+    const fromId = ev.playerId;
+    const toId = parseInt(ev.value||'0', 10);
+    const from = state?.players?.find(p=>p.id===fromId);
+    const to   = state?.players?.find(p=>p.id===toId);
+    showTargetOverlay(from, to);
+    targetProposal = { fromId, toId };
+  }
+  if (ev.type === 'TARGET_ACCEPTED'){
+    hideTargetOverlay();
+    const chosen = state?.players?.find(p=>p.id===ev.playerId);
+    showToast(`Następny odpowiada ${formatPlayerLabel(chosen)}.`);
+    targetProposal = null;
+  }
+  if (ev.type === 'TARGET_REJECTED'){
+    hideTargetOverlay();
+    showToast('Wybór odrzucony. Poproś o inną osobę.');
+    targetProposal = null;
   }
 }
 function handleTimer(t){
@@ -727,6 +842,25 @@ function updateTimerDisplay(){
   if (isAnswering){
     ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
   } else {
+    if (state?.phase === 'READING' && state?.hostDashboard?.activeQuestion?.preparing){
+      ansTime.textContent = 'Przygotuj pytanie i kliknij „Czytam”.';
+    } else {
+      ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
+    }
+  }
+
+  const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
+  timerRemainingEl.textContent = formatSecondsShort(remaining);
+  timerTotalEl.textContent = `/ ${formatSecondsShort(total)} s`;
+  const percent = total > 0 ? (remaining / total) * 100 : 0;
+  timerFillEl.style.width = `${percent}%`;
+  const critical = isAnswering && remaining <= Math.min(total, 2000);
+  timerBarEl.classList.toggle('critical', critical);
+  if (timerBoxEl){ timerBoxEl.classList.toggle('critical', critical); }
+
+  if (isAnswering){
+    ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
+  } else {
     ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
   }
 }
@@ -737,4 +871,18 @@ function truncate(text, max){
 }
 function escapeHtml(s){
   return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function formatPlayerLabel(player){
+  if (!player) return '—';
+  const nm = (player.name || '').trim();
+  return nm ? `${player.id}. ${nm}` : `Gracz ${player.id}`;
 }

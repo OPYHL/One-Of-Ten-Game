@@ -8,10 +8,11 @@ public class ActiveQuestion {
     private String answer;
     private int order;
     private boolean revealed;
+    private boolean preparing;
 
     public ActiveQuestion() {}
 
-    public ActiveQuestion(String id, String difficulty, String category, String question, String answer, int order, boolean revealed) {
+    public ActiveQuestion(String id, String difficulty, String category, String question, String answer, int order, boolean revealed, boolean preparing) {
         this.id = id;
         this.difficulty = difficulty;
         this.category = category;
@@ -19,6 +20,7 @@ public class ActiveQuestion {
         this.answer = answer;
         this.order = order;
         this.revealed = revealed;
+        this.preparing = preparing;
     }
 
     public String getId(){ return id; }
@@ -35,4 +37,7 @@ public class ActiveQuestion {
     public void setOrder(int order){ this.order = order; }
     public boolean isRevealed(){ return revealed; }
     public void setRevealed(boolean revealed){ this.revealed = revealed; }
+
+    public boolean isPreparing(){ return preparing; }
+    public void setPreparing(boolean preparing){ this.preparing = preparing; }
 }

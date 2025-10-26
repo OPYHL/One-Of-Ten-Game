@@ -120,8 +120,15 @@ if (answerSlider){
 btnBuzzStart.onclick = () => send('/app/openBuzzers');
 btnHostStart.onclick = () => {
   if (!st) return;
-  if (st.phase === 'IDLE') send('/app/host/start');
-  else if (st.phase === 'READING') send('/app/host/next');
+  if (st.phase === 'IDLE') {
+    send('/app/host/start');
+  } else if (st.phase === 'READING') {
+    if (st.hostDashboard?.activeQuestion?.preparing){
+      send('/app/host/readingStart');
+    } else {
+      send('/app/host/next');
+    }
+  }
 };
 btnReadDone.onclick  = () => send('/app/host/readDone');
 btnIntro.onclick     = () => send('/app/playCue',{cue:'INTRO'});
@@ -151,7 +158,10 @@ function render(){
   const pct = totalAnswerMs > 0 ? Math.max(0, Math.min(1, (totalAnswerMs - (timer.remainingMs||0))/totalAnswerMs)) : 0;
   pb.style.width = (pct*100).toFixed(1)+'%';
 
-  btnHostStart.textContent = st.phase === 'READING' ? 'Kolejne pytanie' : 'Rozpocznij rundę';
+  const prepping = st.phase === 'READING' && st.hostDashboard?.activeQuestion?.preparing;
+  btnHostStart.textContent = st.phase === 'READING'
+    ? (prepping ? 'Rozpocznij czytanie' : 'Kolejne pytanie')
+    : 'Rozpocznij rundę';
   const inIntro = st.phase==='INTRO';
   btnHostStart.disabled = !(st.phase==='IDLE' || st.phase==='READING') || inIntro || lockNext;
   btnReadDone.disabled  = !(st.phase==='READING');

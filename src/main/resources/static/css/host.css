@@ -190,6 +190,11 @@ body{
 .overlay-card{background:rgba(12,20,38,.92);border:1px solid rgba(60,109,248,.35);border-radius:26px;box-shadow:0 40px 120px rgba(0,0,0,.45);padding:36px 44px;text-align:center;max-width:540px}
 .overlay-card h1{margin:0 0 14px;font-size:2.3rem;letter-spacing:.5px}
 .overlay-card p{margin:0 0 22px;color:var(--muted);font-size:1.05rem;line-height:1.5}
+.overlay-card.small{max-width:440px;padding:28px 32px}
+.overlay-card.small h2{margin:0 0 10px;font-size:1.6rem}
+.overlay-card.small p{margin-bottom:20px;font-size:.98rem}
+.overlay-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.overlay-actions .btn{min-width:140px}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:grid;place-items:center;z-index:60}
 .modal.hidden{display:none}

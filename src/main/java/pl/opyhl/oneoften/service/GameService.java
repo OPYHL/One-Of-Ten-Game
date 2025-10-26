@@ -131,7 +131,7 @@ public class GameService {
         Optional<QuestionDetail> opt = questionBank.find(difficulty, category, questionId);
         if (opt.isEmpty()) return;
         QuestionDetail detail = opt.get();
-        activeQuestion = new ActiveQuestion(detail.getId(), detail.getDifficulty(), detail.getCategory(), detail.getQuestion(), detail.getAnswer(), detail.getOrder(), false);
+        activeQuestion = new ActiveQuestion(detail.getId(), detail.getDifficulty(), detail.getCategory(), detail.getQuestion(), detail.getAnswer(), detail.getOrder(), false, true);
         questionStartTimestamp = 0L;
         pushState();
         bus.publish(new Event("QUESTION_SELECTED", null, detail.getId(), null));
@@ -152,7 +152,7 @@ public class GameService {
         stopTimer();
         answeringId = id;
         currentChooserId = null;
-        beginReadingNewQuestion();               // nowe pytanie → czyścimy bany
+        enterReadingSetup();               // nowe pytanie → czyścimy bany
         bus.publish(new Event("ANSWERING_STARTED", id, null, null));
         bus.publish(new Event("PHASE", null, "READING", null));
     }
@@ -216,15 +216,13 @@ public class GameService {
 
     public synchronized void hostNextQuestion(){
         if (phase == GamePhase.INTRO) return;
-        beginReadingNewQuestion();
-        bus.publish(new Event("CUE", null, "START_Q", null));
+        enterReadingSetup();
         bus.publish(new Event("PHASE", null, "READING", null));
     }
 
     public synchronized void introDone(){
         if (phase != GamePhase.INTRO) return;
-        beginReadingNewQuestion();
-        bus.publish(new Event("CUE", null, "START_Q", null));
+        enterReadingSetup();
         bus.publish(new Event("PHASE", null, "READING", null));
     }
 
@@ -268,7 +266,7 @@ public class GameService {
         if (!startBuzzOpen) return;
         if (get(id).map(Player::isEliminated).orElse(true)) return;
         startBuzzOpen=false; answeringId=id; currentChooserId=null;
-        beginReadingNewQuestion();
+        enterReadingSetup();
         bus.publish(new Event("BUZZ_RESULT", id, null, null));
         bus.publish(new Event("PHASE", null, "READING", null));
     }
@@ -329,7 +327,7 @@ public class GameService {
             answeringId = proposedTargetId;
             int chooser = currentChooserId;
             proposedTargetId = null;
-            beginReadingNewQuestion();          // nowe pytanie -> czyść bany
+            enterReadingSetup();          // nowe pytanie -> czyść bany
             bus.publish(new Event("TARGET_ACCEPTED", answeringId, String.valueOf(chooser), null));
             bus.publish(new Event("CUE", null, "BOOM", null));
             bus.publish(new Event("LOCK_NEXT", null, "ON", null));
@@ -357,6 +355,7 @@ public class GameService {
 
     private void revealCurrentQuestion(){
         if (activeQuestion != null && !activeQuestion.isRevealed()){
+            activeQuestion.setPreparing(false);
             activeQuestion.setRevealed(true);
             bus.publish(new Event("QUESTION_REVEALED", null, activeQuestion.getId(), null));
         }
@@ -456,14 +455,26 @@ public class GameService {
     }
 
     /* =================== helpers =================== */
-    private void beginReadingNewQuestion(){
+    private void enterReadingSetup(){
         bannedThisQuestion.clear();
         phase = GamePhase.READING;
-        questionStartTimestamp = System.currentTimeMillis();
+        questionStartTimestamp = 0L;
         if (activeQuestion != null){
             activeQuestion.setRevealed(false);
+            activeQuestion.setPreparing(true);
         }
         pushState();
+    }
+
+    public synchronized void hostReadingStart(){
+        if (phase != GamePhase.READING) return;
+        if (activeQuestion == null) return;
+        if (!activeQuestion.isPreparing()) return;
+        activeQuestion.setPreparing(false);
+        questionStartTimestamp = System.currentTimeMillis();
+        pushState();
+        bus.publish(new Event("CUE", null, "START_Q", null));
+        bus.publish(new Event("PHASE", null, "READING", null));
     }
 
     /** Zła odpowiedź / timeout. */
@@ -539,7 +550,16 @@ public class GameService {
     private HostDashboard buildHostDashboard(){
         ActiveQuestion aq = null;
         if (activeQuestion != null){
-            aq = new ActiveQuestion(activeQuestion.getId(), activeQuestion.getDifficulty(), activeQuestion.getCategory(), activeQuestion.getQuestion(), activeQuestion.getAnswer(), activeQuestion.getOrder(), activeQuestion.isRevealed());
+            aq = new ActiveQuestion(
+                    activeQuestion.getId(),
+                    activeQuestion.getDifficulty(),
+                    activeQuestion.getCategory(),
+                    activeQuestion.getQuestion(),
+                    activeQuestion.getAnswer(),
+                    activeQuestion.getOrder(),
+                    activeQuestion.isRevealed(),
+                    activeQuestion.isPreparing()
+            );
         }
         HostMetrics m = new HostMetrics(metrics.getStartedAt(), metrics.getAskedCount(), metrics.getTotalQuestionTimeMs(), metrics.getLastQuestionTimeMs());
         HostConfig hostCfg = configService.getConfig() != null ? configService.getConfig().getHost() : null;

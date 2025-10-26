@@ -252,7 +252,12 @@ function render(){
   if (st.phase === 'INTRO') {
     hideCenter(); showBanner('Intro…');
   } else if (st.phase === 'READING') {
-    hideCenter(); showBanner('Prowadzący czyta pytanie…');
+    hideCenter();
+    if (st.hostDashboard?.activeQuestion?.preparing){
+      showBanner('Prowadzący przygotowuje pytanie…');
+    } else {
+      showBanner('Prowadzący czyta pytanie…');
+    }
   } else if (st.phase === 'COOLDOWN') {
     hideCenter(); hideBanner(); startLocalCooldown(COOLDOWN_MS);
   } else if (st.phase === 'BUZZING') {
@@ -295,6 +300,9 @@ function renderQuestionBoard(st){
   if (active.revealed){
     qText.textContent = active.question || '—';
     questionBoard.classList.add('revealed');
+  } else if (active.preparing){
+    qText.textContent = 'Prowadzący przygotowuje pytanie…';
+    questionBoard.classList.remove('revealed');
   } else {
     qText.textContent = 'Prowadzący czyta pytanie…';
     questionBoard.classList.remove('revealed');
@@ -409,7 +417,7 @@ function cardFor(p, st, w){
 /* ============== Scena (środek) ============== */
 function showStage(p, phase){
   const name = normName(p);
-  stageName.textContent = `${name || ''}`;
+  stageName.textContent = name ? `${p.id}. ${name}` : `Gracz ${p.id}`;
   stageSeat.textContent = `Stanowisko ${p.id}`;
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
 
@@ -502,7 +510,12 @@ function handleEvent(ev){
     if (ev.value === 'COOLDOWN') {
       hideBanner(); startLocalCooldown(COOLDOWN_MS);
     } else if (ev.value === 'READING') {
-      hideCooldown(); hideCenter(); showBanner('Prowadzący czyta pytanie…');
+      hideCooldown(); hideCenter();
+      if (state?.hostDashboard?.activeQuestion?.preparing){
+        showBanner('Prowadzący przygotowuje pytanie…');
+      } else {
+        showBanner('Prowadzący czyta pytanie…');
+      }
     } else if (ev.value === 'BUZZING') {
       hideCooldown(); showBuzzingCallout();
     } else if (ev.value === 'IDLE') {

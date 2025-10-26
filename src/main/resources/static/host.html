@@ -17,11 +17,6 @@
         <div class="pill"><span class="k">Graczy</span><span class="v" id="statPlayers">0</span></div>
         <div class="pill"><span class="k">Czas odpowiedzi</span><span class="v" id="statAnswerTime">0 s</span></div>
     </div>
-    <div class="center">
-        <div class="pill"><span class="k">Faza</span><span class="v" id="phase">IDLE</span></div>
-        <div class="pill"><span class="k">Graczy</span><span class="v" id="statPlayers">0</span></div>
-        <div class="pill"><span class="k">Czas odpowiedzi</span><span class="v" id="statAnswerTime">0 s</span></div>
-    </div>
     <div class="right">
         <button class="btn ghost" id="btnReset">Reset gry</button>
         <button class="btn ghost" id="btnNew">Nowa gra</button>
@@ -38,6 +33,17 @@
     </div>
 </div>
 
+<div id="targetOverlay" class="overlay hidden">
+    <div class="overlay-card small">
+        <h2>Potwierdź wybór gracza</h2>
+        <p id="targetMessage">—</p>
+        <div class="overlay-actions">
+            <button class="btn primary" id="btnTargetApprove">Akceptuj</button>
+            <button class="btn ghost" id="btnTargetReject">Odrzuć</button>
+        </div>
+    </div>
+</div>
+
 <main id="layout">
     <section id="stageColumn">
         <article class="stage-card">
@@ -49,6 +55,7 @@
             <div class="stage-controls">
                 <div class="stage-buttons" id="stageAction">
                     <button class="btn primary" id="btnStart" data-label="Rozpocznij">Rozpocznij</button>
+                    <button class="btn" id="btnIntroDone" data-label="Rozpocznij czytanie">Rozpocznij czytanie</button>
                     <button class="btn" id="btnQuestion" data-label="Wybierz pytanie">Wybierz pytanie</button>
                     <button class="btn" id="btnRead" data-label="Czytam">Czytam</button>
                     <button class="btn" id="btnReadDone" data-label="Przeczytałem">Przeczytałem</button>
