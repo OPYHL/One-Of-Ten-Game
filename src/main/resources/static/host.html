@@ -16,15 +16,53 @@
         <button class="btn bad"  id="btnBad">✗ Zła</button>
         <button class="btn" id="btnNext">Kolejne pytanie</button>
     </div>
+    <div class="center">
+        <div class="pill"><span class="k">Faza</span><span class="v" id="phase">IDLE</span></div>
+        <div class="pill"><span class="k">Graczy</span><span class="v" id="statPlayers">0</span></div>
+        <div class="pill"><span class="k">Czas odpowiedzi</span><span class="v" id="statAnswerTime">0 s</span></div>
+    </div>
     <div class="right">
         <button class="btn ghost" id="btnReset">Reset</button>
         <button class="btn ghost" id="btnNew">Nowa gra</button>
-        <span class="pill"><span class="k">Faza</span><span class="v" id="phase">IDLE</span></span>
-        <span class="pill"><span class="k">Graczy</span><span class="v" id="statPlayers">0</span></span>
     </div>
 </header>
 
+<div id="welcomeOverlay" class="overlay hidden">
+    <div class="overlay-card">
+        <h1 id="welcomeTitle">Witaj Marcel!</h1>
+        <p id="welcomeSubtitle">Zaraz zaczynamy — przygotuj się na pierwsze pytania.</p>
+        <button class="btn primary" id="btnOverlayStart">Zaczynajmy</button>
+    </div>
+</div>
+
 <main id="main">
+    <section id="sidebar">
+        <div class="card question-card">
+            <div class="card-header">
+                <h3>Aktualne pytanie</h3>
+                <button class="btn ghost" id="btnSelectQuestion">Wybierz pytanie</button>
+            </div>
+            <div class="question-info">
+                <div id="questionBadges" class="badges">
+                    <span class="badge" id="badgeDifficulty">—</span>
+                    <span class="badge" id="badgeCategory">—</span>
+                </div>
+                <div class="question-body">
+                    <div class="question-label" id="questionLabel">Brak wybranego pytania</div>
+                    <div class="question-text" id="questionText">Wybierz pytanie, aby rozpocząć.</div>
+                    <div class="question-answer" id="questionAnswer">Odpowiedź: —</div>
+                </div>
+            </div>
+        </div>
+        <div class="card metrics-card">
+            <h3>Tempo gry</h3>
+            <div class="metric"><span>Sesja trwa</span><strong id="metricRuntime">00:00</strong></div>
+            <div class="metric"><span>Pytania w tej sesji</span><strong id="metricCount">0</strong></div>
+            <div class="metric"><span>Średni czas pytania</span><strong id="metricAverage">0,0 s</strong></div>
+            <div class="metric"><span>Ostatnie pytanie</span><strong id="metricLast">0,0 s</strong></div>
+        </div>
+    </section>
+
     <section id="current">
         <h3>Odpowiada teraz</h3>
         <div id="answeringCard" class="person">
@@ -39,11 +77,32 @@
         <p class="muted">Skróty: S — start/kolejne pytanie, R — przeczytałem, G — dobra, B — zła.</p>
     </section>
 
-    <section id="players">
-        <h3>Gracze (kliknij, by ustawić odpowiadającego)</h3>
-        <div id="plist"></div>
+    <section id="flow">
+        <div class="card flow-card">
+            <h3>Co dalej?</h3>
+            <div id="flowStatus" class="flow-status">Czekamy na rozpoczęcie</div>
+            <div id="flowAction" class="flow-action"></div>
+            <p id="flowHint" class="flow-hint muted"></p>
+        </div>
     </section>
 </main>
+
+<div id="questionModal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Wybierz pytanie</h3>
+            <button class="btn ghost" id="btnCloseModal">Zamknij</button>
+        </div>
+        <div class="modal-body">
+            <aside id="difficultyList"></aside>
+            <div class="modal-content">
+                <div id="categoryHeader" class="modal-section-title">Kategorie</div>
+                <div id="categoryList" class="category-grid"></div>
+                <div id="questionList" class="question-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <audio id="sndIntro" preload="auto" src="/audio/intro.mp3"></audio>
 <audio id="sndBoom"  preload="auto" src="/audio/boom.mp3"></audio>

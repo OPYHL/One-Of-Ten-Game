@@ -1,0 +1,14 @@
+answer:
+  minSeconds: 3
+  maxSeconds: 15
+  defaultSeconds: 5
+  stepSeconds: 1
+cooldown:
+  minSeconds: 1
+  maxSeconds: 10
+  defaultSeconds: 3
+  stepSeconds: 1
+host:
+  name: "Marcel"
+  welcomeTitle: "Witaj Marcel!"
+  welcomeSubtitle: "Zaraz zaczynamy — przygotuj się na pierwsze pytania."
