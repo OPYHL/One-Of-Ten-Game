@@ -77,9 +77,13 @@
         <p class="muted">Skróty: S — start/kolejne pytanie, R — przeczytałem, G — dobra, B — zła.</p>
     </section>
 
-    <section id="players">
-        <h3>Gracze (kliknij, by ustawić odpowiadającego)</h3>
-        <div id="plist"></div>
+    <section id="flow">
+        <div class="card flow-card">
+            <h3>Co dalej?</h3>
+            <div id="flowStatus" class="flow-status">Czekamy na rozpoczęcie</div>
+            <div id="flowAction" class="flow-action"></div>
+            <p id="flowHint" class="flow-hint muted"></p>
+        </div>
     </section>
 </main>
 

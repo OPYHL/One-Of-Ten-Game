@@ -21,7 +21,31 @@ const ansSeat = document.getElementById('ansSeat');
 const ansTime = document.getElementById('ansTime');
 const ansJudge= document.getElementById('ansJudge');
 
-const plist   = document.getElementById('plist');
+const badgeDifficulty = document.getElementById('badgeDifficulty');
+const badgeCategory   = document.getElementById('badgeCategory');
+const questionLabel   = document.getElementById('questionLabel');
+const questionText    = document.getElementById('questionText');
+const questionAnswer  = document.getElementById('questionAnswer');
+
+const flowStatus = document.getElementById('flowStatus');
+const flowAction = document.getElementById('flowAction');
+const flowHint   = document.getElementById('flowHint');
+
+const welcomeOverlay  = document.getElementById('welcomeOverlay');
+const welcomeTitle    = document.getElementById('welcomeTitle');
+const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+
+const difficultyList  = document.getElementById('difficultyList');
+const categoryList    = document.getElementById('categoryList');
+const questionList    = document.getElementById('questionList');
+const categoryHeader  = document.getElementById('categoryHeader');
+const questionModal   = document.getElementById('questionModal');
+const btnCloseModal   = document.getElementById('btnCloseModal');
+
+const metricRuntime = document.getElementById('metricRuntime');
+const metricCount   = document.getElementById('metricCount');
+const metricAverage = document.getElementById('metricAverage');
+const metricLast    = document.getElementById('metricLast');
 
 const badgeDifficulty = document.getElementById('badgeDifficulty');
 const badgeCategory   = document.getElementById('badgeCategory');
@@ -51,6 +75,9 @@ let activeDifficulty = null;
 let activeCategory = null;
 let runtimeTimer = null;
 let lastMetrics = null;
+let readingStarted = false;
+let currentQuestionId = null;
+let questionPrompted = false;
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -161,18 +188,10 @@ function startOrNext(){
   }
 }
 
-function handleReadingStart(){
-  if (!state) return;
-  const phase = state.phase;
-  if (phase === 'READING' || phase === 'SELECTING') {
-    send('/app/host/next');
-  }
-}
-
 /* ====== UI actions ====== */
 btnStart.addEventListener('click',     startOrNext);
-btnRead.addEventListener('click',      handleReadingStart);
-btnReadDone.addEventListener('click',  ()=> send('/app/host/readDone'));
+btnRead.addEventListener('click',      beginReading);
+btnReadDone.addEventListener('click',  completeReading);
 btnGood.addEventListener('click',      ()=> judge(true));
 btnBad.addEventListener('click',       ()=> judge(false));
 btnNext.addEventListener('click',      ()=> send('/app/host/next'));
@@ -212,10 +231,22 @@ function render(){
   const answerSeconds = Math.round((st.settings?.answerTimerMs||0)/1000);
   statAnswerTime.textContent = `${answerSeconds} s`;
 
+  const activeQuestion = st.hostDashboard?.activeQuestion || null;
+  const activeId = activeQuestion?.id || null;
+  if (activeId !== currentQuestionId){
+    currentQuestionId = activeId;
+    readingStarted = false;
+  }
+  if (st.phase !== 'READING'){
+    readingStarted = false;
+  }
+
   updateButtons(st.phase);
-  updateQuestion(st);
+  updateQuestion(activeQuestion);
   updateWelcome(st);
   updateMetrics(st.hostDashboard?.metrics);
+  updateFlow(st, activeQuestion);
+  maybePromptQuestion(st, activeQuestion);
 
   /* current answering */
   const p = st.players?.find(x=>x.id===st.answeringId);
@@ -228,22 +259,6 @@ function render(){
     ansName.textContent = '—';
     ansSeat.textContent = 'Stanowisko —';
   }
-
-  /* list */
-  plist.innerHTML = '';
-  joined.forEach(pp=>{
-    const row = document.createElement('div');
-    row.className = 'playerRow' + (st.answeringId===pp.id ? ' active':'');
-    row.innerHTML = `
-      <div class="info">
-        <div class="name">${pp.id}. ${escapeHtml((pp.name||'').trim())}</div>
-        <div class="sub">Życia: ${pp.lives} • Punkty: ${pp.score}</div>
-      </div>
-      <div class="cta">Ustaw</div>
-    `;
-    row.addEventListener('click', ()=> send('/app/setAnswering', { playerId: pp.id }));
-    plist.appendChild(row);
-  });
 }
 
 function updateButtons(phase){
@@ -255,14 +270,14 @@ function updateButtons(phase){
   btnNext.disabled     = !(phase==='IDLE' || phase==='SELECTING');
 }
 
-function updateQuestion(st){
-  const active = st.hostDashboard?.activeQuestion;
+function updateQuestion(active){
   if (active){
     badgeDifficulty.textContent = active.difficulty || '—';
     badgeCategory.textContent   = active.category || '—';
     questionLabel.textContent   = `#${active.order?.toString().padStart(2,'0') || '--'} • ${active.id || ''}`;
     questionText.textContent    = active.question || '—';
     questionAnswer.textContent  = `Odpowiedź: ${active.answer || '—'}`;
+    questionPrompted = false;
   } else {
     badgeDifficulty.textContent = '—';
     badgeCategory.textContent   = '—';
@@ -297,6 +312,83 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
+function updateFlow(st, activeQuestion){
+  const phase = st.phase;
+  const players = st.players || [];
+  const answering = st.answeringId ? players.find(x => x.id === st.answeringId) : null;
+
+  if (phase === 'IDLE'){
+    setFlow('Czekamy na rozpoczęcie', [
+      { label: 'Rozpocznij rozgrywkę', handler: startOrNext, variant: 'primary' }
+    ], 'Gdy wszystko gotowe, rozpocznij program.');
+    return;
+  }
+
+  if (phase === 'INTRO'){
+    setFlow('Intro programu', [], 'Trwa muzyka otwarcia.');
+    return;
+  }
+
+  if (phase === 'READING'){
+    if (!activeQuestion){
+      setFlow('Wybierz pytanie', [
+        { label: 'Przeglądaj pytania', handler: openModal, variant: 'primary' }
+      ], 'Wybierz kategorię i numer pytania dla Marcela.');
+      return;
+    }
+
+    if (!readingStarted){
+      setFlow('Zacznij czytać pytanie', [
+        { label: 'Czytam', handler: beginReading, variant: 'primary' },
+        { label: 'Zmień pytanie', handler: openModal, variant: 'ghost' }
+      ], 'Kliknij, gdy zaczynasz czytać na głos.');
+      return;
+    }
+
+    setFlow('Czytasz pytanie', [
+      { label: 'Przeczytałem', handler: completeReading, variant: 'primary' }
+    ], 'Wciśnij, gdy kończysz czytać i chcesz pokazać treść.');
+    return;
+  }
+
+  if (phase === 'ANSWERING'){
+    const hint = answering ? `${answering.id}. ${(answering.name||'').trim()}` : null;
+    setFlow('Gracz odpowiada', [
+      { label: '✓ Dobra odpowiedź', handler: ()=>judge(true), variant: 'good' },
+      { label: '✗ Zła odpowiedź', handler: ()=>judge(false), variant: 'bad' }
+    ], hint ? `Odpowiada ${hint}. Oceń jego wypowiedź.` : 'Oceń odpowiedź gracza.');
+    return;
+  }
+
+  if (phase === 'BUZZING'){
+    setFlow('Oczekiwanie na zgłoszenie', [], 'Gracze zgłaszają się do odpowiedzi.');
+    return;
+  }
+
+  if (phase === 'SELECTING'){
+    setFlow('Zwycięzca wybiera przeciwnika', [], 'Poczekaj na zatwierdzenie wyboru kolejnego gracza.');
+    return;
+  }
+
+  if (phase === 'COOLDOWN'){
+    setFlow('Chwila przerwy', [], 'Za moment ponownie otworzymy zgłoszenia.');
+    return;
+  }
+
+  setFlow('Sterowanie', [], '');
+}
+
+function maybePromptQuestion(st, activeQuestion){
+  const needQuestion = st.phase === 'READING' && !activeQuestion;
+  if (needQuestion && !questionPrompted){
+    questionPrompted = true;
+    openModal();
+  }
+  if (!needQuestion){
+    questionPrompted = false;
+  }
+}
+
 function clearRuntimeTimer(){ if (runtimeTimer){ clearInterval(runtimeTimer); runtimeTimer = null; } }
 
 function refreshRuntime(){
@@ -320,6 +412,49 @@ function formatSeconds(ms){
   return `${sec.toFixed(1)} s`;
 }
 
+function setFlow(status, actions=[], hint=''){
+  flowStatus.textContent = status;
+  flowAction.innerHTML = '';
+  const hasActions = Array.isArray(actions) && actions.length > 0;
+
+  if (hasActions){
+    actions.forEach(act => {
+      if (!act || typeof act.handler !== 'function') return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      const variant = act.variant || 'primary';
+      if (variant){ btn.classList.add(variant); }
+      btn.textContent = act.label || 'Akcja';
+      btn.addEventListener('click', act.handler);
+      flowAction.appendChild(btn);
+    });
+  }
+
+  flowAction.classList.toggle('empty', !hasActions);
+
+  if (hint && hint.trim()){
+    flowHint.textContent = hint;
+    flowHint.classList.remove('hidden');
+  } else {
+    flowHint.textContent = '';
+    flowHint.classList.add('hidden');
+  }
+}
+
+function beginReading(){
+  if (!state || state.phase !== 'READING') return;
+  if (!state.hostDashboard?.activeQuestion) return;
+  readingStarted = true;
+  send('/app/host/next');
+  updateFlow(state, state.hostDashboard?.activeQuestion || null);
+}
+
+function completeReading(){
+  if (!state || state.phase !== 'READING') return;
+  send('/app/host/readDone');
+}
+
 /* ====== events & timer ====== */
 function handleEvent(ev){
   if (!ev) return;
@@ -329,6 +464,7 @@ function handleEvent(ev){
     setTimeout(()=> ansJudge.className='judge', 1000);
   }
   if (ev.type === 'QUESTION_SELECTED'){
+    readingStarted = false;
     questionLabel.classList.add('pulse');
     setTimeout(()=>questionLabel.classList.remove('pulse'), 600);
   }
