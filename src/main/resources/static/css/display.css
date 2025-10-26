@@ -64,6 +64,28 @@ img{ max-width:100%; display:block }
 }
 .banner.show{ opacity:1; transform:none }
 
+
+/* ===================== TABLICA PYTANIA ===================== */
+#questionBoard{
+  position:fixed; top:88px; left:50%; transform:translateX(-50%);
+  width:min(1100px,88vw); z-index:28;
+}
+#questionBoard .question-card{
+  background:linear-gradient(180deg,#101a31,#0f1629);
+  border:1px solid #213358; border-radius:18px;
+  box-shadow:0 26px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
+  padding:22px 26px; display:grid; gap:14px;
+}
+#questionBoard .meta{display:flex; gap:12px; flex-wrap:wrap}
+#questionBoard .pill{background:rgba(15,27,46,.8); border-color:#243659;}
+#questionBoard .text{font:800 28px/1.2 Inter,system-ui,sans-serif; color:#f2f7ff; min-height:72px}
+#questionBoard .answer{font:700 20px/1.2 Inter,system-ui,sans-serif; color:rgba(32,201,151,.85); opacity:.3; transition:opacity .25s ease}
+#questionBoard.revealed .answer{opacity:1}
+#questionBoard .answer.hidden{opacity:.25;color:#9cb2d9}
+
+#questionBoard.flash .question-card{animation:questionFlash .5s ease}
+@keyframes questionFlash{0%{box-shadow:0 26px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);}50%{box-shadow:0 26px 110px rgba(59,109,246,.4), inset 0 1px 0 rgba(255,255,255,.12);}100%{box-shadow:0 26px 90px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);}}
+
 /* ===================== SCENA (center) ===================== */
 #stage{
   position:fixed; inset:130px 0 250px; display:grid; place-items:center; z-index:30; pointer-events:none;

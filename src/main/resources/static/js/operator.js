@@ -17,6 +17,11 @@ const btnSave      = document.getElementById('btnSave');
 const btnReset     = document.getElementById('btnReset');
 const btnNewGame   = document.getElementById('btnNewGame');
 
+const answerSlider = document.getElementById('answerSlider');
+const answerValue  = document.getElementById('answerValue');
+const answerHint   = document.getElementById('answerHint');
+const answerMini   = document.getElementById('answerMini');
+
 const approveBackdrop = document.getElementById('approveBackdrop');
 const approveText     = document.getElementById('approveText');
 const btnApprove      = document.getElementById('btnApprove');
@@ -25,7 +30,9 @@ const btnReject       = document.getElementById('btnReject');
 let st = null, timer = {remainingMs:0, active:false};
 let pending = { fromId:null, toId:null };
 let lockNext = false;
-const TOTAL = 10000;
+let totalAnswerMs = 10000;
+let sliderConfig = null;
+let suppressSlider = false;
 
 const bus = connect({
   onState: s => { st = s; render(); },
@@ -58,6 +65,57 @@ const bus = connect({
     }
   }
 });
+loadOperatorConfig();
+
+async function loadOperatorConfig(){
+  if (!answerSlider) return;
+  try{
+    const res = await fetch('/api/operator/config');
+    if (!res.ok) return;
+    sliderConfig = await res.json();
+    setupSlider(sliderConfig);
+  } catch (e){ console.error('Nie udało się pobrać konfiguracji operatora', e); }
+}
+
+function setupSlider(cfg){
+  if (!answerSlider) return;
+  const ans = cfg?.answer || {};
+  if (ans.minSeconds) answerSlider.min = ans.minSeconds;
+  if (ans.maxSeconds) answerSlider.max = ans.maxSeconds;
+  if (ans.stepSeconds) answerSlider.step = ans.stepSeconds;
+  const def = ans.defaultSeconds || parseInt(answerSlider.value,10) || 10;
+  suppressSlider = true;
+  answerSlider.value = def;
+  suppressSlider = false;
+  updateSliderLabel(def);
+  if (answerHint){ answerHint.textContent = `Zakres: ${answerSlider.min}–${answerSlider.max} s`; }
+}
+
+function updateSliderLabel(sec){
+  if (!answerValue) return;
+  answerValue.textContent = `${sec} s`;
+}
+
+function syncSlider(seconds){
+  if (!answerSlider) return;
+  const sec = Math.round(seconds);
+  if (Number(answerSlider.value) !== sec){
+    suppressSlider = true;
+    answerSlider.value = sec;
+    suppressSlider = false;
+  }
+  updateSliderLabel(sec);
+}
+
+if (answerSlider){
+  answerSlider.addEventListener('input', () => updateSliderLabel(Number(answerSlider.value)));
+  answerSlider.addEventListener('change', () => {
+    if (suppressSlider) return;
+    const sec = Number(answerSlider.value);
+    if (Number.isFinite(sec)){ send('/app/operator/answerTimer', { seconds: sec }); }
+  });
+}
+
 
 btnBuzzStart.onclick = () => send('/app/openBuzzers');
 btnHostStart.onclick = () => {
@@ -80,9 +138,17 @@ function send(dest, body){ bus.send(dest, body || {}); }
 
 function render(){
   if(!st) return;
+  if (st.settings?.answerTimerMs){
+    totalAnswerMs = st.settings.answerTimerMs;
+    syncSlider(totalAnswerMs/1000);
+    if (answerMini){
+      const sec = Math.round(totalAnswerMs/1000);
+      answerMini.textContent = `W ANSWERING pasek pokazuje upływ ${sec} s. W BUZZING czekamy na „Znam odpowiedź!”.`;
+    }
+  }
   ph.textContent = 'Faza: ' + st.phase;
   ti.textContent = 'Timer: ' + (timer.remainingMs/1000).toFixed(1) + 's';
-  const pct = Math.max(0, Math.min(1, (TOTAL - (timer.remainingMs||0))/TOTAL));
+  const pct = totalAnswerMs > 0 ? Math.max(0, Math.min(1, (totalAnswerMs - (timer.remainingMs||0))/totalAnswerMs)) : 0;
   pb.style.width = (pct*100).toFixed(1)+'%';
 
   btnHostStart.textContent = st.phase === 'READING' ? 'Kolejne pytanie' : 'Rozpocznij rundę';
@@ -116,7 +182,7 @@ function render(){
   });
 }
 
-window.rename    = (id, name)   => send('/app/setName',{playerId:id, name});
+window.rename    = (id, name)   => send('/app/setName',{playerId:id, name, force:true});
 window.setGender = (id, gender) => send('/app/setGender',{playerId:id, gender});
 window.setAns    = (id)         => send('/app/setAnswering',{playerId:id});
 window.judge     = (id, ok)     => send('/app/judge',{playerId:id, correct:ok});
