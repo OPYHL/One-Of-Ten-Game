@@ -47,6 +47,28 @@ const metricCount   = document.getElementById('metricCount');
 const metricAverage = document.getElementById('metricAverage');
 const metricLast    = document.getElementById('metricLast');
 
+const badgeDifficulty = document.getElementById('badgeDifficulty');
+const badgeCategory   = document.getElementById('badgeCategory');
+const questionLabel   = document.getElementById('questionLabel');
+const questionText    = document.getElementById('questionText');
+const questionAnswer  = document.getElementById('questionAnswer');
+
+const welcomeOverlay  = document.getElementById('welcomeOverlay');
+const welcomeTitle    = document.getElementById('welcomeTitle');
+const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+
+const difficultyList  = document.getElementById('difficultyList');
+const categoryList    = document.getElementById('categoryList');
+const questionList    = document.getElementById('questionList');
+const categoryHeader  = document.getElementById('categoryHeader');
+const questionModal   = document.getElementById('questionModal');
+const btnCloseModal   = document.getElementById('btnCloseModal');
+
+const metricRuntime = document.getElementById('metricRuntime');
+const metricCount   = document.getElementById('metricCount');
+const metricAverage = document.getElementById('metricAverage');
+const metricLast    = document.getElementById('metricLast');
+
 let state = null;
 let catalog = null;
 let activeDifficulty = null;
