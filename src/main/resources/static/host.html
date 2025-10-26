@@ -8,13 +8,14 @@
 </head>
 <body>
 <header id="topbar">
-    <div class="left">
-        <button class="btn primary" id="btnStart">Rozpocznij</button>
-        <button class="btn" id="btnRead">Czytam</button>
-        <button class="btn" id="btnReadDone">Przeczytałem</button>
-        <button class="btn good" id="btnGood">✓ Dobra</button>
-        <button class="btn bad"  id="btnBad">✗ Zła</button>
-        <button class="btn" id="btnNext">Kolejne pytanie</button>
+    <div class="brand">
+        <div class="brand-name">Panel prowadzącego</div>
+        <div class="brand-sub">1 z 10</div>
+    </div>
+    <div class="center">
+        <div class="pill"><span class="k">Faza</span><span class="v" id="phase">IDLE</span></div>
+        <div class="pill"><span class="k">Graczy</span><span class="v" id="statPlayers">0</span></div>
+        <div class="pill"><span class="k">Czas odpowiedzi</span><span class="v" id="statAnswerTime">0 s</span></div>
     </div>
     <div class="center">
         <div class="pill"><span class="k">Faza</span><span class="v" id="phase">IDLE</span></div>
@@ -22,7 +23,7 @@
         <div class="pill"><span class="k">Czas odpowiedzi</span><span class="v" id="statAnswerTime">0 s</span></div>
     </div>
     <div class="right">
-        <button class="btn ghost" id="btnReset">Reset</button>
+        <button class="btn ghost" id="btnReset">Reset gry</button>
         <button class="btn ghost" id="btnNew">Nowa gra</button>
     </div>
 </header>
@@ -33,16 +34,39 @@
     <div class="overlay-card">
         <h1 id="welcomeTitle">Witaj Marcel!</h1>
         <p id="welcomeSubtitle">Zaraz zaczynamy — przygotuj się na pierwsze pytania.</p>
-        <button class="btn primary" id="btnOverlayStart">Zaczynajmy</button>
+        <button class="btn primary" id="btnOverlayStart">Rozpocznij</button>
     </div>
 </div>
 
-<main id="main">
-    <section id="sidebar" class="column column-left">
-        <div class="card question-card">
+<main id="layout">
+    <section id="stageColumn">
+        <article class="stage-card">
+            <header class="stage-head">
+                <span class="stage-pill" id="stagePhase">Czekamy na start</span>
+                <h2 class="stage-title" id="stageTitle">Witaj Marcelu</h2>
+                <p class="stage-sub" id="stageSub">Rozpocznij rozgrywkę, aby zobaczyć kolejne kroki.</p>
+            </header>
+            <div class="stage-controls">
+                <div class="stage-buttons" id="stageAction">
+                    <button class="btn primary" id="btnStart" data-label="Rozpocznij">Rozpocznij</button>
+                    <button class="btn" id="btnQuestion" data-label="Wybierz pytanie">Wybierz pytanie</button>
+                    <button class="btn" id="btnRead" data-label="Czytam">Czytam</button>
+                    <button class="btn" id="btnReadDone" data-label="Przeczytałem">Przeczytałem</button>
+                    <button class="btn good" id="btnGood" data-label="✓ Dobra">✓ Dobra</button>
+                    <button class="btn bad"  id="btnBad" data-label="✗ Zła">✗ Zła</button>
+                    <button class="btn" id="btnNext" data-label="Kolejne pytanie">Kolejne pytanie</button>
+                </div>
+                <div class="stage-placeholder" id="stagePlaceholder">Sterowanie pojawi się automatycznie, gdy będzie potrzebne.</div>
+            </div>
+            <ol class="stage-steps" id="stageSteps"></ol>
+        </article>
+    </section>
+
+    <section id="infoColumn">
+        <article class="card question-card">
             <div class="card-header">
                 <h3>Aktualne pytanie</h3>
-                <button class="btn ghost" id="btnSelectQuestion">Wybierz pytanie</button>
+                <button class="btn ghost" id="btnSelectQuestion">Przegląd pytań</button>
             </div>
             <div class="question-info">
                 <div id="questionBadges" class="badges">
@@ -55,53 +79,41 @@
                     <div class="question-answer" id="questionAnswer">Odpowiedź: —</div>
                 </div>
             </div>
-        </div>
-        <div class="card metrics-card">
+        </article>
+
+        <article id="answeringCard" class="card answering-card">
+            <div class="person-head">Aktualnie odpowiada</div>
+            <div class="answer-grid">
+                <div class="avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
+                <div class="person-meta">
+                    <div id="ansName" class="name">—</div>
+                    <div id="ansSeat" class="seat">Stanowisko —</div>
+                    <div class="timer" id="timerBox">
+                        <div class="timer-head">
+                            <span class="timer-label">Pozostały czas</span>
+                            <span id="timerTotal" class="timer-total">/ 0.0 s</span>
+                        </div>
+                        <div class="timer-count">
+                            <span id="timerRemaining" class="timer-number">0.0</span>
+                            <span class="timer-unit">s</span>
+                        </div>
+                        <div class="timer-bar" id="timerBar">
+                            <div class="timer-fill" id="timerFill"></div>
+                        </div>
+                        <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
+                    </div>
+                </div>
+                <div id="ansJudge" class="judge"></div>
+            </div>
+        </article>
+
+        <article class="card metrics-card">
             <h3>Tempo gry</h3>
             <div class="metric"><span>Sesja trwa</span><strong id="metricRuntime">00:00</strong></div>
             <div class="metric"><span>Pytania w tej sesji</span><strong id="metricCount">0</strong></div>
             <div class="metric"><span>Średni czas pytania</span><strong id="metricAverage">0,0 s</strong></div>
             <div class="metric"><span>Ostatnie pytanie</span><strong id="metricLast">0,0 s</strong></div>
-        </div>
-    </section>
-
-    <section id="current" class="column column-center">
-        <div class="stage-card">
-            <div class="stage-head">
-                <span class="stage-pill" id="stagePhase">Czekamy na start</span>
-                <h2 class="stage-title" id="stageTitle">Witaj Marcelu</h2>
-                <p class="stage-sub" id="stageSub">Rozpocznij rozgrywkę, aby zobaczyć kolejne kroki.</p>
-            </div>
-            <div class="stage-body">
-                <div class="stage-action" id="stageAction">
-                    <div class="stage-placeholder">Sterowanie pojawi się, gdy gra będzie gotowa.</div>
-                </div>
-                <ol class="stage-steps" id="stageSteps"></ol>
-            </div>
-        </div>
-        <div id="answeringCard" class="person">
-            <div class="person-head">Aktualnie odpowiada</div>
-            <div class="avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
-            <div class="meta">
-                <div id="ansName" class="name">—</div>
-                <div id="ansSeat" class="seat">Stanowisko —</div>
-                <div class="timer" id="timerBox">
-                    <div class="timer-head">
-                        <span class="timer-label">Pozostały czas</span>
-                        <span id="timerTotal" class="timer-total">/ 0.0 s</span>
-                    </div>
-                    <div class="timer-count">
-                        <span id="timerRemaining" class="timer-number">0.0</span>
-                        <span class="timer-unit">s</span>
-                    </div>
-                    <div class="timer-bar" id="timerBar">
-                        <div class="timer-fill" id="timerFill"></div>
-                    </div>
-                    <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
-                </div>
-            </div>
-            <div id="ansJudge" class="judge"></div>
-        </div>
+        </article>
     </section>
 </main>
 
