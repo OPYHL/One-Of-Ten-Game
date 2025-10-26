@@ -17,6 +17,13 @@ const stageSeat  = document.getElementById('stageSeat');
 const stageJudge = document.getElementById('stageJudge');
 const stageCd    = document.getElementById('stageCountdown');
 
+const questionBoard = document.getElementById('questionBoard');
+const qDiff = document.getElementById('qDiff');
+const qCat  = document.getElementById('qCat');
+const qId   = document.getElementById('qId');
+const qText = document.getElementById('qText');
+const qAnswer = document.getElementById('qAnswer');
+
 /* ===== Full-width timebar (tworzymy, jeśli brak) ===== */
 let timebarWrap = document.getElementById('timebarWrap');
 if (!timebarWrap){
@@ -41,8 +48,8 @@ let state      = null;
 let lastPhase  = 'IDLE';
 let askedCount = 0;
 
-const TOTAL_ANS_MS = 10_000;
-const COOLDOWN_MS  = 3_000;
+let TOTAL_ANS_MS = 10_000;
+let COOLDOWN_MS  = 3_000;
 
 let lastIds    = [];
 let lastScores = new Map();
@@ -226,6 +233,10 @@ function render(){
   const st = state; if (!st) return;
 
   const joined = (st.players||[]).filter(isJoined);
+  TOTAL_ANS_MS = st.settings?.answerTimerMs ?? TOTAL_ANS_MS;
+  COOLDOWN_MS = st.settings?.cooldownMs ?? COOLDOWN_MS;
+
+  renderQuestionBoard(st);
 
   // HUD – animacje przy zmianie
   if (hudPlayers && joined.length !== lastHud.players){ hudPlayers.textContent = joined.length; hudPlayers.parentElement.classList.add('bump'); setTimeout(()=>hudPlayers.parentElement.classList.remove('bump'), 260); lastHud.players = joined.length; }
@@ -262,6 +273,43 @@ function render(){
   } else if (st.phase!=='SELECTING') {
     hideStage();
   }
+}
+
+function renderQuestionBoard(st){
+  if (!questionBoard) return;
+  const active = st.hostDashboard?.activeQuestion;
+  if (!active){
+    qDiff.textContent = '—';
+    qCat.textContent = '—';
+    qId.textContent = 'Pytanie —';
+    qText.textContent = 'Czekamy na pytanie prowadzącego…';
+    qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
+    qAnswer.classList.add('hidden');
+    questionBoard.classList.remove('revealed');
+    return;
+  }
+  qDiff.textContent = active.difficulty || '—';
+  qCat.textContent  = active.category || '—';
+  const orderNum = typeof active.order === 'number' ? active.order : null;
+  qId.textContent   = orderNum ? `Pytanie ${orderNum.toString().padStart(2,'0')}` : 'Pytanie —';
+  if (active.revealed){
+    qText.textContent = active.question || '—';
+    questionBoard.classList.add('revealed');
+  } else {
+    qText.textContent = 'Prowadzący czyta pytanie…';
+    questionBoard.classList.remove('revealed');
+  }
+  if (shouldShowAnswer(st.phase)){
+    qAnswer.textContent = `Odpowiedź: ${active.answer || '—'}`;
+    qAnswer.classList.remove('hidden');
+  } else {
+    qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
+    qAnswer.classList.add('hidden');
+  }
+}
+
+function shouldShowAnswer(phase){
+  return phase === 'SELECTING' || phase === 'COOLDOWN' || phase === 'IDLE';
 }
 
 function renderGrid(players, st){
@@ -384,6 +432,14 @@ function hideCooldown(){ cd.style.display = 'none'; stopLocalCooldown(); }
 function handleEvent(ev){
   if (!ev) return;
 
+  if (ev.type === 'QUESTION_SELECTED'){
+    questionBoard?.classList.add('flash');
+    setTimeout(()=>questionBoard?.classList.remove('flash'), 600);
+  }
+  if (ev.type === 'QUESTION_REVEALED' && state){
+    renderQuestionBoard(state);
+  }
+
   if (ev.type === 'JUDGE') {
     const el = document.getElementById('judge-'+ev.playerId);
     if (el){
@@ -462,7 +518,7 @@ function handleTimer(t){
   // Pasek 10 s – tylko ANSWERING
   if (state?.phase === 'ANSWERING'){
     timebarWrap.classList.add('show');
-    const pct = Math.max(0, Math.min(1, (TOTAL_ANS_MS - ms)/TOTAL_ANS_MS));
+    const pct = Math.max(0, Math.min(1, (TOTAL_ANS_MS - ms)/Math.max(1, TOTAL_ANS_MS)));
     pb.style.width = (pct*100).toFixed(1)+'%';
 
     // Kolor paska: H 130 (zielony) → 0 (czerwony) + „żyjący” gradient

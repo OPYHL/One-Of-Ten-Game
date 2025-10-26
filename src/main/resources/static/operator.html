@@ -26,6 +26,17 @@
         </div>
     </div>
 
+    <div class="card" id="timerCard">
+        <div class="row" style="justify-content:space-between; align-items:center; gap:16px">
+            <div>
+                <h3 style="margin:0">Limit czasu odpowiedzi</h3>
+                <div class="mini" id="answerHint">Zakres: —</div>
+            </div>
+            <div class="badge" id="answerValue">0 s</div>
+        </div>
+        <input type="range" id="answerSlider" min="3" max="15" step="1" value="5" style="width:100%; margin-top:12px">
+    </div>
+
     <div class="card">
         <div class="row" style="justify-content:space-between">
             <div><b>Aktualny odpowiadający:</b> <span id="who">—</span></div>
@@ -34,7 +45,7 @@
         <div class="progressWrap" style="position:relative; top:auto; left:auto; right:auto; bottom:auto; margin-top:8px">
             <div id="pb" class="progressBar"></div>
         </div>
-        <div class="mini">W ANSWERING pasek pokazuje upływ 10 s. W BUZZING czekamy na „Znam odpowiedź!”.</div>
+        <div class="mini" id="answerMini">W ANSWERING pasek pokazuje upływ 10 s. W BUZZING czekamy na „Znam odpowiedź!”.</div>
     </div>
 
     <div id="grid" class="grid" style="grid-template-columns:repeat(5,1fr)"></div>

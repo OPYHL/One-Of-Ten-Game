@@ -20,6 +20,7 @@ public class OperatorWsController {
     @MessageMapping("/host/start")    public void hostStart(SimpleDto ignored){ game.hostStartRound(); }
     @MessageMapping("/host/next")     public void hostNext(SimpleDto ignored){ game.hostNextQuestion(); }
     @MessageMapping("/host/readDone") public void hostReadDone(SimpleDto ignored){ game.hostReadDone(); }
+    @MessageMapping("/host/selectQuestion") public void selectQuestion(SelectQuestionDto dto){ game.selectQuestion(dto.getDifficulty(), dto.getCategory(), dto.getQuestionId()); }
 
     // Pierwszy buzzer
     @MessageMapping("/openBuzzers")  public void openBuzzers(SimpleDto ignored){ game.openBuzzersStart(); }
@@ -35,10 +36,12 @@ public class OperatorWsController {
     @MessageMapping("/approveTarget") public void approveTarget(ApproveTargetDto dto){ game.approveTarget(dto.isAccept()); }
 
     // Meta
-    @MessageMapping("/setName")   public void setName(SetNameDto dto){ game.setName(dto.getPlayerId(), dto.getName()); }
+    @MessageMapping("/setName")   public void setName(SetNameDto dto){ game.setName(dto.getPlayerId(), dto.getName(), dto.isForce()); }
     @MessageMapping("/setGender") public void setGender(SetGenderDto dto){ game.setGender(dto.getPlayerId(), dto.getGender()); }
     @MessageMapping("/playCue")   public void playCue(PlayCueDto dto){ game.playCue(dto.getCue()); }
 
     // Zapis
     @MessageMapping("/saveResults") public void saveResults(SimpleDto ignored){ game.saveResults(); }
+
+    @MessageMapping("/operator/answerTimer") public void updateAnswerTimer(UpdateAnswerTimerDto dto){ game.updateAnswerTimer(dto.getSeconds()); }
 }
