@@ -36,7 +36,7 @@
 </div>
 
 <main id="main">
-    <section id="sidebar">
+    <section id="sidebar" class="column column-left">
         <div class="card question-card">
             <div class="card-header">
                 <h3>Aktualne pytanie</h3>
@@ -63,24 +63,40 @@
         </div>
     </section>
 
-    <section id="current">
+    <section id="current" class="column column-center">
         <h3>Odpowiada teraz</h3>
         <div id="answeringCard" class="person">
             <div class="avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
             <div class="meta">
                 <div id="ansName" class="name">—</div>
                 <div id="ansSeat" class="seat">Stanowisko —</div>
-                <div id="ansTime" class="time">Czas: 0.0 s</div>
+                <div class="timer" id="timerBox">
+                    <div class="timer-head">
+                        <span class="timer-label">Pozostały czas</span>
+                        <span id="timerTotal" class="timer-total">/ 0.0 s</span>
+                    </div>
+                    <div class="timer-count">
+                        <span id="timerRemaining" class="timer-number">0.0</span>
+                        <span class="timer-unit">s</span>
+                    </div>
+                    <div class="timer-bar" id="timerBar">
+                        <div class="timer-fill" id="timerFill"></div>
+                    </div>
+                    <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
+                </div>
             </div>
             <div id="ansJudge" class="judge"></div>
         </div>
         <p class="muted">Skróty: S — start/kolejne pytanie, R — przeczytałem, G — dobra, B — zła.</p>
     </section>
 
-    <section id="flow">
+    <section id="flow" class="column column-right">
         <div class="card flow-card">
-            <h3>Co dalej?</h3>
-            <div id="flowStatus" class="flow-status">Czekamy na rozpoczęcie</div>
+            <div class="flow-header">
+                <h3>Przebieg tury</h3>
+                <span id="flowStatus" class="flow-status-tag">Czekamy na rozpoczęcie</span>
+            </div>
+            <ol id="flowSteps" class="flow-steps"></ol>
             <div id="flowAction" class="flow-action"></div>
             <p id="flowHint" class="flow-hint muted"></p>
         </div>

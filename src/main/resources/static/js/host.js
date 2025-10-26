@@ -19,6 +19,11 @@ const ansName = document.getElementById('ansName');
 const ansSeat = document.getElementById('ansSeat');
 const ansTime = document.getElementById('ansTime');
 const ansJudge= document.getElementById('ansJudge');
+const timerBoxEl = document.getElementById('timerBox');
+const timerRemainingEl = document.getElementById('timerRemaining');
+const timerTotalEl = document.getElementById('timerTotal');
+const timerBarEl = document.getElementById('timerBar');
+const timerFillEl = document.getElementById('timerFill');
 
 const badgeDifficulty = document.getElementById('badgeDifficulty');
 const badgeCategory   = document.getElementById('badgeCategory');
@@ -27,6 +32,7 @@ const questionText    = document.getElementById('questionText');
 const questionAnswer  = document.getElementById('questionAnswer');
 
 const flowStatus = document.getElementById('flowStatus');
+const flowSteps  = document.getElementById('flowSteps');
 const flowAction = document.getElementById('flowAction');
 const flowHint   = document.getElementById('flowHint');
 
@@ -56,6 +62,7 @@ let lastMetrics = null;
 let readingStarted = false;
 let currentQuestionId = null;
 let questionPrompted = false;
+let latestTimerRemainingMs = 0;
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -208,8 +215,8 @@ function render(){
   const joinedCount = joined.length;
   statPlayers.textContent = joinedCount;
   phaseEl.textContent = st.phase;
-  const answerSeconds = Math.round((st.settings?.answerTimerMs||0)/1000);
-  statAnswerTime.textContent = `${answerSeconds} s`;
+  const answerMs = st.settings?.answerTimerMs || 0;
+  statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`;
 
   const activeQuestion = st.hostDashboard?.activeQuestion || null;
   const activeId = activeQuestion?.id || null;
@@ -220,13 +227,17 @@ function render(){
   if (st.phase !== 'READING'){
     readingStarted = false;
   }
+  if (st.phase !== 'ANSWERING'){
+    latestTimerRemainingMs = answerMs;
+  }
 
-  updateButtons(st.phase, joinedCount);
+  updateButtons(st.phase, joinedCount, !!activeQuestion);
   updateQuestion(activeQuestion);
   updateWelcome(st, joinedCount);
   updateMetrics(st.hostDashboard?.metrics);
-  updateFlow(st, activeQuestion, joinedCount);
+  updateFlow(st);
   maybePromptQuestion(st, activeQuestion);
+  updateTimerDisplay();
 
   /* current answering */
   const p = st.players?.find(x=>x.id===st.answeringId);
@@ -241,18 +252,30 @@ function render(){
   }
 }
 
-function updateButtons(phase, joinedCount){
-  const allowStart = phase === 'IDLE' ? joinedCount > 0 : (phase==='READING' || phase==='SELECTING');
-  btnStart.disabled    = !allowStart;
+function updateButtons(phase, joinedCount, hasQuestion){
+  const canStart = phase === 'IDLE' && joinedCount > 0;
+  toggleActionButton(btnStart, phase === 'IDLE');
+  btnStart.disabled = !canStart;
+
+  const showRead = phase === 'READING' && hasQuestion && !readingStarted;
+  toggleActionButton(btnRead, showRead);
+  btnRead.disabled = !showRead;
+
+  const showReadDone = phase === 'READING' && readingStarted;
+  toggleActionButton(btnReadDone, showReadDone);
+  btnReadDone.disabled = !showReadDone;
+
+  const showJudge = phase === 'ANSWERING' && !!state?.answeringId;
+  toggleActionButton(btnGood, showJudge);
+  toggleActionButton(btnBad, showJudge);
+  btnGood.disabled = !showJudge;
+  btnBad.disabled  = !showJudge;
+
+  const showNext = phase === 'SELECTING';
+  toggleActionButton(btnNext, showNext);
+  btnNext.disabled = !showNext;
+
   btnSelectQuestion.disabled = !(phase==='READING' || phase==='INTRO');
-  btnRead.disabled     = (phase!=='READING' && phase!=='SELECTING');
-  if (phase === 'READING' && !state?.hostDashboard?.activeQuestion){
-    btnRead.disabled = true;
-  }
-  btnReadDone.disabled = (phase!=='READING') || !readingStarted;
-  btnGood.disabled     = (phase!=='ANSWERING') || !state?.answeringId;
-  btnBad.disabled      = (phase!=='ANSWERING') || !state?.answeringId;
-  btnNext.disabled     = !(phase==='IDLE' || phase==='SELECTING');
 }
 
 function updateQuestion(active){
@@ -312,82 +335,235 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateFlow(st, activeQuestion, joinedCount){
+function updateFlow(st){
+  if (!st) return;
   const phase = st.phase;
   const players = st.players || [];
+  const joinedCount = players.filter(isJoined).length;
+  const activeQuestion = st.hostDashboard?.activeQuestion || null;
   const answering = st.answeringId ? players.find(x => x.id === st.answeringId) : null;
 
-  if (phase === 'IDLE'){
-    if (joinedCount === 0){
-      setFlow('Czekamy na graczy', [], 'Poproś graczy o dołączenie przez player.html.');
+  const steps = buildFlowSteps(st, activeQuestion, answering);
+  let status = 'Sterowanie';
+  let hint = '';
+  const actions = [];
+
+  switch (phase){
+    case 'IDLE':
+      if (joinedCount === 0){
+        status = 'Czekamy na graczy';
+        hint = 'Poproś graczy o dołączenie przez player.html.';
+      } else {
+        status = 'Gotowy do startu';
+        const readyHint = joinedCount === 1 ? 'Dołączył 1 gracz — rozpocznij program.' : `${joinedCount} graczy czeka na start.`;
+        hint = readyHint;
+        actions.push({ label: 'Rozpocznij', handler: startOrNext, variant: 'primary' });
+      }
+      break;
+    case 'INTRO':
+      status = 'Intro programu';
+      if (!activeQuestion){
+        actions.push({ label: 'Wybierz pytanie', handler: openModal, variant: 'primary' });
+        hint = 'Podczas muzyki wybierz kategorię i numer pytania.';
+      } else {
+        actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
+        hint = 'Intro nadal trwa — możesz jeszcze zmienić pytanie.';
+      }
+      break;
+    case 'READING':
+      if (!activeQuestion){
+        status = 'Wybierz pytanie';
+        actions.push({ label: 'Przeglądaj pytania', handler: openModal, variant: 'primary' });
+        hint = 'Wskaż pytanie zanim zaczniesz czytać.';
+      } else if (!readingStarted){
+        status = 'Rozpocznij czytanie';
+        actions.push({ label: 'Czytam', handler: beginReading, variant: 'primary' });
+        actions.push({ label: 'Zmień pytanie', handler: openModal, variant: 'ghost' });
+        hint = 'Kliknij „Czytam”, gdy zaczynasz mówić na głos.';
+      } else {
+        status = 'Kończysz czytanie';
+        actions.push({ label: 'Przeczytałem', handler: completeReading, variant: 'primary' });
+        hint = 'Odsłoń pytanie na ekranie po przeczytaniu.';
+      }
+      break;
+    case 'BUZZING':
+      status = 'Oczekiwanie na zgłoszenie';
+      hint = 'Gracze wciskają przyciski, by się zgłosić.';
+      break;
+    case 'ANSWERING':
+      status = 'Gracz odpowiada';
+      if (answering){
+        const nm = (answering.name || '').trim();
+        const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+        hint = `Odpowiada ${label}.`;
+      } else {
+        hint = 'Oceń odpowiedź gracza.';
+      }
+      actions.push({ label: '✓ Dobra odpowiedź', handler: ()=>judge(true), variant: 'good' });
+      actions.push({ label: '✗ Zła odpowiedź', handler: ()=>judge(false), variant: 'bad' });
+      break;
+    case 'SELECTING':
+      status = 'Wybór kolejnego gracza';
+      hint = 'Zwycięzca wskazuje przeciwnika. Poczekaj na potwierdzenie.';
+      break;
+    case 'COOLDOWN':
+      status = 'Chwila przerwy';
+      hint = 'Za moment ponownie otworzymy zgłoszenia.';
+      break;
+    default:
+      status = 'Sterowanie';
+      hint = '';
+  }
+
+  renderFlowState({ status, hint, actions, steps });
+}
+
+function buildFlowSteps(st, activeQuestion, answering){
+  const steps = [
+    { number: 1, title: 'Wybierz pytanie', desc: 'Otwórz katalog pytań i wskaż numer.', status: 'pending' },
+    { number: 2, title: 'Kliknij „Czytam”, gdy jesteś gotowy', desc: 'Rozpocznij czytanie pytania na głos.', status: 'pending' },
+    { number: 3, title: 'Kliknij „Przeczytałem” po lekturze', desc: 'Odsłoń pytanie na ekranie.', status: 'pending' },
+    { number: 4, title: 'Oczekiwanie na zgłoszenie gracza', desc: 'Gracze wciskają przyciski, aby się zgłosić.', status: 'pending' },
+    { number: 5, title: 'Oceń odpowiedź gracza', desc: 'Wybierz „Dobra” lub „Zła”.', status: 'pending' }
+  ];
+
+  const phase = st.phase;
+  const hasQuestion = !!activeQuestion;
+
+  if (!hasQuestion){
+    if (phase === 'INTRO' || phase === 'READING'){
+      steps[0].status = 'active';
+    }
+  } else {
+    steps[0].status = 'done';
+    const details = [];
+    if (activeQuestion.difficulty) details.push(activeQuestion.difficulty);
+    if (activeQuestion.category)   details.push(activeQuestion.category);
+    if (activeQuestion.id)         details.push(`#${activeQuestion.id}`);
+    if (details.length){
+      steps[0].desc = details.join(' • ');
     } else {
-      setFlow('Wszyscy gotowi', [
-        { label: 'Rozpocznij rozgrywkę', handler: startOrNext, variant: 'primary' }
-      ], 'Gdy jesteś gotowy, rozpocznij program.');
+      steps[0].desc = 'Pytanie gotowe do czytania.';
     }
-    return;
   }
 
-  if (phase === 'INTRO'){
-    if (!activeQuestion){
-      setFlow('Intro programu', [
-        { label: 'Wybierz pytanie', handler: openModal, variant: 'primary' }
-      ], 'W czasie muzyki wybierz kategorię i pytanie.');
-    } else {
-      setFlow('Intro programu', [
-        { label: 'Zmień pytanie', handler: openModal, variant: 'ghost' }
-      ], 'Trwa muzyka otwarcia — przygotuj się do czytania.');
+  if (hasQuestion){
+    if (phase === 'READING'){
+      if (!readingStarted){
+        steps[1].status = 'active';
+        steps[2].status = 'pending';
+      } else {
+        steps[1].status = 'done';
+        steps[2].status = 'active';
+      }
+    } else if (phase !== 'INTRO' && phase !== 'IDLE'){
+      steps[1].status = 'done';
+      steps[2].status = 'done';
     }
-    return;
   }
 
-  if (phase === 'READING'){
-    if (!activeQuestion){
-      setFlow('Wybierz pytanie', [
-        { label: 'Przeglądaj pytania', handler: openModal, variant: 'primary' }
-      ], 'Wybierz kategorię i numer pytania dla Marcela.');
-      return;
-    }
-
-    if (!readingStarted){
-      setFlow('Zacznij czytać pytanie', [
-        { label: 'Czytam', handler: beginReading, variant: 'primary' },
-        { label: 'Zmień pytanie', handler: openModal, variant: 'ghost' }
-      ], 'Kliknij, gdy zaczynasz czytać na głos.');
-      return;
-    }
-
-    setFlow('Czytasz pytanie', [
-      { label: 'Przeczytałem', handler: completeReading, variant: 'primary' }
-    ], 'Wciśnij, gdy kończysz czytać i chcesz pokazać treść.');
-    return;
-  }
-
-  if (phase === 'ANSWERING'){
-    const hint = answering ? `${answering.id}. ${(answering.name||'').trim()}` : null;
-    setFlow('Gracz odpowiada', [
-      { label: '✓ Dobra odpowiedź', handler: ()=>judge(true), variant: 'good' },
-      { label: '✗ Zła odpowiedź', handler: ()=>judge(false), variant: 'bad' }
-    ], hint ? `Odpowiada ${hint}. Oceń jego wypowiedź.` : 'Oceń odpowiedź gracza.');
-    return;
+  if (!hasQuestion){
+    steps[1].status = steps[1].status === 'done' ? 'done' : 'pending';
+    steps[2].status = steps[2].status === 'done' ? 'done' : 'pending';
+  } else if (phase === 'READING' && !readingStarted){
+    steps[2].status = steps[2].status === 'active' ? 'active' : 'pending';
   }
 
   if (phase === 'BUZZING'){
-    setFlow('Oczekiwanie na zgłoszenie', [], 'Gracze zgłaszają się do odpowiedzi.');
+    steps[3].status = 'active';
+  } else if (phase === 'ANSWERING' || phase === 'SELECTING'){
+    steps[3].status = 'done';
+  } else if (phase === 'COOLDOWN'){
+    steps[3].status = 'active';
+    steps[3].desc = 'Krótka przerwa przed kolejnym pytaniem.';
+  }
+
+  if (phase === 'ANSWERING'){
+    steps[4].status = 'active';
+    if (answering){
+      const nm = (answering.name || '').trim();
+      const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+      steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
+    }
+  } else if (phase === 'SELECTING' || phase === 'COOLDOWN'){
+    steps[4].status = 'done';
+    if (phase === 'SELECTING'){
+      steps[4].desc = 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
+    }
+  }
+
+  return steps;
+}
+
+function renderFlowState({ status, hint, actions, steps }){
+  flowStatus.textContent = status;
+  renderFlowSteps(Array.isArray(steps) ? steps : []);
+  renderFlowActions(Array.isArray(actions) ? actions : []);
+  if (hint && hint.trim()){
+    flowHint.textContent = hint;
+    flowHint.classList.remove('hidden');
+  } else {
+    flowHint.textContent = '';
+    flowHint.classList.add('hidden');
+  }
+}
+
+function renderFlowSteps(steps){
+  flowSteps.innerHTML = '';
+  if (!steps.length){
+    const placeholder = document.createElement('li');
+    placeholder.className = 'flow-step';
+    placeholder.innerHTML = `
+      <div class="flow-step-number">–</div>
+      <div class="flow-step-body">
+        <div class="flow-step-title">Brak kroków</div>
+        <div class="flow-step-desc">Sterowanie pojawi się po rozpoczęciu gry.</div>
+      </div>
+    `;
+    flowSteps.appendChild(placeholder);
     return;
   }
 
-  if (phase === 'SELECTING'){
-    setFlow('Zwycięzca wybiera przeciwnika', [], 'Poczekaj na zatwierdzenie wyboru kolejnego gracza.');
+  steps.forEach((step, idx) => {
+    const li = document.createElement('li');
+    const status = step.status || 'pending';
+    li.className = `flow-step ${status}`;
+    const number = step.number ?? (idx + 1);
+    li.innerHTML = `
+      <div class="flow-step-number">${escapeHtml(String(number))}</div>
+      <div class="flow-step-body">
+        <div class="flow-step-title">${escapeHtml(step.title || '')}</div>
+        <div class="flow-step-desc">${escapeHtml(step.desc || '')}</div>
+      </div>
+    `;
+    flowSteps.appendChild(li);
+  });
+}
+
+function renderFlowActions(actions){
+  flowAction.innerHTML = '';
+  const hasActions = actions.length > 0;
+  flowAction.classList.toggle('empty', !hasActions);
+
+  if (!hasActions){
+    const placeholder = document.createElement('div');
+    placeholder.className = 'flow-placeholder';
+    placeholder.textContent = 'Brak akcji w tym kroku.';
+    flowAction.appendChild(placeholder);
     return;
   }
 
-  if (phase === 'COOLDOWN'){
-    setFlow('Chwila przerwy', [], 'Za moment ponownie otworzymy zgłoszenia.');
-    return;
-  }
-
-  setFlow('Sterowanie', [], '');
+  actions.forEach(act => {
+    if (!act || typeof act.handler !== 'function') return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn';
+    if (act.variant){ btn.classList.add(act.variant); }
+    btn.textContent = act.label || 'Akcja';
+    if (act.disabled){ btn.disabled = true; }
+    btn.addEventListener('click', act.handler);
+    flowAction.appendChild(btn);
+  });
 }
 
 function maybePromptQuestion(st, activeQuestion){
@@ -431,34 +607,14 @@ function formatSeconds(ms){
   return `${sec.toFixed(1)} s`;
 }
 
-function setFlow(status, actions=[], hint=''){
-  flowStatus.textContent = status;
-  flowAction.innerHTML = '';
-  const hasActions = Array.isArray(actions) && actions.length > 0;
+function formatSecondsShort(ms){
+  return (Math.max(0, ms)/1000).toFixed(1);
+}
 
-  if (hasActions){
-    actions.forEach(act => {
-      if (!act || typeof act.handler !== 'function') return;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn';
-      const variant = act.variant || 'primary';
-      if (variant){ btn.classList.add(variant); }
-      btn.textContent = act.label || 'Akcja';
-      btn.addEventListener('click', act.handler);
-      flowAction.appendChild(btn);
-    });
-  }
-
-  flowAction.classList.toggle('empty', !hasActions);
-
-  if (hint && hint.trim()){
-    flowHint.textContent = hint;
-    flowHint.classList.remove('hidden');
-  } else {
-    flowHint.textContent = '';
-    flowHint.classList.add('hidden');
-  }
+function toggleActionButton(btn, visible){
+  if (!btn) return;
+  btn.classList.toggle('is-hidden', !visible);
+  if (!visible){ btn.disabled = true; }
 }
 
 function beginReading(){
@@ -466,7 +622,7 @@ function beginReading(){
   if (!state.hostDashboard?.activeQuestion) return;
   readingStarted = true;
   send('/app/host/next');
-  updateFlow(state, state.hostDashboard?.activeQuestion || null);
+  updateFlow(state);
 }
 
 function completeReading(){
@@ -489,12 +645,51 @@ function handleEvent(ev){
   }
 }
 function handleTimer(t){
-  if (state?.phase === 'ANSWERING'){
-    const left = Math.max(0, t.remainingMs||0);
-    ansTime.textContent = `Czas: ${((state.settings?.answerTimerMs||0 - left)/1000).toFixed(1)} s`;
+  if (!state) return;
+  if (state.phase === 'ANSWERING'){
+    latestTimerRemainingMs = Math.max(0, t?.remainingMs || 0);
   } else {
-    ansTime.textContent = 'Czas: 0.0 s';
+    latestTimerRemainingMs = state.settings?.answerTimerMs || 0;
   }
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+  const total = Math.max(0, state?.settings?.answerTimerMs || 0);
+  const isAnswering = state?.phase === 'ANSWERING';
+
+  if (total === 0){
+    timerRemainingEl.textContent = '0.0';
+    timerTotalEl.textContent = '/ 0.0 s';
+    timerFillEl.style.width = '0%';
+    timerBarEl.classList.remove('critical');
+    if (timerBoxEl){ timerBoxEl.classList.remove('critical'); }
+    ansTime.textContent = 'Czas odpowiedzi nie został ustawiony.';
+    return;
+  }
+
+  const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
+  timerRemainingEl.textContent = formatSecondsShort(remaining);
+  timerTotalEl.textContent = `/ ${formatSecondsShort(total)} s`;
+  const percent = total > 0 ? (remaining / total) * 100 : 0;
+  timerFillEl.style.width = `${percent}%`;
+  const critical = isAnswering && remaining <= Math.min(total, 2000);
+  timerBarEl.classList.toggle('critical', critical);
+  if (timerBoxEl){ timerBoxEl.classList.toggle('critical', critical); }
+
+  if (isAnswering){
+    ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
+  } else {
+    ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
+  }
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 }
 
 function truncate(text, max){
