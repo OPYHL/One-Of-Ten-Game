@@ -56,6 +56,7 @@ body{margin:0;background:linear-gradient(180deg,#0b1326,#060b16);color:var(--tex
 #flow .flow-status{font-size:1.35rem;font-weight:900;color:#f6fbff}
 #flow .flow-action{display:flex;flex-wrap:wrap;gap:12px}
 #flow .flow-action .btn{flex:1 1 220px;justify-content:center;padding:14px 18px;font-size:1.08rem}
+#flow .flow-action.empty{min-height:56px;align-items:center;justify-content:center;opacity:.85}
 #flow .flow-hint{min-height:1.2em}
 #flow .flow-hint.hidden{display:none}
 

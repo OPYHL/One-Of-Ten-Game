@@ -9,7 +9,6 @@ const btnNext     = document.getElementById('btnNext');
 const btnReset    = document.getElementById('btnReset');
 const btnNew      = document.getElementById('btnNew');
 const btnSelectQuestion = document.getElementById('btnSelectQuestion');
-const btnOverlayStart = document.getElementById('btnOverlayStart');
 
 const phaseEl     = document.getElementById('phase');
 const statPlayers = document.getElementById('statPlayers');
@@ -34,28 +33,7 @@ const flowHint   = document.getElementById('flowHint');
 const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeTitle    = document.getElementById('welcomeTitle');
 const welcomeSubtitle = document.getElementById('welcomeSubtitle');
-
-const difficultyList  = document.getElementById('difficultyList');
-const categoryList    = document.getElementById('categoryList');
-const questionList    = document.getElementById('questionList');
-const categoryHeader  = document.getElementById('categoryHeader');
-const questionModal   = document.getElementById('questionModal');
-const btnCloseModal   = document.getElementById('btnCloseModal');
-
-const metricRuntime = document.getElementById('metricRuntime');
-const metricCount   = document.getElementById('metricCount');
-const metricAverage = document.getElementById('metricAverage');
-const metricLast    = document.getElementById('metricLast');
-
-const badgeDifficulty = document.getElementById('badgeDifficulty');
-const badgeCategory   = document.getElementById('badgeCategory');
-const questionLabel   = document.getElementById('questionLabel');
-const questionText    = document.getElementById('questionText');
-const questionAnswer  = document.getElementById('questionAnswer');
-
-const welcomeOverlay  = document.getElementById('welcomeOverlay');
-const welcomeTitle    = document.getElementById('welcomeTitle');
-const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+const welcomeCta      = document.getElementById('btnOverlayStart');
 
 const difficultyList  = document.getElementById('difficultyList');
 const categoryList    = document.getElementById('categoryList');
@@ -182,6 +160,7 @@ function startOrNext(){
   if (!state) return;
   const phase = state.phase;
   if (phase === 'IDLE') {
+    if (!hasReadyPlayers()) return;
     send('/app/host/start');
   } else if (phase === 'READING' || phase === 'SELECTING') {
     send('/app/host/next');
@@ -197,7 +176,7 @@ btnBad.addEventListener('click',       ()=> judge(false));
 btnNext.addEventListener('click',      ()=> send('/app/host/next'));
 btnReset.addEventListener('click',     ()=> send('/app/reset'));
 btnNew.addEventListener('click',       ()=> send('/app/newGame'));
-btnOverlayStart.addEventListener('click', startOrNext);
+welcomeCta.addEventListener('click', startOrNext);
 
 document.addEventListener('keydown', (e)=>{
   if (e.repeat) return;
@@ -226,7 +205,8 @@ function render(){
   const st = state; if (!st) return;
 
   const joined = (st.players||[]).filter(isJoined);
-  statPlayers.textContent = joined.length;
+  const joinedCount = joined.length;
+  statPlayers.textContent = joinedCount;
   phaseEl.textContent = st.phase;
   const answerSeconds = Math.round((st.settings?.answerTimerMs||0)/1000);
   statAnswerTime.textContent = `${answerSeconds} s`;
@@ -241,11 +221,11 @@ function render(){
     readingStarted = false;
   }
 
-  updateButtons(st.phase);
+  updateButtons(st.phase, joinedCount);
   updateQuestion(activeQuestion);
-  updateWelcome(st);
+  updateWelcome(st, joinedCount);
   updateMetrics(st.hostDashboard?.metrics);
-  updateFlow(st, activeQuestion);
+  updateFlow(st, activeQuestion, joinedCount);
   maybePromptQuestion(st, activeQuestion);
 
   /* current answering */
@@ -261,12 +241,17 @@ function render(){
   }
 }
 
-function updateButtons(phase){
-  btnStart.disabled    = !(phase==='IDLE' || phase==='READING' || phase==='SELECTING');
+function updateButtons(phase, joinedCount){
+  const allowStart = phase === 'IDLE' ? joinedCount > 0 : (phase==='READING' || phase==='SELECTING');
+  btnStart.disabled    = !allowStart;
+  btnSelectQuestion.disabled = !(phase==='READING' || phase==='INTRO');
   btnRead.disabled     = (phase!=='READING' && phase!=='SELECTING');
-  btnReadDone.disabled = (phase!=='READING');
-  btnGood.disabled     = (phase!=='ANSWERING');
-  btnBad.disabled      = (phase!=='ANSWERING');
+  if (phase === 'READING' && !state?.hostDashboard?.activeQuestion){
+    btnRead.disabled = true;
+  }
+  btnReadDone.disabled = (phase!=='READING') || !readingStarted;
+  btnGood.disabled     = (phase!=='ANSWERING') || !state?.answeringId;
+  btnBad.disabled      = (phase!=='ANSWERING') || !state?.answeringId;
   btnNext.disabled     = !(phase==='IDLE' || phase==='SELECTING');
 }
 
@@ -287,11 +272,26 @@ function updateQuestion(active){
   }
 }
 
-function updateWelcome(st){
+function updateWelcome(st, joinedCount){
   const dash = st.hostDashboard || {};
-  welcomeTitle.textContent = dash.welcomeTitle || `Witaj ${dash.hostName||'Prowadzący'}!`;
-  welcomeSubtitle.textContent = dash.welcomeSubtitle || 'Zaraz zaczynamy — przygotuj się.';
+  const hostName = dash.hostName || 'Prowadzący';
+  const waitingForPlayers = joinedCount === 0;
   const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
+
+  welcomeTitle.textContent = dash.welcomeTitle || `Witaj ${hostName}!`;
+
+  if (waitingForPlayers){
+    welcomeSubtitle.textContent = 'Czekamy aż gracze dołączą i zajmą stanowiska.';
+    welcomeCta.textContent = 'Oczekiwanie na graczy';
+    welcomeCta.disabled = true;
+  } else {
+    const readyLine = joinedCount === 1 ? '1 gracz czeka.' : `${joinedCount} graczy czeka.`;
+    const baseSubtitle = (dash.welcomeSubtitle || 'Zaraz zaczynamy — przygotuj się.').trim();
+    welcomeSubtitle.textContent = `${baseSubtitle} ${readyLine}`.trim();
+    welcomeCta.textContent = 'Rozpocznij rozgrywkę';
+    welcomeCta.disabled = false;
+  }
+
   welcomeOverlay.classList.toggle('hidden', !showOverlay);
 }
 
@@ -312,20 +312,32 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateFlow(st, activeQuestion){
+function updateFlow(st, activeQuestion, joinedCount){
   const phase = st.phase;
   const players = st.players || [];
   const answering = st.answeringId ? players.find(x => x.id === st.answeringId) : null;
 
   if (phase === 'IDLE'){
-    setFlow('Czekamy na rozpoczęcie', [
-      { label: 'Rozpocznij rozgrywkę', handler: startOrNext, variant: 'primary' }
-    ], 'Gdy wszystko gotowe, rozpocznij program.');
+    if (joinedCount === 0){
+      setFlow('Czekamy na graczy', [], 'Poproś graczy o dołączenie przez player.html.');
+    } else {
+      setFlow('Wszyscy gotowi', [
+        { label: 'Rozpocznij rozgrywkę', handler: startOrNext, variant: 'primary' }
+      ], 'Gdy jesteś gotowy, rozpocznij program.');
+    }
     return;
   }
 
   if (phase === 'INTRO'){
-    setFlow('Intro programu', [], 'Trwa muzyka otwarcia.');
+    if (!activeQuestion){
+      setFlow('Intro programu', [
+        { label: 'Wybierz pytanie', handler: openModal, variant: 'primary' }
+      ], 'W czasie muzyki wybierz kategorię i pytanie.');
+    } else {
+      setFlow('Intro programu', [
+        { label: 'Zmień pytanie', handler: openModal, variant: 'ghost' }
+      ], 'Trwa muzyka otwarcia — przygotuj się do czytania.');
+    }
     return;
   }
 
@@ -379,7 +391,9 @@ function updateFlow(st, activeQuestion){
 }
 
 function maybePromptQuestion(st, activeQuestion){
-  const needQuestion = st.phase === 'READING' && !activeQuestion;
+  const phase = st.phase;
+  const canSelect = phase === 'READING' || phase === 'INTRO';
+  const needQuestion = canSelect && !activeQuestion;
   if (needQuestion && !questionPrompted){
     questionPrompted = true;
     openModal();
@@ -387,6 +401,11 @@ function maybePromptQuestion(st, activeQuestion){
   if (!needQuestion){
     questionPrompted = false;
   }
+}
+
+function hasReadyPlayers(){
+  if (!state) return false;
+  return (state.players || []).some(isJoined);
 }
 
 function clearRuntimeTimer(){ if (runtimeTimer){ clearInterval(runtimeTimer); runtimeTimer = null; } }
