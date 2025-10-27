@@ -33,6 +33,7 @@ const waitingBox    = document.getElementById('waitingBox');
 const waitingStatus = document.getElementById('waitingStatus');
 const waitingHint   = document.getElementById('waitingHint');
 const waitingCount  = document.getElementById('waitingCount');
+const waitingPlayersList = document.getElementById('waitingPlayers');
 
 /* ===== Full-width timebar (tworzymy, jeśli brak) ===== */
 let timebarWrap = document.getElementById('timebarWrap');
@@ -100,7 +101,7 @@ if (!audioOverlay || audioOverlay.classList.contains('hidden')){
   applyWaitingVisibility();
 }
 
-function updateWaitingCard(joinedCount = 0, totalSlots = 10){
+function updateWaitingCard(joinedCount = 0, totalSlots = 10, players = []){
   if (!waitingBox) return;
   const joined = Math.max(0, joinedCount);
   const total  = Math.max(joined, totalSlots || 10);
@@ -122,6 +123,7 @@ function updateWaitingCard(joinedCount = 0, totalSlots = 10){
   if (waitingHint)   waitingHint.textContent   = hint;
 
   waitingIsFull = joined >= total && total > 0;
+  renderWaitingPlayers(players);
   applyWaitingVisibility();
 }
 
@@ -133,6 +135,35 @@ function applyWaitingVisibility(){
   if (body){
     body.classList.toggle('waiting-mode', shouldShow);
   }
+}
+
+function renderWaitingPlayers(players = []){
+  if (!waitingPlayersList) return;
+  waitingPlayersList.innerHTML = '';
+  const joined = (players || []).filter(isJoined);
+  waitingBox?.classList.toggle('has-players', joined.length > 0);
+  if (!joined.length){
+    waitingPlayersList.classList.add('empty');
+    const empty = document.createElement('div');
+    empty.className = 'waiting-empty';
+    empty.textContent = 'Czekamy na pierwszego gracza…';
+    waitingPlayersList.appendChild(empty);
+    return;
+  }
+  waitingPlayersList.classList.remove('empty');
+  joined.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'waiting-player';
+    const name = normName(p) || `Gracz ${p.id}`;
+    item.innerHTML = `
+      <div class="avatar"><img src="${avatarFor(p, 'idle')}" alt=""></div>
+      <div class="meta">
+        <div class="name">${escapeHtml(name)}</div>
+        <div class="seat">Stanowisko ${p.id}</div>
+      </div>
+    `;
+    waitingPlayersList.appendChild(item);
+  });
 }
 
 /* ===== Centralne komunikaty ===== */
@@ -286,7 +317,7 @@ function render(){
 
   const joined = (st.players||[]).filter(isJoined);
   const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
-  updateWaitingCard(joined.length, totalSlots);
+  updateWaitingCard(joined.length, totalSlots, st.players || []);
   applyWaitingVisibility();
   TOTAL_ANS_MS = st.settings?.answerTimerMs ?? TOTAL_ANS_MS;
   COOLDOWN_MS = st.settings?.cooldownMs ?? COOLDOWN_MS;
