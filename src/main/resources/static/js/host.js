@@ -216,8 +216,12 @@ function closeModal(){ questionModal.classList.add('hidden'); }
 
 if (btnQuestion) btnQuestion.addEventListener('click', openModal);
 if (btnSelectQuestion) btnSelectQuestion.addEventListener('click', openModal);
-btnCloseModal.addEventListener('click', closeModal);
-questionModal.addEventListener('click', e=>{ if (e.target === questionModal) closeModal(); });
+if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+if (questionModal) {
+  questionModal.addEventListener('click', e => {
+    if (e.target === questionModal) closeModal();
+  });
+}
 
 function send(dest, body={}){ try{ bus.send(dest, body);}catch(e){ console.error(e); } }
 
@@ -303,8 +307,8 @@ function coerceJoinedFlag(val){
   if (typeof val === 'string'){
     const norm = val.trim().toLowerCase();
     if (!norm) return null;
-    if (norm === 'true' || norm === '1' || norm === 'yes') return true;
-    if (norm === 'false' || norm === '0' || norm === 'no') return false;
+    if (['false', '0', 'no', 'n', 'f', 'off'].includes(norm)) return false;
+    if (['true', '1', 'yes', 'y', 't', 'on', 'joined', 'connected', 'ready'].includes(norm)) return true;
   }
   return null;
 }
@@ -346,7 +350,7 @@ function render(){
   if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
   if (phaseEl){ phaseEl.textContent = phaseLabel(st.phase); }
   const answerMs = st.settings?.answerTimerMs || 0;
-  statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`;
+  if (statAnswerTime){ statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`; }
 
   const activeId = activeQuestion?.id || null;
   if (activeId !== currentQuestionId){
@@ -389,6 +393,9 @@ function render(){
 }
 
 function updateQuestion(active){
+  if (!badgeDifficulty || !badgeCategory || !questionLabel || !questionText || !questionAnswer){
+    return;
+  }
   if (active){
     badgeDifficulty.textContent = active.difficulty || '—';
     badgeCategory.textContent   = active.category || '—';
@@ -461,11 +468,17 @@ function updateWelcome(st, joinedCount, totalSlots){
   }
 
   if (welcomeOverlay){ welcomeOverlay.classList.toggle('hidden', !showOverlay); }
-  document.body.classList.toggle('welcome-active', showOverlay);
+  if (document.body){
+    document.body.classList.toggle('welcome-active', showOverlay);
+  }
 }
 
 function updateMetrics(metrics){
   lastMetrics = metrics || null;
+  if (!metricRuntime || !metricCount || !metricAverage || !metricLast){
+    return;
+  }
+
   if (!metrics){
     metricRuntime.textContent = '00:00';
     metricCount.textContent   = '0';
@@ -484,6 +497,9 @@ function updateMetrics(metrics){
 }
 
 function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
+  if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl){
+    return;
+  }
   if (!st) return;
   const phase = st.phase;
   const isPreparing = !!activeQuestion?.preparing;
@@ -736,6 +752,7 @@ function renderStageSteps(steps){
 }
 
 function updateStageButtons(buttons){
+  if (!stageButtons) return;
   const configs = {};
   buttons.forEach(btn => { if (btn?.id){ configs[btn.id] = btn; } });
   let visible = 0;
@@ -780,6 +797,7 @@ function updateStageButtons(buttons){
 }
 
 function maybePromptQuestion(st, activeQuestion){
+  if (!questionModal) return;
   const phase = st.phase;
   const canSelect = phase === 'READING' || phase === 'INTRO';
   const needQuestion = canSelect && !activeQuestion;
@@ -808,6 +826,7 @@ function hasReadyPlayers(){
 function clearRuntimeTimer(){ if (runtimeTimer){ clearInterval(runtimeTimer); runtimeTimer = null; } }
 
 function refreshRuntime(){
+  if (!metricRuntime){ return; }
   if (!lastMetrics){ metricRuntime.textContent = '00:00'; return; }
   const start = lastMetrics.startedAt || 0;
   if (!start){ metricRuntime.textContent = '00:00'; return; }
