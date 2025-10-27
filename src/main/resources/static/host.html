@@ -162,30 +162,36 @@
 
         <article id="answeringCard" class="card answering-card">
             <header class="answer-head">
-                <h3>Aktualnie odpowiada</h3>
+                <div class="answer-heading">
+                    <span class="answer-icon" aria-hidden="true"></span>
+                    <h3>Aktualnie odpowiada</h3>
+                </div>
                 <div id="ansJudge" class="judge"></div>
             </header>
             <div class="answer-body">
-                <div class="answer-avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
-                <div class="answer-info">
-                    <div class="answer-meta">
+                <div class="answer-person">
+                    <div class="answer-avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
+                    <div class="answer-info">
                         <div id="ansName" class="answer-name">—</div>
                         <div id="ansSeat" class="answer-seat">Stanowisko —</div>
                     </div>
-                    <div class="timer" id="timerBox">
-                        <div class="timer-head">
-                            <span class="timer-label">Pozostały czas</span>
-                            <span id="timerSummary" class="timer-total">0.0 s / 0.0 s</span>
-                        </div>
-                        <div class="timer-count">
-                            <span id="timerRemaining" class="timer-number">0.0</span>
-                            <span class="timer-unit">s</span>
-                        </div>
-                        <div class="timer-bar" id="timerBar">
-                            <div class="timer-fill" id="timerFill"></div>
-                        </div>
-                        <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
+                    <div class="answer-chip">
+                        <span class="chip-icon" aria-hidden="true"></span>
+                        <span id="timerSummary" class="timer-total">0.0 s / 0.0 s</span>
                     </div>
+                </div>
+                <div class="timer" id="timerBox">
+                    <div class="timer-head">
+                        <span class="timer-label">Pozostały czas</span>
+                    </div>
+                    <div class="timer-count">
+                        <span id="timerRemaining" class="timer-number">0.0</span>
+                        <span class="timer-unit">s</span>
+                    </div>
+                    <div class="timer-bar" id="timerBar">
+                        <div class="timer-fill" id="timerFill"></div>
+                    </div>
+                    <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
                 </div>
             </div>
             <div class="answer-actions">
