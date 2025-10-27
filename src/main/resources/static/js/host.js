@@ -116,7 +116,7 @@ let clockTimer = null;
 
 const PHASE_LABELS = {
   IDLE: 'Czekamy',
-  INTRO: 'Intro',
+  INTRO: 'Wybór pytania',
   READING: 'Czytanie',
   BUZZING: 'Zgłoszenia',
   ANSWERING: 'Odpowiedź',
@@ -343,7 +343,9 @@ function stageCounts(st = state){
 function refreshStageCard(){
   if (!state) return;
   const snap = stageCounts(state);
-  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer);
+  const uiPhase = resolveUiPhase(state, snap.activeQuestion, snap.answeringPlayer);
+  if (phaseEl){ phaseEl.textContent = phaseLabel(uiPhase); }
+  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer, uiPhase);
 }
 
 function render(){
@@ -351,12 +353,13 @@ function render(){
 
   const counts = stageCounts(st);
   const { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer } = counts;
+  const uiPhase = resolveUiPhase(st, activeQuestion, answeringPlayer);
   if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
     hideTargetOverlay();
   }
   if (statPlayers){ statPlayers.textContent = joinedCount; }
   if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
-  if (phaseEl){ phaseEl.textContent = phaseLabel(st.phase); }
+  if (phaseEl){ phaseEl.textContent = phaseLabel(uiPhase); }
   const answerMs = st.settings?.answerTimerMs || 0;
   if (statAnswerTime){ statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`; }
 
@@ -385,7 +388,7 @@ function render(){
   updateQuestion(activeQuestion);
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
-  updateStage(st, joinedCount, computedTotalSlots || 10, activeQuestion, answeringPlayer);
+  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, uiPhase);
   maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
@@ -508,20 +511,20 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
+function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiPhase){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl){
     return;
   }
   if (!st) return;
-  const phase = st.phase;
+  const actualPhase = st.phase;
+  const phase = uiPhase || actualPhase;
   const isPreparing = !!activeQuestion?.preparing;
-  const readingActive = phase === 'READING' && activeQuestion && !activeQuestion.preparing;
   const stage = {
     badge: 'Sterowanie',
     title: 'Sterowanie',
     message: 'Działania pojawią się w odpowiednim momencie.',
     buttons: [],
-    steps: buildStageSteps(st, activeQuestion, answering),
+    steps: buildStageSteps(st, activeQuestion, answering, phase, actualPhase),
   };
 
   const allowQuestionPick = phase === 'INTRO' || phase === 'READING' || phase === 'COOLDOWN' || phase === 'SELECTING';
@@ -644,7 +647,8 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
       stage.title = `${label} odpowiada`;
       stage.message = 'Słuchaj uważnie i oceń odpowiedź.';
     }
-    if (phase !== 'SELECTING' && phase !== 'COOLDOWN'){
+    const judgingBlocked = phase === 'SELECTING' || phase === 'COOLDOWN' || actualPhase === 'SELECTING' || actualPhase === 'COOLDOWN';
+    if (!judgingBlocked){
       if (!stage.buttons.some(btn => btn?.id === 'btnGood')){
         stage.buttons.push({ id: 'btnGood', label: '✓ Dobra', variant: 'good' });
       }
@@ -657,7 +661,7 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
   applyStage(stage);
 }
 
-function buildStageSteps(st, activeQuestion, answering){
+function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
   const steps = [
     { number: 1, title: 'Wybierz pytanie', desc: 'Otwórz katalog pytań i wskaż numer.', status: 'pending' },
     { number: 2, title: 'Kliknij „Czytam”, gdy jesteś gotowy', desc: 'Rozpocznij czytanie pytania na głos.', status: 'pending' },
@@ -666,11 +670,10 @@ function buildStageSteps(st, activeQuestion, answering){
     { number: 5, title: 'Oceń odpowiedź gracza', desc: 'Wybierz „Dobra” lub „Zła”.', status: 'pending' }
   ];
 
-  const phase = st.phase;
   const hasQuestion = !!activeQuestion;
   const isPreparing = !!activeQuestion?.preparing;
   const readingStarted = hasQuestion && !isPreparing;
-  const readingWrapUp = phase === 'READING' && readingStarted && !!readingFinishPending;
+  const readingWrapUp = (actualPhase === 'READING' || phase === 'READING') && readingStarted && !!readingFinishPending;
 
   if (!hasQuestion){
     if (phase === 'INTRO' || phase === 'READING'){
@@ -741,7 +744,7 @@ function buildStageSteps(st, activeQuestion, answering){
     const nm = (answering.name || '').trim();
     const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
     steps[3].status = 'done';
-    if (phase !== 'SELECTING' && phase !== 'COOLDOWN'){
+    if (phase !== 'SELECTING' && phase !== 'COOLDOWN' && actualPhase !== 'SELECTING' && actualPhase !== 'COOLDOWN'){
       steps[4].status = 'active';
       steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
     }
@@ -750,6 +753,22 @@ function buildStageSteps(st, activeQuestion, answering){
   }
 
   return steps;
+}
+
+function resolveUiPhase(st, activeQuestion, answering){
+  const rawPhase = st?.phase || 'IDLE';
+  if (rawPhase === 'READING'){
+    if (!activeQuestion){
+      return 'INTRO';
+    }
+    if (readingFinishPending){
+      return answering ? 'ANSWERING' : 'BUZZING';
+    }
+  }
+  if (rawPhase === 'BUZZING' && answering){
+    return 'ANSWERING';
+  }
+  return rawPhase;
 }
 function applyStage(stage){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl) return;
