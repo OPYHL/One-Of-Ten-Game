@@ -88,14 +88,16 @@ img{ max-width:100%; display:block }
 .waiting-screen.full .waiting-card p{ color:rgba(230,238,255,.9); }
 .waiting-screen.full .waiting-card p:last-of-type{ color:rgba(196,214,255,.85); }
 .waiting-screen.full .waiting-counter{ background:rgba(63,110,246,.28); border-color:rgba(96,138,255,.6); }
-.waiting-players{ display:grid; gap:12px; margin-top:14px; max-height:260px; overflow:auto; padding-right:4px; }
-.waiting-players.empty{ opacity:.65; }
-.waiting-player{ display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:18px; background:rgba(12,22,40,.72); border:1px solid rgba(70,108,198,.45); box-shadow:0 20px 60px rgba(5,10,25,.55); }
-.waiting-player .avatar{ width:52px; height:52px; border-radius:16px; background:radial-gradient(70px 70px at 50% 24%, rgba(70,110,210,.25), rgba(10,20,40,.95)); display:grid; place-items:center; border:1px solid rgba(88,130,232,.55); }
-.waiting-player .avatar img{ width:42px; height:42px; object-fit:contain; filter:drop-shadow(0 12px 24px rgba(3,8,20,.75)); }
-.waiting-player .meta{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; font-weight:700; color:#eaf1ff; }
-.waiting-player .meta .seat{ font-size:.82rem; text-transform:uppercase; letter-spacing:.18em; color:rgba(172,195,240,.78); }
-.waiting-empty{ padding:18px 0; font-weight:600; color:rgba(172,195,240,.78); text-align:center; }
+.waiting-roster{ position:fixed; left:50%; bottom:32px; transform:translateX(-50%); width:min(1120px,92vw); display:flex; flex-wrap:wrap; justify-content:center; gap:16px; z-index:110; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; }
+.waiting-roster.show{ opacity:1; transform:translate(-50%,0); }
+.waiting-roster.empty{ justify-content:center; }
+.waiting-roster .waiting-empty{ flex:1 1 100%; padding:12px 0; text-align:center; font-weight:600; color:rgba(180,202,244,.8); }
+.waiting-roster-item{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:18px; background:rgba(12,22,40,.78); border:1px solid rgba(70,108,198,.5); box-shadow:0 24px 60px rgba(5,10,25,.55); min-width:200px; }
+.waiting-roster-item .avatar{ width:48px; height:48px; border-radius:16px; background:radial-gradient(64px 64px at 50% 24%, rgba(70,110,210,.28), rgba(10,20,40,.95)); display:grid; place-items:center; border:1px solid rgba(92,134,240,.6); }
+.waiting-roster-item .avatar img{ width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(3,8,20,.75)); }
+.waiting-roster-item .meta{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; font-weight:700; color:#ecf2ff; }
+.waiting-roster-item .seat{ font-size:.78rem; text-transform:uppercase; letter-spacing:.16em; color:rgba(162,188,236,.76); }
+.waiting-empty{ padding:12px 0; font-weight:600; color:rgba(172,195,240,.78); text-align:center; }
 .waiting-counter{ display:flex; align-items:center; justify-content:center; gap:16px; padding:18px 20px; border-radius:20px; background:rgba(63,110,246,.16); border:1px solid rgba(76,118,232,.45); }
 .counter-icon{ width:56px; height:56px; border-radius:18px; background:rgba(9,18,34,.9); display:grid; place-items:center; box-shadow:0 20px 52px rgba(10,16,32,.65); border:1px solid rgba(63,110,246,.45); }
 .counter-icon svg{ width:34px; height:34px; fill:#7fa2ff; }

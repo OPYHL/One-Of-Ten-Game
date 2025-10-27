@@ -49,9 +49,14 @@ const stageCardEl = document.querySelector('.stage-card');
 const stageButtons = {};
 [btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
   if (!btn) return;
+  const baseClasses = (btn.className || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(cls => cls !== 'primary' && cls !== 'ghost');
+  const base = baseClasses.length ? baseClasses.join(' ') : 'btn';
   stageButtons[btn.id] = {
     el: btn,
-    base: btn.className,
+    base,
     label: btn.dataset?.label || btn.textContent,
   };
 });
@@ -963,25 +968,8 @@ function updateTimerDisplay(){
 
   if (isAnswering){
     ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
-  } else {
-    if (state?.phase === 'READING' && state?.hostDashboard?.activeQuestion?.preparing){
-      ansTime.textContent = 'Przygotuj pytanie i kliknij „Czytam”.';
-    } else {
-      ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
-    }
-  }
-
-  const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
-  timerRemainingEl.textContent = formatSecondsShort(remaining);
-  timerTotalEl.textContent = `/ ${formatSecondsShort(total)} s`;
-  const percent = total > 0 ? (remaining / total) * 100 : 0;
-  timerFillEl.style.width = `${percent}%`;
-  const critical = isAnswering && remaining <= Math.min(total, 2000);
-  timerBarEl.classList.toggle('critical', critical);
-  if (timerBoxEl){ timerBoxEl.classList.toggle('critical', critical); }
-
-  if (isAnswering){
-    ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
+  } else if (state?.phase === 'READING' && state?.hostDashboard?.activeQuestion?.preparing){
+    ansTime.textContent = 'Przygotuj pytanie i kliknij „Czytam”.';
   } else {
     ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
   }
@@ -989,29 +977,7 @@ function updateTimerDisplay(){
 
 function truncate(text, max){
   if (!text) return '';
-  return text.length > max ? text.slice(0,max-1)+'…' : text;
-}
-function escapeHtml(s){
-  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-}
-
-function truncate(text, max){
-  if (!text) return '';
-  return text.length > max ? text.slice(0,max-1)+'…' : text;
-}
-function escapeHtml(s){
-  return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-}
-
-function formatPlayerLabel(player){
-  if (!player) return '—';
-  const nm = (player.name || '').trim();
-  return nm ? `${player.id}. ${nm}` : `Gracz ${player.id}`;
-}
-
-function truncate(text, max){
-  if (!text) return '';
-  return text.length > max ? text.slice(0,max-1)+'…' : text;
+  return text.length > max ? text.slice(0, max - 1) + '…' : text;
 }
 function escapeHtml(s){
   if (s == null) return '';

@@ -33,7 +33,7 @@ const waitingBox    = document.getElementById('waitingBox');
 const waitingStatus = document.getElementById('waitingStatus');
 const waitingHint   = document.getElementById('waitingHint');
 const waitingCount  = document.getElementById('waitingCount');
-const waitingPlayersList = document.getElementById('waitingPlayers');
+const waitingRoster = document.getElementById('waitingRoster');
 
 /* ===== Full-width timebar (tworzymy, jeśli brak) ===== */
 let timebarWrap = document.getElementById('timebarWrap');
@@ -132,28 +132,31 @@ function applyWaitingVisibility(){
   const shouldShow = waitingEnabled && (!state || state.phase === 'IDLE');
   waitingBox.classList.toggle('show', shouldShow);
   waitingBox.classList.toggle('full', waitingIsFull);
+  if (waitingRoster){
+    waitingRoster.classList.toggle('show', shouldShow);
+  }
   if (body){
     body.classList.toggle('waiting-mode', shouldShow);
   }
 }
 
 function renderWaitingPlayers(players = []){
-  if (!waitingPlayersList) return;
-  waitingPlayersList.innerHTML = '';
+  if (!waitingRoster) return;
+  waitingRoster.innerHTML = '';
   const joined = (players || []).filter(isJoined);
   waitingBox?.classList.toggle('has-players', joined.length > 0);
   if (!joined.length){
-    waitingPlayersList.classList.add('empty');
+    waitingRoster.classList.add('empty');
     const empty = document.createElement('div');
     empty.className = 'waiting-empty';
     empty.textContent = 'Czekamy na pierwszego gracza…';
-    waitingPlayersList.appendChild(empty);
+    waitingRoster.appendChild(empty);
     return;
   }
-  waitingPlayersList.classList.remove('empty');
+  waitingRoster.classList.remove('empty');
   joined.forEach(p => {
     const item = document.createElement('div');
-    item.className = 'waiting-player';
+    item.className = 'waiting-roster-item';
     const name = normName(p) || `Gracz ${p.id}`;
     item.innerHTML = `
       <div class="avatar"><img src="${avatarFor(p, 'idle')}" alt=""></div>
@@ -162,7 +165,7 @@ function renderWaitingPlayers(players = []){
         <div class="seat">Stanowisko ${p.id}</div>
       </div>
     `;
-    waitingPlayersList.appendChild(item);
+    waitingRoster.appendChild(item);
   });
 }
 
