@@ -178,20 +178,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="answer-visual">
-                    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                        <path d="M24 4a20 20 0 1 1-20 20A20 20 0 0 1 24 4Zm0 4a16 16 0 1 0 16 16A16 16 0 0 0 24 8Zm-2 6a2 2 0 0 1 4 0v8h6a2 2 0 0 1 0 4h-8a2 2 0 0 1-2-2Z" />
-                    </svg>
-                    <div class="answer-remaining">
-                        <span class="number" id="timerRemaining">0.0</span>
-                        <span class="unit">s</span>
+                <div class="answer-side">
+                    <div class="answer-judge">
+                        <button class="btn bad judge-btn" id="btnBad" data-label="✗ Zła">✗ Zła</button>
+                        <button class="btn good judge-btn" id="btnGood" data-label="✓ Dobra">✓ Dobra</button>
                     </div>
                 </div>
             </div>
             <div class="answer-progress" id="timerBox">
                 <div class="progress-head">
                     <span class="progress-label">Pozostały czas</span>
-                    <span class="progress-value" id="timerSummary">0.0 s / 0.0 s</span>
+                    <span class="progress-value" id="timerSummary">0.0 s</span>
                 </div>
                 <div class="timer-track" id="timerBar">
                     <div class="timer-fill" id="timerFill"></div>
@@ -199,10 +196,6 @@
             </div>
             <div class="answer-actions">
                 <button class="btn" id="btnNext" data-label="Kolejne pytanie">Kolejne pytanie</button>
-                <div class="answer-judge">
-                    <button class="btn bad" id="btnBad" data-label="✗ Zła">✗ Zła</button>
-                    <button class="btn good" id="btnGood" data-label="✓ Dobra">✓ Dobra</button>
-                </div>
             </div>
         </article>
 

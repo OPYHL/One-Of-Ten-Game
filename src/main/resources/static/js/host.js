@@ -25,7 +25,6 @@ const ansSeat = document.getElementById('ansSeat');
 const ansTime = document.getElementById('ansTime');
 const ansJudge= document.getElementById('ansJudge');
 const timerBoxEl = document.getElementById('timerBox');
-const timerRemainingEl = document.getElementById('timerRemaining');
 const timerSummaryEl = document.getElementById('timerSummary');
 const timerBarEl = document.getElementById('timerBar');
 const timerFillEl = document.getElementById('timerFill');
@@ -54,6 +53,7 @@ const stageButtons = {};
     .filter(Boolean)
     .filter(cls => cls !== 'primary' && cls !== 'ghost');
   const base = baseClasses.length ? baseClasses.join(' ') : 'btn';
+  btn.dataset.available = btn.dataset.available || 'false';
   stageButtons[btn.id] = {
     el: btn,
     base,
@@ -823,13 +823,24 @@ function updateStageButtons(buttons){
     const def = configs[el.id];
     el.className = cfg.base;
     el.textContent = def?.label || cfg.label;
+    const isJudgeBtn = el.id === 'btnGood' || el.id === 'btnBad';
     if (!def){
       el.disabled = true;
-      el.classList.add('is-hidden');
+      el.dataset.available = 'false';
+      if (isJudgeBtn){
+        el.classList.remove('is-hidden');
+        el.classList.add('is-idle');
+      } else {
+        el.classList.add('is-hidden');
+      }
       return;
     }
     el.disabled = !!def.disabled;
+    el.dataset.available = def.disabled ? 'false' : 'true';
     el.classList.remove('is-hidden');
+    if (isJudgeBtn){
+      el.classList.toggle('is-idle', !!def.disabled);
+    }
     if (def?.variant && !el.classList.contains(def.variant)){
       el.classList.add(def.variant);
     }
@@ -844,16 +855,17 @@ function updateStageButtons(buttons){
   if (answerJudgeWrap){
     const goodEl = stageButtons.btnGood?.el;
     const badEl  = stageButtons.btnBad?.el;
-    const judgeVisible = !!(goodEl && !goodEl.classList.contains('is-hidden')) || !!(badEl && !badEl.classList.contains('is-hidden'));
-    answerJudgeWrap.classList.toggle('hidden', !judgeVisible);
+    const judgeActive = !!(goodEl && goodEl.dataset.available === 'true') || !!(badEl && badEl.dataset.available === 'true');
+    answerJudgeWrap.classList.remove('hidden');
+    answerJudgeWrap.classList.toggle('is-idle', !judgeActive);
   }
   if (answerActionsEl){
     const nextEl = stageButtons.btnNext?.el;
     const nextVisible = !!(nextEl && !nextEl.classList.contains('is-hidden'));
     const goodEl = stageButtons.btnGood?.el;
     const badEl  = stageButtons.btnBad?.el;
-    const judgeVisible = !!(goodEl && !goodEl.classList.contains('is-hidden')) || !!(badEl && !badEl.classList.contains('is-hidden'));
-    answerActionsEl.classList.toggle('hidden', !nextVisible && !judgeVisible);
+    const judgeActive = !!(goodEl && goodEl.dataset.available === 'true') || !!(badEl && badEl.dataset.available === 'true');
+    answerActionsEl.classList.toggle('hidden', !nextVisible && !judgeActive);
   }
 }
 
@@ -1056,8 +1068,7 @@ function updateTimerDisplay(){
   const isAnswering = state?.phase === 'ANSWERING';
 
   if (total === 0){
-    timerRemainingEl.textContent = '0.0';
-    timerSummaryEl.textContent = '0.0 s / 0.0 s';
+    if (timerSummaryEl){ timerSummaryEl.textContent = '0.0 s'; }
     timerFillEl.style.width = '0%';
     timerBarEl.classList.remove('critical');
     if (timerBoxEl){ timerBoxEl.classList.remove('critical'); }
@@ -1066,9 +1077,7 @@ function updateTimerDisplay(){
   }
 
   const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
-  timerRemainingEl.textContent = formatSecondsShort(remaining);
-  const summaryText = `${formatSecondsShort(remaining)} s / ${formatSecondsShort(total)} s`;
-  timerSummaryEl.textContent = summaryText;
+  if (timerSummaryEl){ timerSummaryEl.textContent = `${formatSecondsShort(remaining)} s`; }
   const percent = total > 0 ? (remaining / total) * 100 : 0;
   timerFillEl.style.width = `${percent}%`;
   const critical = isAnswering && remaining <= Math.min(total, 2000);
