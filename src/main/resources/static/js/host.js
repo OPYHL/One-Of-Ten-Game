@@ -416,6 +416,7 @@ function updateWelcome(st, joinedCount, totalSlots){
   if (!welcomeSubtitle || !welcomeCta) return;
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
+  const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
   const everyoneReady = joinedCount >= totalSlots && totalSlots > 0;
   const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
