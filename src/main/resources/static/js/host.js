@@ -374,7 +374,7 @@ function render(){
   updateQuestion(activeQuestion);
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
-  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer);
+  updateStage(st, joinedCount, computedTotalSlots || 10, activeQuestion, answeringPlayer);
   maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
@@ -416,9 +416,9 @@ function updateWelcome(st, joinedCount, totalSlots){
   if (!welcomeSubtitle || !welcomeCta) return;
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
-  const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
+  const computedTotalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
-  const everyoneReady = joinedCount >= totalSlots && totalSlots > 0;
+  const everyoneReady = joinedCount >= computedTotalSlots && computedTotalSlots > 0;
   const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
 
   if (welcomeHeading){
@@ -428,9 +428,9 @@ function updateWelcome(st, joinedCount, totalSlots){
   const greetTitle = dash.welcomeTitle || `Witaj ${hostName}`;
   welcomeTitle.textContent = greetTitle;
   const baseHint = (dash.welcomeSubtitle || '').trim();
-  const freeSeats = Math.max(0, totalSlots - joinedCount);
+  const freeSeats = Math.max(0, computedTotalSlots - joinedCount);
 
-  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${totalSlots}`; }
+  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${computedTotalSlots}`; }
   if (welcomeCard){
     welcomeCard.classList.toggle('ready', joinedCount > 0);
     welcomeCard.classList.toggle('full', everyoneReady);
