@@ -1067,7 +1067,8 @@ function updateTimerDisplay(){
 
   const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
   timerRemainingEl.textContent = formatSecondsShort(remaining);
-  timerSummaryEl.textContent = `${formatSecondsShort(remaining)} s / ${formatSecondsShort(total)} s`;
+  const summaryText = `${formatSecondsShort(remaining)} s / ${formatSecondsShort(total)} s`;
+  timerSummaryEl.textContent = summaryText;
   const percent = total > 0 ? (remaining / total) * 100 : 0;
   timerFillEl.style.width = `${percent}%`;
   const critical = isAnswering && remaining <= Math.min(total, 2000);
