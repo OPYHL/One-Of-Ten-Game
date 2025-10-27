@@ -10,6 +10,9 @@
   --ok:#20c997;
   --bad:#ff4757;
 
+  --card-light:#f7faff;
+  --card-shadow:rgba(2,8,20,.6);
+
   /* siatka graczy */
   --grid-gap-x: 18px;
   --grid-gap-y: 18px;
@@ -33,6 +36,101 @@ body{
 }
 img{ max-width:100%; display:block }
 .hidden{ display:none !important }
+
+/* =================== AUDIO OVERLAY =================== */
+.audio-overlay{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(5,10,20,.88);
+  backdrop-filter:blur(20px);
+  z-index:260;
+  transition:opacity .25s ease;
+}
+.audio-overlay.hidden{ opacity:0; pointer-events:none; }
+.audio-card{
+  width:min(520px,92vw);
+  padding:38px 42px;
+  border-radius:26px;
+  background:linear-gradient(155deg, rgba(18,35,70,.94), rgba(9,17,36,.94));
+  border:1px solid rgba(73,110,210,.55);
+  box-shadow:0 42px 140px rgba(0,0,0,.6);
+  display:grid; gap:20px; text-align:center;
+}
+.audio-card h1{ margin:0; font-size:32px; font-weight:900; color:#f1f7ff; }
+.audio-card p{ margin:0; color:var(--muted); font-weight:600; line-height:1.45; }
+.audio-icon{ width:94px; height:94px; border-radius:28px; background:rgba(59,109,246,.18); border:1px solid rgba(73,110,210,.65); display:grid; place-items:center; margin:0 auto; box-shadow:0 20px 50px rgba(8,16,34,.45); }
+.audio-icon svg{ width:52px; height:52px; }
+.audio-actions{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+
+/* =================== WELCOME SCREEN =================== */
+.waiting-screen{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  z-index:120; pointer-events:none; opacity:0; transition:opacity .3s ease;
+  background:radial-gradient(900px 900px at 50% 40%, rgba(43,73,140,.18), rgba(8,14,26,0));
+}
+.waiting-screen.show{ opacity:1; }
+.waiting-card{
+  width:min(520px,88vw);
+  padding:40px 44px;
+  border-radius:26px;
+  background:linear-gradient(185deg, rgba(14,24,46,.96), rgba(7,12,24,.92));
+  border:1px solid rgba(65,102,190,.48);
+  color:#dbe8ff;
+  text-align:center;
+  box-shadow:0 44px 160px rgba(0,0,0,.55);
+  display:grid; gap:20px;
+}
+.waiting-avatar{ width:110px; height:110px; border-radius:32px; background:linear-gradient(180deg,rgba(63,110,246,.25),rgba(20,44,99,.65)); margin:0 auto; display:grid; place-items:center; box-shadow:0 20px 60px rgba(16,34,78,.55); border:1px solid rgba(80,124,232,.42); }
+.waiting-avatar img{ width:70px; height:70px; object-fit:contain; filter:drop-shadow(0 16px 32px rgba(8,12,24,.45)); }
+.waiting-card h2{ margin:0; font-size:32px; font-weight:900; letter-spacing:.4px; color:#f1f6ff; }
+.waiting-card p{ margin:0; font-size:17px; font-weight:600; color:rgba(204,220,255,.86); }
+.waiting-card p:last-of-type{ color:rgba(172,196,244,.78); font-weight:500; }
+.waiting-screen.full .waiting-card{ border-color:rgba(92,134,242,.65); box-shadow:0 54px 160px rgba(24,40,92,.6); }
+.waiting-screen.full .waiting-card p{ color:rgba(230,238,255,.9); }
+.waiting-screen.full .waiting-card p:last-of-type{ color:rgba(196,214,255,.85); }
+.waiting-screen.full .waiting-counter{ background:rgba(63,110,246,.28); border-color:rgba(96,138,255,.6); }
+.waiting-roster{ position:fixed; left:50%; bottom:32px; transform:translateX(-50%); width:min(1120px,92vw); display:flex; flex-wrap:wrap; justify-content:center; gap:16px; z-index:110; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; }
+.waiting-roster.show{ opacity:1; transform:translate(-50%,0); }
+.waiting-roster.empty{ justify-content:center; }
+.waiting-roster .waiting-empty{ flex:1 1 100%; padding:12px 0; text-align:center; font-weight:600; color:rgba(180,202,244,.8); }
+.waiting-roster-item{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:18px; background:rgba(12,22,40,.78); border:1px solid rgba(70,108,198,.5); box-shadow:0 24px 60px rgba(5,10,25,.55); min-width:200px; }
+.waiting-roster-item .avatar{ width:48px; height:48px; border-radius:16px; background:radial-gradient(64px 64px at 50% 24%, rgba(70,110,210,.28), rgba(10,20,40,.95)); display:grid; place-items:center; border:1px solid rgba(92,134,240,.6); }
+.waiting-roster-item .avatar img{ width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(3,8,20,.75)); }
+.waiting-roster-item .meta{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; font-weight:700; color:#ecf2ff; }
+.waiting-roster-item .seat{ font-size:.78rem; text-transform:uppercase; letter-spacing:.16em; color:rgba(162,188,236,.76); }
+.waiting-empty{ padding:12px 0; font-weight:600; color:rgba(172,195,240,.78); text-align:center; }
+.waiting-counter{ display:flex; align-items:center; justify-content:center; gap:16px; padding:18px 20px; border-radius:20px; background:rgba(63,110,246,.16); border:1px solid rgba(76,118,232,.45); }
+.counter-icon{ width:56px; height:56px; border-radius:18px; background:rgba(9,18,34,.9); display:grid; place-items:center; box-shadow:0 20px 52px rgba(10,16,32,.65); border:1px solid rgba(63,110,246,.45); }
+.counter-icon svg{ width:34px; height:34px; fill:#7fa2ff; }
+.counter-info{ display:grid; text-align:left; gap:4px; }
+.counter-value{ font-size:30px; font-weight:900; color:#f6fbff; }
+.counter-label{ font-size:13px; font-weight:700; color:rgba(184,205,247,.78); text-transform:uppercase; letter-spacing:.16em; }
+
+.btn{
+  padding:12px 20px;
+  border-radius:999px;
+  border:1px solid transparent;
+  font:700 16px/1 Inter,system-ui,sans-serif;
+  letter-spacing:.25px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 16px 40px rgba(8,15,32,.35); }
+.btn:active{ transform:translateY(0); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; transform:none; }
+.btn.primary{ background:var(--accent); color:#fff; box-shadow:0 18px 50px rgba(59,109,246,.35); }
+.btn.primary:hover{ box-shadow:0 26px 60px rgba(59,109,246,.45); }
+.btn.ghost{ background:rgba(9,16,32,.62); border-color:rgba(57,91,170,.4); color:var(--text); }
+.btn.ghost:hover{ background:rgba(12,20,40,.82); }
+
+body.waiting-mode #hud,
+body.waiting-mode #questionBoard,
+body.waiting-mode #stage,
+body.waiting-mode #centerBox,
+body.waiting-mode #timebarWrap,
+body.waiting-mode #banner{
+  display:none !important;
+}
+body.waiting-mode #gridWrap{ display:none; }
 
 /* ======================== HUD ========================= */
 #hud{
