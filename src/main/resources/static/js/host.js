@@ -12,9 +12,12 @@ const btnReset    = document.getElementById('btnReset');
 const btnNew      = document.getElementById('btnNew');
 const btnSelectQuestion = document.getElementById('btnSelectQuestion');
 
-const phaseEl     = document.getElementById('phase');
-const statPlayers = document.getElementById('statPlayers');
-const statAnswerTime = document.getElementById('statAnswerTime');
+const phaseEl       = document.getElementById('phase');
+const statPlayers   = document.getElementById('statPlayers');
+const statPlayersMax= document.getElementById('statPlayersMax');
+const statAnswerTime= document.getElementById('statAnswerTime');
+const statAsked     = document.getElementById('statAsked');
+const hostClockEl   = document.getElementById('hostClock');
 
 const ansAv   = document.getElementById('ansAv');
 const ansName = document.getElementById('ansName');
@@ -39,6 +42,8 @@ const stageSubEl   = document.getElementById('stageSub');
 const stageActionEl= document.getElementById('stageAction');
 const stagePlaceholderEl = document.getElementById('stagePlaceholder');
 const stageStepsEl = document.getElementById('stageSteps');
+const answerActionsEl = document.querySelector('.answer-actions');
+const answerJudgeWrap = document.querySelector('.answer-judge');
 
 const stageButtons = {};
 [btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
@@ -56,6 +61,9 @@ const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeTitle    = document.getElementById('welcomeTitle');
 const welcomeSubtitle = document.getElementById('welcomeSubtitle');
 const welcomeCta      = document.getElementById('btnOverlayStart');
+const welcomeCard     = welcomeOverlay ? welcomeOverlay.querySelector('.welcome-card') : null;
+const welcomeCount    = document.getElementById('welcomeCount');
+const welcomeHint     = document.getElementById('welcomeHint');
 
 const difficultyList  = document.getElementById('difficultyList');
 const categoryList    = document.getElementById('categoryList');
@@ -88,6 +96,7 @@ let toastHideTimer = null;
 let autoAdvanceIntroPending = false;
 let readingStartPending = false;
 let targetProposal = null;
+let clockTimer = null;
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -96,6 +105,7 @@ const bus = connect({
 });
 
 loadCatalog();
+startClock();
 
 async function loadCatalog(){
   try {
@@ -270,10 +280,12 @@ function render(){
 
   const joined = (st.players||[]).filter(isJoined);
   const joinedCount = joined.length;
+  const totalSlots = Array.isArray(st.players) ? st.players.length : 0;
   if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
     hideTargetOverlay();
   }
   statPlayers.textContent = joinedCount;
+  if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
   phaseEl.textContent = st.phase;
   const answerMs = st.settings?.answerTimerMs || 0;
   statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`;
@@ -326,33 +338,46 @@ function updateQuestion(active){
     badgeCategory.textContent   = active.category || '—';
     questionLabel.textContent   = `#${active.order?.toString().padStart(2,'0') || '--'} • ${active.id || ''}`;
     questionText.textContent    = active.question || '—';
-    questionAnswer.textContent  = `Odpowiedź: ${active.answer || '—'}`;
+    questionAnswer.textContent  = active.answer || '—';
     questionPrompted = false;
   } else {
     badgeDifficulty.textContent = '—';
     badgeCategory.textContent   = '—';
     questionLabel.textContent   = 'Brak wybranego pytania';
     questionText.textContent    = 'Wybierz pytanie, aby rozpocząć.';
-    questionAnswer.textContent  = 'Odpowiedź: —';
+    questionAnswer.textContent  = '—';
   }
 }
 
 function updateWelcome(st, joinedCount){
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
+  const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
+  const everyoneReady = joinedCount >= totalSlots && totalSlots > 0;
   const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
 
   welcomeTitle.textContent = dash.welcomeTitle || `Witaj ${hostName}!`;
+  const baseHint = (dash.welcomeSubtitle || '').trim();
+  const freeSeats = Math.max(0, totalSlots - joinedCount);
+
+  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${totalSlots}`; }
+  if (welcomeCard){ welcomeCard.classList.toggle('ready', joinedCount > 0); }
 
   if (waitingForPlayers){
-    welcomeSubtitle.textContent = 'Czekamy aż gracze dołączą i zajmą stanowiska.';
+    welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie graczy…';
     welcomeCta.textContent = 'Oczekiwanie na graczy';
     welcomeCta.disabled = true;
+    if (welcomeHint){ welcomeHint.textContent = baseHint || 'Zaproś uczestników do pokoju gry.'; }
+  } else if (!everyoneReady){
+    welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie reszty graczy…';
+    const tail = freeSeats === 1 ? 'Pozostało 1 wolne miejsce.' : `Pozostało ${freeSeats} wolnych miejsc.`;
+    if (welcomeHint){ welcomeHint.textContent = baseHint ? `${baseHint} ${tail}`.trim() : tail; }
+    welcomeCta.textContent = 'Rozpocznij, gdy jesteś gotowy';
+    welcomeCta.disabled = false;
   } else {
-    const readyLine = joinedCount === 1 ? '1 gracz czeka.' : `${joinedCount} graczy czeka.`;
-    const baseSubtitle = (dash.welcomeSubtitle || 'Zaraz zaczynamy — przygotuj się.').trim();
-    welcomeSubtitle.textContent = `${baseSubtitle} ${readyLine}`.trim();
+    welcomeSubtitle.textContent = 'Oczekiwanie na rozpoczęcie przez gospodarza.';
+    if (welcomeHint){ welcomeHint.textContent = baseHint || 'Wszyscy gracze są na stanowiskach.'; }
     welcomeCta.textContent = 'Rozpocznij rozgrywkę';
     welcomeCta.disabled = false;
   }
@@ -367,10 +392,12 @@ function updateMetrics(metrics){
     metricCount.textContent   = '0';
     metricAverage.textContent = '0,0 s';
     metricLast.textContent    = '0,0 s';
+    if (statAsked){ statAsked.textContent = '0'; }
     clearRuntimeTimer();
     return;
   }
   metricCount.textContent = metrics.askedCount != null ? metrics.askedCount : 0;
+  if (statAsked){ statAsked.textContent = metrics.askedCount != null ? metrics.askedCount : 0; }
   metricAverage.textContent = formatSeconds(metrics.averageQuestionTimeMs || 0);
   metricLast.textContent    = formatSeconds(metrics.lastQuestionTimeMs || 0);
   refreshRuntime();
@@ -648,6 +675,20 @@ function updateStageButtons(buttons){
   if (stageActionEl){
     stageActionEl.classList.toggle('empty', visible === 0);
   }
+  if (answerJudgeWrap){
+    const goodEl = stageButtons.btnGood?.el;
+    const badEl  = stageButtons.btnBad?.el;
+    const judgeVisible = !!(goodEl && !goodEl.classList.contains('is-hidden')) || !!(badEl && !badEl.classList.contains('is-hidden'));
+    answerJudgeWrap.classList.toggle('hidden', !judgeVisible);
+  }
+  if (answerActionsEl){
+    const nextEl = stageButtons.btnNext?.el;
+    const nextVisible = !!(nextEl && !nextEl.classList.contains('is-hidden'));
+    const goodEl = stageButtons.btnGood?.el;
+    const badEl  = stageButtons.btnBad?.el;
+    const judgeVisible = !!(goodEl && !goodEl.classList.contains('is-hidden')) || !!(badEl && !badEl.classList.contains('is-hidden'));
+    answerActionsEl.classList.toggle('hidden', !nextVisible && !judgeVisible);
+  }
 }
 
 function maybePromptQuestion(st, activeQuestion){
@@ -701,6 +742,19 @@ function formatSeconds(ms){
 
 function formatSecondsShort(ms){
   return (Math.max(0, ms)/1000).toFixed(1);
+}
+
+function startClock(){
+  if (!hostClockEl) return;
+  if (clockTimer){ clearInterval(clockTimer); }
+  const tick = ()=>{
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2,'0');
+    const minutes = now.getMinutes().toString().padStart(2,'0');
+    hostClockEl.textContent = `${hours}:${minutes}`;
+  };
+  tick();
+  clockTimer = setInterval(tick, 15000);
 }
 
 function showToast(message){

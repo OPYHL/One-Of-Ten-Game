@@ -10,6 +10,9 @@
   --ok:#20c997;
   --bad:#ff4757;
 
+  --card-light:#f7faff;
+  --card-shadow:rgba(2,8,20,.6);
+
   /* siatka graczy */
   --grid-gap-x: 18px;
   --grid-gap-y: 18px;
@@ -33,6 +36,78 @@ body{
 }
 img{ max-width:100%; display:block }
 .hidden{ display:none !important }
+
+/* =================== AUDIO OVERLAY =================== */
+.audio-overlay{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(5,10,20,.88);
+  backdrop-filter:blur(20px);
+  z-index:260;
+  transition:opacity .25s ease;
+}
+.audio-overlay.hidden{ opacity:0; pointer-events:none; }
+.audio-card{
+  width:min(520px,92vw);
+  padding:38px 42px;
+  border-radius:26px;
+  background:linear-gradient(155deg, rgba(18,35,70,.94), rgba(9,17,36,.94));
+  border:1px solid rgba(73,110,210,.55);
+  box-shadow:0 42px 140px rgba(0,0,0,.6);
+  display:grid; gap:20px; text-align:center;
+}
+.audio-card h1{ margin:0; font-size:32px; font-weight:900; color:#f1f7ff; }
+.audio-card p{ margin:0; color:var(--muted); font-weight:600; line-height:1.45; }
+.audio-icon{ width:94px; height:94px; border-radius:28px; background:rgba(59,109,246,.18); border:1px solid rgba(73,110,210,.65); display:grid; place-items:center; margin:0 auto; box-shadow:0 20px 50px rgba(8,16,34,.45); }
+.audio-icon svg{ width:52px; height:52px; }
+.audio-actions{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+
+/* =================== WELCOME SCREEN =================== */
+.waiting-screen{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  z-index:120; pointer-events:none; opacity:0; transition:opacity .24s ease;
+}
+.waiting-screen.show{ opacity:1; }
+.waiting-card{
+  width:min(620px,86vw);
+  padding:42px 48px;
+  border-radius:28px;
+  background:#f7faff;
+  color:#0c1a33;
+  box-shadow:0 46px 120px rgba(0,0,0,.55);
+  text-align:center;
+  display:grid; gap:18px;
+}
+.waiting-avatar{ width:112px; height:112px; border-radius:50%; background:linear-gradient(180deg,#f0f5ff,#dbe6ff); margin:0 auto; display:grid; place-items:center; box-shadow:0 22px 60px rgba(59,109,246,.28); }
+.waiting-avatar img{ width:72px; height:72px; object-fit:contain; }
+.waiting-card h2{ margin:0; font-size:34px; font-weight:900; letter-spacing:.4px; color:#0c1a33; }
+.waiting-card p{ margin:0; font-size:18px; font-weight:600; color:#2c3f66; }
+.waiting-card p:last-of-type{ color:#4a5d87; font-weight:500; }
+.waiting-screen.full .waiting-card{ border:1px solid rgba(59,109,246,.35); }
+.waiting-screen.full .waiting-card p{ color:#1c2d54; }
+.waiting-screen.full .waiting-card p:last-of-type{ color:#2f4470; }
+.waiting-counter{ display:flex; align-items:center; justify-content:center; gap:14px; padding:18px 20px; border-radius:20px; background:rgba(59,109,246,.12); border:1px solid rgba(59,109,246,.25); }
+.counter-icon{ width:54px; height:54px; border-radius:18px; background:#fff; display:grid; place-items:center; box-shadow:0 10px 24px rgba(59,109,246,.25); }
+.counter-icon svg{ width:34px; height:34px; }
+.counter-info{ display:grid; text-align:left; gap:2px; }
+.counter-value{ font-size:28px; font-weight:900; color:#0c1a33; }
+.counter-label{ font-size:14px; font-weight:600; color:#4a5d87; text-transform:uppercase; letter-spacing:.18em; }
+
+.btn{
+  padding:12px 20px;
+  border-radius:999px;
+  border:1px solid transparent;
+  font:700 16px/1 Inter,system-ui,sans-serif;
+  letter-spacing:.25px;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 16px 40px rgba(8,15,32,.35); }
+.btn:active{ transform:translateY(0); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; transform:none; }
+.btn.primary{ background:var(--accent); color:#fff; box-shadow:0 18px 50px rgba(59,109,246,.35); }
+.btn.primary:hover{ box-shadow:0 26px 60px rgba(59,109,246,.45); }
+.btn.ghost{ background:rgba(9,16,32,.62); border-color:rgba(57,91,170,.4); color:var(--text); }
+.btn.ghost:hover{ background:rgba(12,20,40,.82); }
 
 /* ======================== HUD ========================= */
 #hud{

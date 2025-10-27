@@ -9,15 +9,52 @@
 <body>
 <header id="topbar">
     <div class="brand">
-        <div class="brand-name">Panel prowadzącego</div>
-        <div class="brand-sub">1 z 10</div>
+        <div class="brand-logo">1/10</div>
+        <div class="brand-copy">
+            <div class="brand-title">Prowadzący</div>
+            <div class="brand-sub">Panel sterowania</div>
+        </div>
     </div>
-    <div class="center">
-        <div class="pill"><span class="k">Faza</span><span class="v" id="phase">IDLE</span></div>
-        <div class="pill"><span class="k">Graczy</span><span class="v" id="statPlayers">0</span></div>
-        <div class="pill"><span class="k">Czas odpowiedzi</span><span class="v" id="statAnswerTime">0 s</span></div>
+    <div class="hud">
+        <div class="scoreboard">
+            <div class="score-card">
+                <div class="score-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48"><path d="M15.5 6a8.5 8.5 0 1 1-8.5 8.5A8.51 8.51 0 0 1 15.5 6Zm0 16a12.5 12.5 0 0 1 12.5 12.5V39H3v-4.5A12.5 12.5 0 0 1 15.5 22Z"/></svg>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Gracze</span>
+                    <span class="score-value"><span id="statPlayers">0</span><span class="score-total">/<span id="statPlayersMax">10</span></span></span>
+                </div>
+            </div>
+            <div class="score-card">
+                <div class="score-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48"><path d="M12 8h24a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4Zm12 6a2 2 0 0 0-2 2v8h-6a2 2 0 0 0 0 4h8a2 2 0 0 0 2-2V16a2 2 0 0 0-2-2Z"/></svg>
+                </div>
+                <div class="score-details">
+                    <span class="score-label">Pytania</span>
+                    <span class="score-value" id="statAsked">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="phase-card">
+            <span class="phase-label">Faza gry</span>
+            <span class="phase-value" id="phase">IDLE</span>
+        </div>
+        <div class="answer-card">
+            <span class="answer-label">Czas odpowiedzi</span>
+            <span class="answer-value" id="statAnswerTime">0 s</span>
+        </div>
     </div>
-    <div class="right">
+    <div class="top-actions">
+        <div class="clock" aria-live="polite">
+            <div class="clock-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48"><path d="M24 4a20 20 0 1 1-20 20A20 20 0 0 1 24 4Zm0 4a16 16 0 1 0 16 16A16 16 0 0 0 24 8Zm-2 6a2 2 0 0 1 4 0v8h6a2 2 0 0 1 0 4h-8a2 2 0 0 1-2-2Z"/></svg>
+            </div>
+            <div class="clock-details">
+                <span class="clock-label">Zegar</span>
+                <span class="clock-value" id="hostClock">00:00</span>
+            </div>
+        </div>
         <button class="btn ghost" id="btnReset">Reset gry</button>
         <button class="btn ghost" id="btnNew">Nowa gra</button>
     </div>
@@ -26,9 +63,22 @@
 <div id="toast" class="toast hidden"></div>
 
 <div id="welcomeOverlay" class="overlay hidden">
-    <div class="overlay-card">
-        <h1 id="welcomeTitle">Witaj Marcel!</h1>
-        <p id="welcomeSubtitle">Zaraz zaczynamy — przygotuj się na pierwsze pytania.</p>
+    <div class="overlay-card welcome-card">
+        <div class="welcome-icon">
+            <div class="welcome-avatar"><img src="/img/host.png" alt="Prowadzący"></div>
+        </div>
+        <h1 id="welcomeTitle">Witaj!</h1>
+        <p id="welcomeSubtitle" class="welcome-status">Oczekiwanie na dołączenie graczy…</p>
+        <div class="welcome-counter">
+            <div class="counter-icon">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 10a10 10 0 1 1-10 10 10 10 0 0 1 10-10zm22 0a10 10 0 1 1-10 10 10 10 0 0 1 10-10zM12 36h20a8 8 0 0 1 8 8v8H4v-8a8 8 0 0 1 8-8zm32 0h8a8 8 0 0 1 8 8v8H36v-8a8 8 0 0 1 8-8z" fill="#3b6df6"/></svg>
+            </div>
+            <div class="counter-text">
+                <span id="welcomeCount" class="counter-value">0/10</span>
+                <span class="counter-label">graczy gotowych</span>
+            </div>
+        </div>
+        <p id="welcomeHint" class="welcome-hint">Zaproś uczestników do pokoju gry.</p>
         <button class="btn primary" id="btnOverlayStart">Rozpocznij</button>
     </div>
 </div>
@@ -59,37 +109,43 @@
                     <button class="btn" id="btnQuestion" data-label="Wybierz pytanie">Wybierz pytanie</button>
                     <button class="btn" id="btnRead" data-label="Czytam">Czytam</button>
                     <button class="btn" id="btnReadDone" data-label="Przeczytałem">Przeczytałem</button>
-                    <button class="btn good" id="btnGood" data-label="✓ Dobra">✓ Dobra</button>
-                    <button class="btn bad"  id="btnBad" data-label="✗ Zła">✗ Zła</button>
-                    <button class="btn" id="btnNext" data-label="Kolejne pytanie">Kolejne pytanie</button>
                 </div>
                 <div class="stage-placeholder" id="stagePlaceholder">Sterowanie pojawi się automatycznie, gdy będzie potrzebne.</div>
             </div>
-            <ol class="stage-steps" id="stageSteps"></ol>
+            <div class="stage-steps-wrapper">
+                <div class="stage-steps-title">Faza gry</div>
+                <ol class="stage-steps" id="stageSteps"></ol>
+            </div>
         </article>
     </section>
 
     <section id="infoColumn">
         <article class="card question-card">
-            <div class="card-header">
-                <h3>Aktualne pytanie</h3>
+            <header class="card-header">
+                <div>
+                    <h3>Podgląd pytania</h3>
+                    <div id="questionBadges" class="badges">
+                        <span class="badge" id="badgeDifficulty">—</span>
+                        <span class="badge" id="badgeCategory">—</span>
+                    </div>
+                </div>
                 <button class="btn ghost" id="btnSelectQuestion">Przegląd pytań</button>
+            </header>
+            <div class="question-body">
+                <div class="question-label" id="questionLabel">Brak wybranego pytania</div>
+                <div class="question-text" id="questionText">Wybierz pytanie, aby rozpocząć.</div>
             </div>
-            <div class="question-info">
-                <div id="questionBadges" class="badges">
-                    <span class="badge" id="badgeDifficulty">—</span>
-                    <span class="badge" id="badgeCategory">—</span>
-                </div>
-                <div class="question-body">
-                    <div class="question-label" id="questionLabel">Brak wybranego pytania</div>
-                    <div class="question-text" id="questionText">Wybierz pytanie, aby rozpocząć.</div>
-                    <div class="question-answer" id="questionAnswer">Odpowiedź: —</div>
-                </div>
+            <div class="question-answer">
+                <span class="answer-tag">ODP:</span>
+                <span class="answer-text" id="questionAnswer">—</span>
             </div>
         </article>
 
         <article id="answeringCard" class="card answering-card">
-            <div class="person-head">Aktualnie odpowiada</div>
+            <div class="card-header">
+                <h3>Aktualnie odpowiada</h3>
+                <div id="ansJudge" class="judge"></div>
+            </div>
             <div class="answer-grid">
                 <div class="avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
                 <div class="person-meta">
@@ -110,7 +166,13 @@
                         <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
                     </div>
                 </div>
-                <div id="ansJudge" class="judge"></div>
+            </div>
+            <div class="answer-actions">
+                <button class="btn" id="btnNext" data-label="Kolejne pytanie">Kolejne pytanie</button>
+                <div class="answer-judge">
+                    <button class="btn bad" id="btnBad" data-label="✗ Zła">✗ Zła</button>
+                    <button class="btn good" id="btnGood" data-label="✓ Dobra">✓ Dobra</button>
+                </div>
             </div>
         </article>
 
