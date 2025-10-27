@@ -12,9 +12,12 @@ const btnReset    = document.getElementById('btnReset');
 const btnNew      = document.getElementById('btnNew');
 const btnSelectQuestion = document.getElementById('btnSelectQuestion');
 
-const phaseEl     = document.getElementById('phase');
-const statPlayers = document.getElementById('statPlayers');
-const statAnswerTime = document.getElementById('statAnswerTime');
+const phaseEl       = document.getElementById('phase');
+const statPlayers   = document.getElementById('statPlayers');
+const statPlayersMax= document.getElementById('statPlayersMax');
+const statAnswerTime= document.getElementById('statAnswerTime');
+const statAsked     = document.getElementById('statAsked');
+const hostClockEl   = document.getElementById('hostClock');
 
 const ansAv   = document.getElementById('ansAv');
 const ansName = document.getElementById('ansName');
@@ -39,6 +42,8 @@ const stageSubEl   = document.getElementById('stageSub');
 const stageActionEl= document.getElementById('stageAction');
 const stagePlaceholderEl = document.getElementById('stagePlaceholder');
 const stageStepsEl = document.getElementById('stageSteps');
+const answerActionsEl = document.querySelector('.answer-actions');
+const answerJudgeWrap = document.querySelector('.answer-judge');
 
 const stageButtons = {};
 [btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
@@ -91,6 +96,7 @@ let toastHideTimer = null;
 let autoAdvanceIntroPending = false;
 let readingStartPending = false;
 let targetProposal = null;
+let clockTimer = null;
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -99,6 +105,7 @@ const bus = connect({
 });
 
 loadCatalog();
+startClock();
 
 async function loadCatalog(){
   try {
@@ -273,10 +280,12 @@ function render(){
 
   const joined = (st.players||[]).filter(isJoined);
   const joinedCount = joined.length;
+  const totalSlots = Array.isArray(st.players) ? st.players.length : 0;
   if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
     hideTargetOverlay();
   }
   statPlayers.textContent = joinedCount;
+  if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
   phaseEl.textContent = st.phase;
   const answerMs = st.settings?.answerTimerMs || 0;
   statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`;
@@ -329,14 +338,14 @@ function updateQuestion(active){
     badgeCategory.textContent   = active.category || '—';
     questionLabel.textContent   = `#${active.order?.toString().padStart(2,'0') || '--'} • ${active.id || ''}`;
     questionText.textContent    = active.question || '—';
-    questionAnswer.textContent  = `Odpowiedź: ${active.answer || '—'}`;
+    questionAnswer.textContent  = active.answer || '—';
     questionPrompted = false;
   } else {
     badgeDifficulty.textContent = '—';
     badgeCategory.textContent   = '—';
     questionLabel.textContent   = 'Brak wybranego pytania';
     questionText.textContent    = 'Wybierz pytanie, aby rozpocząć.';
-    questionAnswer.textContent  = 'Odpowiedź: —';
+    questionAnswer.textContent  = '—';
   }
 }
 
@@ -383,10 +392,12 @@ function updateMetrics(metrics){
     metricCount.textContent   = '0';
     metricAverage.textContent = '0,0 s';
     metricLast.textContent    = '0,0 s';
+    if (statAsked){ statAsked.textContent = '0'; }
     clearRuntimeTimer();
     return;
   }
   metricCount.textContent = metrics.askedCount != null ? metrics.askedCount : 0;
+  if (statAsked){ statAsked.textContent = metrics.askedCount != null ? metrics.askedCount : 0; }
   metricAverage.textContent = formatSeconds(metrics.averageQuestionTimeMs || 0);
   metricLast.textContent    = formatSeconds(metrics.lastQuestionTimeMs || 0);
   refreshRuntime();
@@ -664,6 +675,20 @@ function updateStageButtons(buttons){
   if (stageActionEl){
     stageActionEl.classList.toggle('empty', visible === 0);
   }
+  if (answerJudgeWrap){
+    const goodEl = stageButtons.btnGood?.el;
+    const badEl  = stageButtons.btnBad?.el;
+    const judgeVisible = !!(goodEl && !goodEl.classList.contains('is-hidden')) || !!(badEl && !badEl.classList.contains('is-hidden'));
+    answerJudgeWrap.classList.toggle('hidden', !judgeVisible);
+  }
+  if (answerActionsEl){
+    const nextEl = stageButtons.btnNext?.el;
+    const nextVisible = !!(nextEl && !nextEl.classList.contains('is-hidden'));
+    const goodEl = stageButtons.btnGood?.el;
+    const badEl  = stageButtons.btnBad?.el;
+    const judgeVisible = !!(goodEl && !goodEl.classList.contains('is-hidden')) || !!(badEl && !badEl.classList.contains('is-hidden'));
+    answerActionsEl.classList.toggle('hidden', !nextVisible && !judgeVisible);
+  }
 }
 
 function maybePromptQuestion(st, activeQuestion){
@@ -717,6 +742,19 @@ function formatSeconds(ms){
 
 function formatSecondsShort(ms){
   return (Math.max(0, ms)/1000).toFixed(1);
+}
+
+function startClock(){
+  if (!hostClockEl) return;
+  if (clockTimer){ clearInterval(clockTimer); }
+  const tick = ()=>{
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2,'0');
+    const minutes = now.getMinutes().toString().padStart(2,'0');
+    hostClockEl.textContent = `${hours}:${minutes}`;
+  };
+  tick();
+  clockTimer = setInterval(tick, 15000);
 }
 
 function showToast(message){
