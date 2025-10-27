@@ -26,9 +26,22 @@
 <div id="toast" class="toast hidden"></div>
 
 <div id="welcomeOverlay" class="overlay hidden">
-    <div class="overlay-card">
-        <h1 id="welcomeTitle">Witaj Marcel!</h1>
-        <p id="welcomeSubtitle">Zaraz zaczynamy — przygotuj się na pierwsze pytania.</p>
+    <div class="overlay-card welcome-card">
+        <div class="welcome-icon">
+            <div class="welcome-avatar"><img src="/img/host.png" alt="Prowadzący"></div>
+        </div>
+        <h1 id="welcomeTitle">Witaj!</h1>
+        <p id="welcomeSubtitle" class="welcome-status">Oczekiwanie na dołączenie graczy…</p>
+        <div class="welcome-counter">
+            <div class="counter-icon">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 10a10 10 0 1 1-10 10 10 10 0 0 1 10-10zm22 0a10 10 0 1 1-10 10 10 10 0 0 1 10-10zM12 36h20a8 8 0 0 1 8 8v8H4v-8a8 8 0 0 1 8-8zm32 0h8a8 8 0 0 1 8 8v8H36v-8a8 8 0 0 1 8-8z" fill="#3b6df6"/></svg>
+            </div>
+            <div class="counter-text">
+                <span id="welcomeCount" class="counter-value">0/10</span>
+                <span class="counter-label">graczy gotowych</span>
+            </div>
+        </div>
+        <p id="welcomeHint" class="welcome-hint">Zaproś uczestników do pokoju gry.</p>
         <button class="btn primary" id="btnOverlayStart">Rozpocznij</button>
     </div>
 </div>

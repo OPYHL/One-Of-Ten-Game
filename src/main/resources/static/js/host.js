@@ -56,6 +56,9 @@ const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeTitle    = document.getElementById('welcomeTitle');
 const welcomeSubtitle = document.getElementById('welcomeSubtitle');
 const welcomeCta      = document.getElementById('btnOverlayStart');
+const welcomeCard     = welcomeOverlay ? welcomeOverlay.querySelector('.welcome-card') : null;
+const welcomeCount    = document.getElementById('welcomeCount');
+const welcomeHint     = document.getElementById('welcomeHint');
 
 const difficultyList  = document.getElementById('difficultyList');
 const categoryList    = document.getElementById('categoryList');
@@ -340,19 +343,32 @@ function updateQuestion(active){
 function updateWelcome(st, joinedCount){
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
+  const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
+  const everyoneReady = joinedCount >= totalSlots && totalSlots > 0;
   const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
 
   welcomeTitle.textContent = dash.welcomeTitle || `Witaj ${hostName}!`;
+  const baseHint = (dash.welcomeSubtitle || '').trim();
+  const freeSeats = Math.max(0, totalSlots - joinedCount);
+
+  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${totalSlots}`; }
+  if (welcomeCard){ welcomeCard.classList.toggle('ready', joinedCount > 0); }
 
   if (waitingForPlayers){
-    welcomeSubtitle.textContent = 'Czekamy aż gracze dołączą i zajmą stanowiska.';
+    welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie graczy…';
     welcomeCta.textContent = 'Oczekiwanie na graczy';
     welcomeCta.disabled = true;
+    if (welcomeHint){ welcomeHint.textContent = baseHint || 'Zaproś uczestników do pokoju gry.'; }
+  } else if (!everyoneReady){
+    welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie reszty graczy…';
+    const tail = freeSeats === 1 ? 'Pozostało 1 wolne miejsce.' : `Pozostało ${freeSeats} wolnych miejsc.`;
+    if (welcomeHint){ welcomeHint.textContent = baseHint ? `${baseHint} ${tail}`.trim() : tail; }
+    welcomeCta.textContent = 'Rozpocznij, gdy jesteś gotowy';
+    welcomeCta.disabled = false;
   } else {
-    const readyLine = joinedCount === 1 ? '1 gracz czeka.' : `${joinedCount} graczy czeka.`;
-    const baseSubtitle = (dash.welcomeSubtitle || 'Zaraz zaczynamy — przygotuj się.').trim();
-    welcomeSubtitle.textContent = `${baseSubtitle} ${readyLine}`.trim();
+    welcomeSubtitle.textContent = 'Oczekiwanie na rozpoczęcie przez gospodarza.';
+    if (welcomeHint){ welcomeHint.textContent = baseHint || 'Wszyscy gracze są na stanowiskach.'; }
     welcomeCta.textContent = 'Rozpocznij rozgrywkę';
     welcomeCta.disabled = false;
   }
