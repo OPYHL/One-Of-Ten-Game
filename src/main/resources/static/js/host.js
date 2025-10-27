@@ -450,7 +450,7 @@ function updateWelcome(st, joinedCount, totalSlots){
 
   if (waitingForPlayers){
     welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie graczy…';
-    welcomeCta.textContent = 'Oczekiwanie na graczy';
+    welcomeCta.textContent = 'Rozpocznij';
     welcomeCta.disabled = true;
     if (welcomeHint){
       const parts = [];
@@ -466,7 +466,7 @@ function updateWelcome(st, joinedCount, totalSlots){
       parts.push(tail);
       welcomeHint.textContent = parts.join(' ').trim();
     }
-    welcomeCta.textContent = 'Rozpocznij, gdy jesteś gotowy';
+    welcomeCta.textContent = 'Rozpocznij';
     welcomeCta.disabled = false;
   } else {
     welcomeSubtitle.textContent = 'Oczekiwanie na rozpoczęcie przez gospodarza.';
@@ -475,7 +475,7 @@ function updateWelcome(st, joinedCount, totalSlots){
       parts.push(baseHint || 'Wszyscy gracze są na stanowiskach.');
       welcomeHint.textContent = parts.join(' ').trim();
     }
-    welcomeCta.textContent = 'Rozpocznij rozgrywkę';
+    welcomeCta.textContent = 'Rozpocznij';
     welcomeCta.disabled = false;
   }
 
@@ -636,6 +636,24 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
       break;
   }
 
+  if (answering){
+    const nm = (answering.name || '').trim();
+    const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+    if (phase !== 'ANSWERING' && (phase === 'BUZZING' || phase === 'READING' || phase === 'INTRO')){
+      stage.badge = `Gracz ${answering.id}`;
+      stage.title = `${label} odpowiada`;
+      stage.message = 'Słuchaj uważnie i oceń odpowiedź.';
+    }
+    if (phase !== 'SELECTING' && phase !== 'COOLDOWN'){
+      if (!stage.buttons.some(btn => btn?.id === 'btnGood')){
+        stage.buttons.push({ id: 'btnGood', label: '✓ Dobra', variant: 'good' });
+      }
+      if (!stage.buttons.some(btn => btn?.id === 'btnBad')){
+        stage.buttons.push({ id: 'btnBad', label: '✗ Zła', variant: 'bad' });
+      }
+    }
+  }
+
   applyStage(stage);
 }
 
@@ -651,7 +669,8 @@ function buildStageSteps(st, activeQuestion, answering){
   const phase = st.phase;
   const hasQuestion = !!activeQuestion;
   const isPreparing = !!activeQuestion?.preparing;
-  const readingActive = phase === 'READING' && hasQuestion && !isPreparing;
+  const readingStarted = hasQuestion && !isPreparing;
+  const readingWrapUp = phase === 'READING' && readingStarted && !!readingFinishPending;
 
   if (!hasQuestion){
     if (phase === 'INTRO' || phase === 'READING'){
@@ -663,24 +682,19 @@ function buildStageSteps(st, activeQuestion, answering){
     if (activeQuestion.difficulty) details.push(activeQuestion.difficulty);
     if (activeQuestion.category)   details.push(activeQuestion.category);
     if (activeQuestion.id)         details.push(`#${activeQuestion.id}`);
-    if (details.length){
-      steps[0].desc = details.join(' • ');
-    } else {
-      steps[0].desc = 'Pytanie gotowe do czytania.';
-    }
+    steps[0].desc = details.length ? details.join(' • ') : 'Pytanie gotowe do czytania.';
   }
 
   if (hasQuestion){
     if (phase === 'READING'){
       if (isPreparing){
         steps[1].status = 'active';
-        steps[2].status = 'pending';
-      } else if (readingActive) {
-        steps[1].status = 'done';
-        steps[2].status = 'active';
-      } else {
+      } else if (readingWrapUp){
         steps[1].status = 'done';
         steps[2].status = 'done';
+      } else {
+        steps[1].status = 'done';
+        steps[2].status = readingStarted ? 'active' : 'done';
       }
     } else if (phase !== 'INTRO' && phase !== 'IDLE'){
       steps[1].status = 'done';
@@ -691,38 +705,52 @@ function buildStageSteps(st, activeQuestion, answering){
   if (!hasQuestion){
     steps[1].status = steps[1].status === 'done' ? 'done' : 'pending';
     steps[2].status = steps[2].status === 'done' ? 'done' : 'pending';
-  } else if (phase === 'READING' && isPreparing){
-    steps[2].status = steps[2].status === 'active' ? 'active' : 'pending';
   }
 
-  if (phase === 'BUZZING'){
+  if (readingWrapUp){
     steps[3].status = 'active';
-  } else if (phase === 'ANSWERING' || phase === 'SELECTING'){
-    steps[3].status = 'done';
-  } else if (phase === 'COOLDOWN'){
-    steps[3].status = 'active';
-    steps[3].desc = 'Krótka przerwa przed kolejnym pytaniem.';
+    steps[3].desc = 'Kończymy etap czytania… chwilę cierpliwości.';
   }
 
-  if (phase === 'ANSWERING'){
-    steps[4].status = 'active';
-    if (answering){
-      const nm = (answering.name || '').trim();
-      const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
-      steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
-    }
-  } else if (phase === 'SELECTING' || phase === 'COOLDOWN'){
-    steps[4].status = 'done';
-    if (phase === 'SELECTING'){
+  switch (phase){
+    case 'BUZZING':
+      steps[3].status = 'active';
+      break;
+    case 'ANSWERING':
+      steps[3].status = 'done';
+      steps[4].status = 'active';
+      break;
+    case 'SELECTING':
+      steps[3].status = 'done';
+      steps[4].status = 'done';
       steps[4].desc = targetProposal
         ? 'Zwycięzca wskazał gracza — potwierdź wybór.'
         : 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
+      break;
+    case 'COOLDOWN':
+      steps[3].status = 'active';
+      steps[3].desc = 'Krótka przerwa przed kolejnym pytaniem.';
+      steps[4].status = 'done';
+      steps[4].desc = 'Ocena zakończona. Przygotuj kolejne pytanie.';
+      break;
+    default:
+      break;
+  }
+
+  if (answering){
+    const nm = (answering.name || '').trim();
+    const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+    steps[3].status = 'done';
+    if (phase !== 'SELECTING' && phase !== 'COOLDOWN'){
+      steps[4].status = 'active';
+      steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
     }
+  } else if (phase === 'ANSWERING'){
+    steps[4].status = 'active';
   }
 
   return steps;
 }
-
 function applyStage(stage){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl) return;
   stagePhaseEl.textContent = stage.badge || 'Sterowanie';
