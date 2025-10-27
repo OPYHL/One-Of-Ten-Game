@@ -106,6 +106,16 @@ let readingStartPending = false;
 let targetProposal = null;
 let clockTimer = null;
 
+const PHASE_LABELS = {
+  IDLE: 'Czekamy',
+  INTRO: 'Intro',
+  READING: 'Czytanie',
+  BUZZING: 'Zgłoszenia',
+  ANSWERING: 'Odpowiedź',
+  SELECTING: 'Wybór',
+  COOLDOWN: 'Przerwa',
+};
+
 const bus = connect({
   onState: s => { state = s; render(); },
   onEvent: ev => handleEvent(ev),
@@ -212,7 +222,10 @@ questionModal.addEventListener('click', e=>{ if (e.target === questionModal) clo
 function send(dest, body={}){ try{ bus.send(dest, body);}catch(e){ console.error(e); } }
 
 function startOrNext(){
-  if (!state) return;
+  if (!state){
+    showToast('Łączenie z serwerem… spróbuj ponownie za moment.');
+    return;
+  }
   const phase = state.phase;
   if (phase === 'IDLE') {
     if (!hasReadyPlayers()) {
@@ -286,40 +299,33 @@ function isJoined(p){
   if (typeof p.joined === 'boolean') return p.joined;
   return !looksLikePlaceholder(p);
 }
-function isConnected(p){
-  if (!p) return false;
-  return !looksLikePlaceholder(p);
-}
-
 function stageCounts(st = state){
   const players = Array.isArray(st?.players) ? st.players : [];
   const joined = players.filter(isJoined);
-  const connected = players.filter(isConnected);
   const joinedCount = joined.length;
-  const connectedCount = connected.length;
   const totalSlots = players.length || 10;
   const activeQuestion = st?.hostDashboard?.activeQuestion || null;
   const answeringPlayer = players.find(p => p.id === st?.answeringId) || null;
-  return { players, joined, connected, joinedCount, connectedCount, totalSlots, activeQuestion, answeringPlayer };
+  return { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer };
 }
 
 function refreshStageCard(){
   if (!state) return;
   const snap = stageCounts(state);
-  updateStage(state, snap.joinedCount, snap.connectedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer);
+  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer);
 }
 
 function render(){
   const st = state; if (!st) return;
 
   const counts = stageCounts(st);
-  const { players, joined, joinedCount, connectedCount, totalSlots, activeQuestion, answeringPlayer } = counts;
+  const { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer } = counts;
   if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
     hideTargetOverlay();
   }
-  if (statPlayers){ statPlayers.textContent = connectedCount; }
+  if (statPlayers){ statPlayers.textContent = joinedCount; }
   if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
-  phaseEl.textContent = st.phase;
+  phaseEl.textContent = phaseLabel(st.phase);
   const answerMs = st.settings?.answerTimerMs || 0;
   statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`;
 
@@ -343,9 +349,9 @@ function render(){
   }
 
   updateQuestion(activeQuestion);
-  updateWelcome(st, joinedCount, connectedCount, totalSlots || 10);
+  updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
-  updateStage(st, joinedCount, connectedCount, totalSlots || 10, activeQuestion, answeringPlayer);
+  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer);
   maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
@@ -380,7 +386,8 @@ function updateQuestion(active){
   }
 }
 
-function updateWelcome(st, joinedCount, connectedCount, totalSlots){
+function updateWelcome(st, joinedCount, totalSlots){
+  if (!welcomeSubtitle || !welcomeCta) return;
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
   const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
@@ -396,15 +403,10 @@ function updateWelcome(st, joinedCount, connectedCount, totalSlots){
   welcomeTitle.textContent = greetTitle;
   const baseHint = (dash.welcomeSubtitle || '').trim();
   const freeSeats = Math.max(0, totalSlots - joinedCount);
-  const filling = connectedCount > joinedCount
-    ? (connectedCount - joinedCount === 1
-        ? '1 zawodnik uzupełnia jeszcze dane.'
-        : `${connectedCount - joinedCount} zawodników uzupełnia jeszcze dane.`)
-    : '';
 
   if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${totalSlots}`; }
   if (welcomeCard){
-    welcomeCard.classList.toggle('ready', connectedCount > 0);
+    welcomeCard.classList.toggle('ready', joinedCount > 0);
     welcomeCard.classList.toggle('full', everyoneReady);
   }
 
@@ -415,7 +417,6 @@ function updateWelcome(st, joinedCount, connectedCount, totalSlots){
     if (welcomeHint){
       const parts = [];
       parts.push(baseHint || 'Zaproś uczestników do pokoju gry.');
-      if (filling){ parts.push(filling); }
       welcomeHint.textContent = parts.join(' ').trim();
     }
   } else if (!everyoneReady){
@@ -425,7 +426,6 @@ function updateWelcome(st, joinedCount, connectedCount, totalSlots){
       const parts = [];
       if (baseHint) parts.push(baseHint);
       parts.push(tail);
-      if (filling) parts.push(filling);
       welcomeHint.textContent = parts.join(' ').trim();
     }
     welcomeCta.textContent = 'Rozpocznij, gdy jesteś gotowy';
@@ -464,7 +464,7 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateStage(st, joinedCount, connectedCount, totalSlots, activeQuestion, answering){
+function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
   if (!st) return;
   const phase = st.phase;
   const isPreparing = !!activeQuestion?.preparing;
@@ -482,7 +482,7 @@ function updateStage(st, joinedCount, connectedCount, totalSlots, activeQuestion
 
   if (stageCardEl){
     stageCardEl.classList.toggle('idle', phase === 'IDLE');
-    stageCardEl.classList.toggle('ready', phase === 'IDLE' && connectedCount > 0);
+    stageCardEl.classList.toggle('ready', phase === 'IDLE' && joinedCount > 0);
     stageCardEl.classList.toggle('active', phase !== 'IDLE');
   }
 
@@ -811,6 +811,11 @@ function formatSeconds(ms){
 
 function formatSecondsShort(ms){
   return (Math.max(0, ms)/1000).toFixed(1);
+}
+
+function phaseLabel(phase){
+  if (!phase) return '—';
+  return PHASE_LABELS[phase] || phase;
 }
 
 function startClock(){

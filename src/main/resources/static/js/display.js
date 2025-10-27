@@ -143,7 +143,9 @@ function applyWaitingVisibility(){
 function renderWaitingPlayers(players = []){
   if (!waitingRoster) return;
   waitingRoster.innerHTML = '';
-  const joined = (players || []).filter(isJoined);
+  const joined = (players || [])
+    .filter(isJoined)
+    .sort((a, b) => (a?.id || 0) - (b?.id || 0));
   waitingBox?.classList.toggle('has-players', joined.length > 0);
   if (!joined.length){
     waitingRoster.classList.add('empty');
