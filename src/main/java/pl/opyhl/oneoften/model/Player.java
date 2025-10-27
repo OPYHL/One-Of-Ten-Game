@@ -9,6 +9,7 @@ public class Player {
     private int lives = 3;
     private int score = 0;
     private boolean eliminated = false;
+    private boolean joined = false;
 
     public Player() {}
     public Player(int id, String name){ this.id=id; this.name=name; }
@@ -25,4 +26,7 @@ public class Player {
     public void setScore(int score){ this.score = score; }
     public boolean isEliminated(){ return eliminated; }
     public void setEliminated(boolean eliminated){ this.eliminated = eliminated; }
+
+    public boolean isJoined(){ return joined; }
+    public void setJoined(boolean joined){ this.joined = joined; }
 }
