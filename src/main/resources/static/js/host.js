@@ -370,7 +370,7 @@ function updateMetrics(metrics){
     clearRuntimeTimer();
     return;
   }
-  metricCount.textContent = metrics.askedCount ?? 0;
+  metricCount.textContent = metrics.askedCount != null ? metrics.askedCount : 0;
   metricAverage.textContent = formatSeconds(metrics.averageQuestionTimeMs || 0);
   metricLast.textContent    = formatSeconds(metrics.lastQuestionTimeMs || 0);
   refreshRuntime();
@@ -608,7 +608,7 @@ function renderStageSteps(steps){
     const li = document.createElement('li');
     const status = step.status || 'pending';
     li.className = `stage-step ${status}`;
-    const number = step.number ?? (idx + 1);
+    const number = step.number != null ? step.number : (idx + 1);
     li.innerHTML = `
       <div class="stage-step-number">${escapeHtml(String(number))}</div>
       <div>
@@ -644,6 +644,9 @@ function updateStageButtons(buttons){
   });
   if (stagePlaceholderEl){
     stagePlaceholderEl.classList.toggle('hidden', visible > 0);
+  }
+  if (stageActionEl){
+    stageActionEl.classList.toggle('empty', visible === 0);
   }
 }
 
@@ -879,6 +882,26 @@ function truncate(text, max){
 }
 function escapeHtml(s){
   return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+function formatPlayerLabel(player){
+  if (!player) return '—';
+  const nm = (player.name || '').trim();
+  return nm ? `${player.id}. ${nm}` : `Gracz ${player.id}`;
+}
+
+function truncate(text, max){
+  if (!text) return '';
+  return text.length > max ? text.slice(0,max-1)+'…' : text;
+}
+function escapeHtml(s){
+  if (s == null) return '';
+  return String(s).replace(/[&<>]/g, ch => {
+    if (ch === '&') return '&amp;';
+    if (ch === '<') return '&lt;';
+    if (ch === '>') return '&gt;';
+    return ch;
+  });
 }
 
 function formatPlayerLabel(player){

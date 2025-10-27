@@ -100,6 +100,8 @@ body{
   gap:26px;
   padding:26px;
   align-items:start;
+  width:min(100%,1260px);
+  margin:0 auto 48px;
 }
 #stageColumn{display:flex}
 #infoColumn{display:grid;gap:22px;align-content:start}
@@ -140,6 +142,7 @@ body{
 .stage-sub{margin:0;font-size:1.05rem;color:rgba(211,222,255,.85);line-height:1.5}
 .stage-controls{display:flex;flex-direction:column;gap:14px}
 .stage-buttons{display:flex;flex-wrap:wrap;gap:12px}
+.stage-buttons.empty{display:none}
 .stage-buttons .btn{flex:1 1 180px;justify-content:center}
 .stage-placeholder{padding:14px 16px;border-radius:14px;border:1px dashed rgba(255,255,255,.16);color:rgba(211,222,255,.7);font-size:.92rem;background:rgba(255,255,255,.04)}
 .stage-placeholder.hidden{display:none}
@@ -223,14 +226,16 @@ body{
   .stage-buttons .btn{flex:1 1 150px}
 }
 @media (max-width:1024px){
-  #layout{grid-template-columns:1fr;gap:20px}
+  #layout{grid-template-columns:1fr;gap:20px;padding:20px;margin:0 auto 36px}
   #stageColumn{order:1}
   #infoColumn{order:2}
 }
 @media (max-width:768px){
-  #topbar{flex-direction:column;align-items:flex-start}
-  #layout{padding:18px}
-  .stage-card{padding:22px}
+  #topbar{flex-direction:column;align-items:flex-start;gap:12px}
+  #topbar .center{justify-content:flex-start}
+  #topbar .right{width:100%;justify-content:flex-start}
+  #layout{padding:18px;margin:0 auto 28px}
+  .stage-card{padding:20px}
   .stage-buttons .btn{flex:1 1 100%}
   .answer-grid{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:14px}
   .answering-card .avatar{justify-self:center}
