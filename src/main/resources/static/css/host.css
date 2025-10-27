@@ -159,7 +159,7 @@ a{color:inherit}
   flex:1;
   align-items:stretch;
 }
-#stageColumn{display:flex;align-items:stretch;min-height:0;height:100%;align-self:stretch}
+#stageColumn{display:flex;align-items:flex-start;min-height:0;height:100%;align-self:stretch}
 #infoColumn{
   display:grid;
   gap:22px;
@@ -170,7 +170,7 @@ a{color:inherit}
 #infoColumn > *{min-width:0}
 
 .stage-card{
-  flex:1;
+  flex:0 1 auto;
   display:flex;
   flex-direction:column;
   gap:18px;
@@ -179,7 +179,7 @@ a{color:inherit}
   background:var(--panel);
   border:1px solid rgba(47,84,235,.18);
   box-shadow:var(--shadow);
-  height:100%;
+  width:100%;
 }
 .stage-card.idle{background:linear-gradient(155deg,#ffffff 0%,#f6f8ff 100%);border-color:rgba(47,84,235,.2)}
 .stage-card.idle:not(.ready){opacity:.92}
