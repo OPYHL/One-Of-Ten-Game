@@ -90,6 +90,13 @@ const targetMessage = document.getElementById('targetMessage');
 const btnTargetApprove = document.getElementById('btnTargetApprove');
 const btnTargetReject  = document.getElementById('btnTargetReject');
 
+if (welcomeOverlay){
+  welcomeOverlay.classList.remove('hidden');
+  if (document.body){
+    document.body.classList.add('welcome-active');
+  }
+}
+
 let state = null;
 let catalog = null;
 let activeDifficulty = null;
@@ -103,12 +110,13 @@ let toastTimer = null;
 let toastHideTimer = null;
 let autoAdvanceIntroPending = false;
 let readingStartPending = false;
+let readingFinishPending = false;
 let targetProposal = null;
 let clockTimer = null;
 
 const PHASE_LABELS = {
   IDLE: 'Czekamy',
-  INTRO: 'Intro',
+  INTRO: 'Wybór pytania',
   READING: 'Czytanie',
   BUZZING: 'Zgłoszenia',
   ANSWERING: 'Odpowiedź',
@@ -335,7 +343,9 @@ function stageCounts(st = state){
 function refreshStageCard(){
   if (!state) return;
   const snap = stageCounts(state);
-  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer);
+  const uiPhase = resolveUiPhase(state, snap.activeQuestion, snap.answeringPlayer);
+  if (phaseEl){ phaseEl.textContent = phaseLabel(uiPhase); }
+  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer, uiPhase);
 }
 
 function render(){
@@ -343,12 +353,13 @@ function render(){
 
   const counts = stageCounts(st);
   const { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer } = counts;
+  const uiPhase = resolveUiPhase(st, activeQuestion, answeringPlayer);
   if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
     hideTargetOverlay();
   }
   if (statPlayers){ statPlayers.textContent = joinedCount; }
   if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
-  if (phaseEl){ phaseEl.textContent = phaseLabel(st.phase); }
+  if (phaseEl){ phaseEl.textContent = phaseLabel(uiPhase); }
   const answerMs = st.settings?.answerTimerMs || 0;
   if (statAnswerTime){ statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`; }
 
@@ -356,10 +367,12 @@ function render(){
   if (activeId !== currentQuestionId){
     currentQuestionId = activeId;
     readingStartPending = false;
+    readingFinishPending = false;
   }
   const inReadingPhase = st.phase === 'READING';
   if (!inReadingPhase){
     readingStartPending = false;
+    readingFinishPending = false;
   }
   if (activeQuestion && !activeQuestion.preparing){
     readingStartPending = false;
@@ -374,7 +387,7 @@ function render(){
   updateQuestion(activeQuestion);
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
-  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer);
+  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, uiPhase);
   maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
@@ -416,10 +429,11 @@ function updateWelcome(st, joinedCount, totalSlots){
   if (!welcomeSubtitle || !welcomeCta) return;
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
-  const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
+  const resolvedTotalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
-  const everyoneReady = joinedCount >= totalSlots && totalSlots > 0;
-  const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
+  const everyoneReady = joinedCount >= resolvedTotalSlots && resolvedTotalSlots > 0;
+  const askedCount = dash.metrics?.askedCount || 0;
+  const showOverlay = st.phase === 'IDLE' && (waitingForPlayers || askedCount === 0);
 
   if (welcomeHeading){
     const heading = dash.welcomeHeading || 'Witaj w „1 z 10”';
@@ -428,9 +442,9 @@ function updateWelcome(st, joinedCount, totalSlots){
   const greetTitle = dash.welcomeTitle || `Witaj ${hostName}`;
   welcomeTitle.textContent = greetTitle;
   const baseHint = (dash.welcomeSubtitle || '').trim();
-  const freeSeats = Math.max(0, totalSlots - joinedCount);
+  const freeSeats = Math.max(0, resolvedTotalSlots - joinedCount);
 
-  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${totalSlots}`; }
+  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${resolvedTotalSlots}`; }
   if (welcomeCard){
     welcomeCard.classList.toggle('ready', joinedCount > 0);
     welcomeCard.classList.toggle('full', everyoneReady);
@@ -438,7 +452,7 @@ function updateWelcome(st, joinedCount, totalSlots){
 
   if (waitingForPlayers){
     welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie graczy…';
-    welcomeCta.textContent = 'Oczekiwanie na graczy';
+    welcomeCta.textContent = 'Rozpocznij';
     welcomeCta.disabled = true;
     if (welcomeHint){
       const parts = [];
@@ -454,7 +468,7 @@ function updateWelcome(st, joinedCount, totalSlots){
       parts.push(tail);
       welcomeHint.textContent = parts.join(' ').trim();
     }
-    welcomeCta.textContent = 'Rozpocznij, gdy jesteś gotowy';
+    welcomeCta.textContent = 'Rozpocznij';
     welcomeCta.disabled = false;
   } else {
     welcomeSubtitle.textContent = 'Oczekiwanie na rozpoczęcie przez gospodarza.';
@@ -463,7 +477,7 @@ function updateWelcome(st, joinedCount, totalSlots){
       parts.push(baseHint || 'Wszyscy gracze są na stanowiskach.');
       welcomeHint.textContent = parts.join(' ').trim();
     }
-    welcomeCta.textContent = 'Rozpocznij rozgrywkę';
+    welcomeCta.textContent = 'Rozpocznij';
     welcomeCta.disabled = false;
   }
 
@@ -496,20 +510,20 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
+function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiPhase){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl){
     return;
   }
   if (!st) return;
-  const phase = st.phase;
+  const actualPhase = st.phase;
+  const phase = uiPhase || actualPhase;
   const isPreparing = !!activeQuestion?.preparing;
-  const readingActive = phase === 'READING' && activeQuestion && !activeQuestion.preparing;
   const stage = {
     badge: 'Sterowanie',
     title: 'Sterowanie',
     message: 'Działania pojawią się w odpowiednim momencie.',
     buttons: [],
-    steps: buildStageSteps(st, activeQuestion, answering),
+    steps: buildStageSteps(st, activeQuestion, answering, phase, actualPhase),
   };
 
   const allowQuestionPick = phase === 'INTRO' || phase === 'READING' || phase === 'COOLDOWN' || phase === 'SELECTING';
@@ -560,15 +574,17 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
         stage.title = 'Przygotuj pytanie';
         stage.message = 'Wybierz kategorię oraz numer zanim zaczniesz czytać.';
         stage.buttons.push({ id: 'btnQuestion', label: 'Przeglądaj pytania', variant: 'primary' });
-      } else if (isPreparing){
+      } else if (isPreparing && !readingStartPending){
         stage.title = 'Czas czytać';
         stage.message = 'Gdy zaczynasz mówić na głos, kliknij „Czytam”.';
         stage.buttons.push({ id: 'btnRead', label: 'Czytam', variant: 'primary', disabled: readingStartPending });
         stage.buttons.push({ id: 'btnQuestion', label: 'Zmień pytanie', variant: 'ghost' });
       } else {
         stage.title = 'Odsłoń pytanie';
-        stage.message = 'Po lekturze kliknij „Przeczytałem”, aby pokazać treść na ekranie.';
-        stage.buttons.push({ id: 'btnReadDone', label: 'Przeczytałem', variant: 'primary' });
+        stage.message = readingFinishPending
+          ? 'Kończymy etap czytania… chwilę cierpliwości.'
+          : 'Po lekturze kliknij „Przeczytałem”, aby pokazać treść na ekranie.';
+        stage.buttons.push({ id: 'btnReadDone', label: 'Przeczytałem', variant: 'primary', disabled: readingFinishPending });
       }
       break;
     }
@@ -622,10 +638,29 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
       break;
   }
 
+  if (answering){
+    const nm = (answering.name || '').trim();
+    const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+    if (phase !== 'ANSWERING' && (phase === 'BUZZING' || phase === 'READING' || phase === 'INTRO')){
+      stage.badge = `Gracz ${answering.id}`;
+      stage.title = `${label} odpowiada`;
+      stage.message = 'Słuchaj uważnie i oceń odpowiedź.';
+    }
+    const judgingBlocked = phase === 'SELECTING' || phase === 'COOLDOWN' || actualPhase === 'SELECTING' || actualPhase === 'COOLDOWN';
+    if (!judgingBlocked){
+      if (!stage.buttons.some(btn => btn?.id === 'btnGood')){
+        stage.buttons.push({ id: 'btnGood', label: '✓ Dobra', variant: 'good' });
+      }
+      if (!stage.buttons.some(btn => btn?.id === 'btnBad')){
+        stage.buttons.push({ id: 'btnBad', label: '✗ Zła', variant: 'bad' });
+      }
+    }
+  }
+
   applyStage(stage);
 }
 
-function buildStageSteps(st, activeQuestion, answering){
+function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
   const steps = [
     { number: 1, title: 'Wybierz pytanie', desc: 'Otwórz katalog pytań i wskaż numer.', status: 'pending' },
     { number: 2, title: 'Kliknij „Czytam”, gdy jesteś gotowy', desc: 'Rozpocznij czytanie pytania na głos.', status: 'pending' },
@@ -634,10 +669,10 @@ function buildStageSteps(st, activeQuestion, answering){
     { number: 5, title: 'Oceń odpowiedź gracza', desc: 'Wybierz „Dobra” lub „Zła”.', status: 'pending' }
   ];
 
-  const phase = st.phase;
   const hasQuestion = !!activeQuestion;
   const isPreparing = !!activeQuestion?.preparing;
-  const readingActive = phase === 'READING' && hasQuestion && !isPreparing;
+  const readingStarted = hasQuestion && !isPreparing;
+  const readingWrapUp = (actualPhase === 'READING' || phase === 'READING') && readingStarted && !!readingFinishPending;
 
   if (!hasQuestion){
     if (phase === 'INTRO' || phase === 'READING'){
@@ -649,24 +684,19 @@ function buildStageSteps(st, activeQuestion, answering){
     if (activeQuestion.difficulty) details.push(activeQuestion.difficulty);
     if (activeQuestion.category)   details.push(activeQuestion.category);
     if (activeQuestion.id)         details.push(`#${activeQuestion.id}`);
-    if (details.length){
-      steps[0].desc = details.join(' • ');
-    } else {
-      steps[0].desc = 'Pytanie gotowe do czytania.';
-    }
+    steps[0].desc = details.length ? details.join(' • ') : 'Pytanie gotowe do czytania.';
   }
 
   if (hasQuestion){
     if (phase === 'READING'){
       if (isPreparing){
         steps[1].status = 'active';
-        steps[2].status = 'pending';
-      } else if (readingActive) {
-        steps[1].status = 'done';
-        steps[2].status = 'active';
-      } else {
+      } else if (readingWrapUp){
         steps[1].status = 'done';
         steps[2].status = 'done';
+      } else {
+        steps[1].status = 'done';
+        steps[2].status = readingStarted ? 'active' : 'done';
       }
     } else if (phase !== 'INTRO' && phase !== 'IDLE'){
       steps[1].status = 'done';
@@ -677,38 +707,68 @@ function buildStageSteps(st, activeQuestion, answering){
   if (!hasQuestion){
     steps[1].status = steps[1].status === 'done' ? 'done' : 'pending';
     steps[2].status = steps[2].status === 'done' ? 'done' : 'pending';
-  } else if (phase === 'READING' && isPreparing){
-    steps[2].status = steps[2].status === 'active' ? 'active' : 'pending';
   }
 
-  if (phase === 'BUZZING'){
+  if (readingWrapUp){
     steps[3].status = 'active';
-  } else if (phase === 'ANSWERING' || phase === 'SELECTING'){
-    steps[3].status = 'done';
-  } else if (phase === 'COOLDOWN'){
-    steps[3].status = 'active';
-    steps[3].desc = 'Krótka przerwa przed kolejnym pytaniem.';
+    steps[3].desc = 'Kończymy etap czytania… chwilę cierpliwości.';
   }
 
-  if (phase === 'ANSWERING'){
-    steps[4].status = 'active';
-    if (answering){
-      const nm = (answering.name || '').trim();
-      const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
-      steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
-    }
-  } else if (phase === 'SELECTING' || phase === 'COOLDOWN'){
-    steps[4].status = 'done';
-    if (phase === 'SELECTING'){
+  switch (phase){
+    case 'BUZZING':
+      steps[3].status = 'active';
+      break;
+    case 'ANSWERING':
+      steps[3].status = 'done';
+      steps[4].status = 'active';
+      break;
+    case 'SELECTING':
+      steps[3].status = 'done';
+      steps[4].status = 'done';
       steps[4].desc = targetProposal
         ? 'Zwycięzca wskazał gracza — potwierdź wybór.'
         : 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
+      break;
+    case 'COOLDOWN':
+      steps[3].status = 'active';
+      steps[3].desc = 'Krótka przerwa przed kolejnym pytaniem.';
+      steps[4].status = 'done';
+      steps[4].desc = 'Ocena zakończona. Przygotuj kolejne pytanie.';
+      break;
+    default:
+      break;
+  }
+
+  if (answering){
+    const nm = (answering.name || '').trim();
+    const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+    steps[3].status = 'done';
+    if (phase !== 'SELECTING' && phase !== 'COOLDOWN' && actualPhase !== 'SELECTING' && actualPhase !== 'COOLDOWN'){
+      steps[4].status = 'active';
+      steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
     }
+  } else if (phase === 'ANSWERING'){
+    steps[4].status = 'active';
   }
 
   return steps;
 }
 
+function resolveUiPhase(st, activeQuestion, answering){
+  const rawPhase = st?.phase || 'IDLE';
+  if (rawPhase === 'READING'){
+    if (!activeQuestion){
+      return 'INTRO';
+    }
+    if (readingFinishPending){
+      return answering ? 'ANSWERING' : 'BUZZING';
+    }
+  }
+  if (rawPhase === 'BUZZING' && answering){
+    return 'ANSWERING';
+  }
+  return rawPhase;
+}
 function applyStage(stage){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl) return;
   stagePhaseEl.textContent = stage.badge || 'Sterowanie';
@@ -920,6 +980,7 @@ function beginReading(){
   }
   if (readingStartPending){ return; }
   readingStartPending = true;
+  readingFinishPending = false;
   send('/app/host/readingStart');
   refreshStageCard();
 }
@@ -931,10 +992,12 @@ function completeReading(){
     return;
   }
   const active = state.hostDashboard?.activeQuestion;
-  if (!active || active.preparing){
+  if (!active || (active.preparing && !readingStartPending)){
     showToast('Najpierw kliknij „Czytam”.');
     return;
   }
+  if (readingFinishPending){ return; }
+  readingFinishPending = true;
   send('/app/host/readDone');
   refreshStageCard();
 }
@@ -949,6 +1012,7 @@ function handleEvent(ev){
   }
   if (ev.type === 'QUESTION_SELECTED'){
     readingStartPending = false;
+    readingFinishPending = false;
     questionLabel.classList.add('pulse');
     setTimeout(()=>questionLabel.classList.remove('pulse'), 600);
     if (state?.phase === 'INTRO'){
