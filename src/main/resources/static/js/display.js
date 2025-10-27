@@ -6,6 +6,7 @@ const hudQ       = document.getElementById('statQuestions');
 const hudPhase   = document.getElementById('statPhase');
 const setPhasePill = v => { if (hudPhase) hudPhase.textContent = v || '—'; };
 
+const body     = document.body;
 const gridWrap = document.getElementById('gridWrap');
 const grid     = document.getElementById('grid');
 const banner   = document.getElementById('banner');
@@ -129,6 +130,9 @@ function applyWaitingVisibility(){
   const shouldShow = waitingEnabled && (!state || state.phase === 'IDLE');
   waitingBox.classList.toggle('show', shouldShow);
   waitingBox.classList.toggle('full', waitingIsFull);
+  if (body){
+    body.classList.toggle('waiting-mode', shouldShow);
+  }
 }
 
 /* ===== Centralne komunikaty ===== */
@@ -368,6 +372,9 @@ function renderQuestionBoard(st){
 }
 
 function shouldShowAnswer(phase){
+  if (phase === 'IDLE' && body?.classList.contains('waiting-mode')){
+    return false;
+  }
   return phase === 'SELECTING' || phase === 'COOLDOWN' || phase === 'IDLE';
 }
 

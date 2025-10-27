@@ -44,6 +44,7 @@ const stagePlaceholderEl = document.getElementById('stagePlaceholder');
 const stageStepsEl = document.getElementById('stageSteps');
 const answerActionsEl = document.querySelector('.answer-actions');
 const answerJudgeWrap = document.querySelector('.answer-judge');
+const stageCardEl = document.querySelector('.stage-card');
 
 const stageButtons = {};
 [btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
@@ -58,12 +59,14 @@ const stageButtons = {};
 const toastEl = document.getElementById('toast');
 
 const welcomeOverlay  = document.getElementById('welcomeOverlay');
+const welcomeHeading  = document.getElementById('welcomeHeading');
 const welcomeTitle    = document.getElementById('welcomeTitle');
 const welcomeSubtitle = document.getElementById('welcomeSubtitle');
 const welcomeCta      = document.getElementById('btnOverlayStart');
 const welcomeCard     = welcomeOverlay ? welcomeOverlay.querySelector('.welcome-card') : null;
 const welcomeCount    = document.getElementById('welcomeCount');
 const welcomeHint     = document.getElementById('welcomeHint');
+const welcomeClock    = document.getElementById('welcomeClock');
 
 const difficultyList  = document.getElementById('difficultyList');
 const categoryList    = document.getElementById('categoryList');
@@ -357,12 +360,20 @@ function updateWelcome(st, joinedCount){
   const everyoneReady = joinedCount >= totalSlots && totalSlots > 0;
   const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
 
-  welcomeTitle.textContent = dash.welcomeTitle || `Witaj ${hostName}!`;
+  if (welcomeHeading){
+    const heading = dash.welcomeHeading || 'Witaj w „1 z 10”';
+    welcomeHeading.textContent = heading;
+  }
+  const greetTitle = dash.welcomeTitle || `Witaj ${hostName}`;
+  welcomeTitle.textContent = greetTitle;
   const baseHint = (dash.welcomeSubtitle || '').trim();
   const freeSeats = Math.max(0, totalSlots - joinedCount);
 
   if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${totalSlots}`; }
-  if (welcomeCard){ welcomeCard.classList.toggle('ready', joinedCount > 0); }
+  if (welcomeCard){
+    welcomeCard.classList.toggle('ready', joinedCount > 0);
+    welcomeCard.classList.toggle('full', everyoneReady);
+  }
 
   if (waitingForPlayers){
     welcomeSubtitle.textContent = 'Oczekiwanie na dołączenie graczy…';
@@ -419,6 +430,12 @@ function updateStage(st, joinedCount, activeQuestion, answering){
 
   const allowQuestionPick = phase === 'INTRO' || phase === 'READING' || phase === 'COOLDOWN' || phase === 'SELECTING';
   if (btnSelectQuestion){ btnSelectQuestion.disabled = !allowQuestionPick; }
+
+  if (stageCardEl){
+    stageCardEl.classList.toggle('idle', phase === 'IDLE');
+    stageCardEl.classList.toggle('ready', phase === 'IDLE' && joinedCount > 0);
+    stageCardEl.classList.toggle('active', phase !== 'IDLE');
+  }
 
   switch (phase){
     case 'IDLE': {
@@ -745,13 +762,14 @@ function formatSecondsShort(ms){
 }
 
 function startClock(){
-  if (!hostClockEl) return;
+  if (!hostClockEl && !welcomeClock) return;
   if (clockTimer){ clearInterval(clockTimer); }
   const tick = ()=>{
     const now = new Date();
     const hours = now.getHours().toString().padStart(2,'0');
     const minutes = now.getMinutes().toString().padStart(2,'0');
-    hostClockEl.textContent = `${hours}:${minutes}`;
+    if (hostClockEl){ hostClockEl.textContent = `${hours}:${minutes}`; }
+    if (welcomeClock){ welcomeClock.textContent = `${hours}:${minutes}`; }
   };
   tick();
   clockTimer = setInterval(tick, 15000);
