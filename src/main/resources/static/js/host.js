@@ -376,6 +376,7 @@ function render(){
   }
   if (activeQuestion && !activeQuestion.preparing){
     readingStartPending = false;
+    readingFinishPending = false;
   }
   if (st.phase !== 'ANSWERING'){
     latestTimerRemainingMs = answerMs;
