@@ -162,8 +162,14 @@
 
         <article id="answeringCard" class="card answering-card">
             <header class="answer-head">
-                <h3>Aktualnie odpowiada</h3>
-                <div id="ansJudge" class="judge" aria-live="polite"></div>
+                <div class="answer-title">
+                    <h3>Aktualnie odpowiada</h3>
+                    <div id="ansJudge" class="judge" aria-live="polite"></div>
+                </div>
+                <div class="answer-judge is-idle">
+                    <button class="btn bad judge-btn" id="btnBad" data-label="✗ Zła" data-icon="✗" aria-label="Zła odpowiedź">✗ Zła</button>
+                    <button class="btn good judge-btn" id="btnGood" data-label="✓ Dobra" data-icon="✓" aria-label="Dobra odpowiedź">✓ Dobra</button>
+                </div>
             </header>
             <div class="answer-body">
                 <div class="answer-info">
@@ -176,12 +182,6 @@
                         <div class="answer-meta">
                             <span class="answer-caption" id="ansTime">Czas odpowiedzi ustawiony na 0.0 s</span>
                         </div>
-                    </div>
-                </div>
-                <div class="answer-side">
-                    <div class="answer-judge">
-                        <button class="btn bad judge-btn" id="btnBad" data-label="✗ Zła">✗ Zła</button>
-                        <button class="btn good judge-btn" id="btnGood" data-label="✓ Dobra">✓ Dobra</button>
                     </div>
                 </div>
             </div>
