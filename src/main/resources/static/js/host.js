@@ -26,7 +26,7 @@ const ansTime = document.getElementById('ansTime');
 const ansJudge= document.getElementById('ansJudge');
 const timerBoxEl = document.getElementById('timerBox');
 const timerRemainingEl = document.getElementById('timerRemaining');
-const timerTotalEl = document.getElementById('timerTotal');
+const timerSummaryEl = document.getElementById('timerSummary');
 const timerBarEl = document.getElementById('timerBar');
 const timerFillEl = document.getElementById('timerFill');
 
@@ -1057,7 +1057,7 @@ function updateTimerDisplay(){
 
   if (total === 0){
     timerRemainingEl.textContent = '0.0';
-    timerTotalEl.textContent = '/ 0.0 s';
+    timerSummaryEl.textContent = '0.0 s / 0.0 s';
     timerFillEl.style.width = '0%';
     timerBarEl.classList.remove('critical');
     if (timerBoxEl){ timerBoxEl.classList.remove('critical'); }
@@ -1067,7 +1067,7 @@ function updateTimerDisplay(){
 
   const remaining = Math.min(total, Math.max(0, isAnswering ? latestTimerRemainingMs : total));
   timerRemainingEl.textContent = formatSecondsShort(remaining);
-  timerTotalEl.textContent = `/ ${formatSecondsShort(total)} s`;
+  timerSummaryEl.textContent = `${formatSecondsShort(remaining)} s / ${formatSecondsShort(total)} s`;
   const percent = total > 0 ? (remaining / total) * 100 : 0;
   timerFillEl.style.width = `${percent}%`;
   const critical = isAnswering && remaining <= Math.min(total, 2000);
