@@ -90,6 +90,13 @@ const targetMessage = document.getElementById('targetMessage');
 const btnTargetApprove = document.getElementById('btnTargetApprove');
 const btnTargetReject  = document.getElementById('btnTargetReject');
 
+if (welcomeOverlay){
+  welcomeOverlay.classList.remove('hidden');
+  if (document.body){
+    document.body.classList.add('welcome-active');
+  }
+}
+
 let state = null;
 let catalog = null;
 let activeDifficulty = null;
@@ -103,6 +110,7 @@ let toastTimer = null;
 let toastHideTimer = null;
 let autoAdvanceIntroPending = false;
 let readingStartPending = false;
+let readingFinishPending = false;
 let targetProposal = null;
 let clockTimer = null;
 
@@ -356,13 +364,16 @@ function render(){
   if (activeId !== currentQuestionId){
     currentQuestionId = activeId;
     readingStartPending = false;
+    readingFinishPending = false;
   }
   const inReadingPhase = st.phase === 'READING';
   if (!inReadingPhase){
     readingStartPending = false;
+    readingFinishPending = false;
   }
   if (activeQuestion && !activeQuestion.preparing){
     readingStartPending = false;
+    readingFinishPending = false;
   }
   if (st.phase !== 'ANSWERING'){
     latestTimerRemainingMs = answerMs;
@@ -416,10 +427,11 @@ function updateWelcome(st, joinedCount, totalSlots){
   if (!welcomeSubtitle || !welcomeCta) return;
   const dash = st.hostDashboard || {};
   const hostName = dash.hostName || 'Prowadzący';
-  const computedTotalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
+  const resolvedTotalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
-  const everyoneReady = joinedCount >= computedTotalSlots && computedTotalSlots > 0;
-  const showOverlay = st.phase === 'IDLE' && (dash.metrics?.askedCount || 0) === 0;
+  const everyoneReady = joinedCount >= resolvedTotalSlots && resolvedTotalSlots > 0;
+  const askedCount = dash.metrics?.askedCount || 0;
+  const showOverlay = st.phase === 'IDLE' && (waitingForPlayers || askedCount === 0);
 
   if (welcomeHeading){
     const heading = dash.welcomeHeading || 'Witaj w „1 z 10”';
@@ -428,9 +440,9 @@ function updateWelcome(st, joinedCount, totalSlots){
   const greetTitle = dash.welcomeTitle || `Witaj ${hostName}`;
   welcomeTitle.textContent = greetTitle;
   const baseHint = (dash.welcomeSubtitle || '').trim();
-  const freeSeats = Math.max(0, computedTotalSlots - joinedCount);
+  const freeSeats = Math.max(0, resolvedTotalSlots - joinedCount);
 
-  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${computedTotalSlots}`; }
+  if (welcomeCount){ welcomeCount.textContent = `${joinedCount}/${resolvedTotalSlots}`; }
   if (welcomeCard){
     welcomeCard.classList.toggle('ready', joinedCount > 0);
     welcomeCard.classList.toggle('full', everyoneReady);
@@ -560,15 +572,17 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering){
         stage.title = 'Przygotuj pytanie';
         stage.message = 'Wybierz kategorię oraz numer zanim zaczniesz czytać.';
         stage.buttons.push({ id: 'btnQuestion', label: 'Przeglądaj pytania', variant: 'primary' });
-      } else if (isPreparing){
+      } else if (isPreparing && !readingStartPending){
         stage.title = 'Czas czytać';
         stage.message = 'Gdy zaczynasz mówić na głos, kliknij „Czytam”.';
         stage.buttons.push({ id: 'btnRead', label: 'Czytam', variant: 'primary', disabled: readingStartPending });
         stage.buttons.push({ id: 'btnQuestion', label: 'Zmień pytanie', variant: 'ghost' });
       } else {
         stage.title = 'Odsłoń pytanie';
-        stage.message = 'Po lekturze kliknij „Przeczytałem”, aby pokazać treść na ekranie.';
-        stage.buttons.push({ id: 'btnReadDone', label: 'Przeczytałem', variant: 'primary' });
+        stage.message = readingFinishPending
+          ? 'Kończymy etap czytania… chwilę cierpliwości.'
+          : 'Po lekturze kliknij „Przeczytałem”, aby pokazać treść na ekranie.';
+        stage.buttons.push({ id: 'btnReadDone', label: 'Przeczytałem', variant: 'primary', disabled: readingFinishPending });
       }
       break;
     }
@@ -920,6 +934,7 @@ function beginReading(){
   }
   if (readingStartPending){ return; }
   readingStartPending = true;
+  readingFinishPending = false;
   send('/app/host/readingStart');
   refreshStageCard();
 }
@@ -931,10 +946,12 @@ function completeReading(){
     return;
   }
   const active = state.hostDashboard?.activeQuestion;
-  if (!active || active.preparing){
+  if (!active || (active.preparing && !readingStartPending)){
     showToast('Najpierw kliknij „Czytam”.');
     return;
   }
+  if (readingFinishPending){ return; }
+  readingFinishPending = true;
   send('/app/host/readDone');
   refreshStageCard();
 }
@@ -949,6 +966,7 @@ function handleEvent(ev){
   }
   if (ev.type === 'QUESTION_SELECTED'){
     readingStartPending = false;
+    readingFinishPending = false;
     questionLabel.classList.add('pulse');
     setTimeout(()=>questionLabel.classList.remove('pulse'), 600);
     if (state?.phase === 'INTRO'){

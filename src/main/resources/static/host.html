@@ -84,22 +84,26 @@
                 </div>
             </div>
             <div class="welcome-content">
-                <h1 id="welcomeTitle">Witaj!</h1>
-                <p id="welcomeSubtitle" class="welcome-status">Oczekiwanie na dołączenie graczy…</p>
+                <div class="welcome-text">
+                    <h1 id="welcomeTitle">Witaj!</h1>
+                    <p id="welcomeSubtitle" class="welcome-status">Oczekiwanie na dołączenie graczy…</p>
+                </div>
                 <p id="welcomeHint" class="welcome-hint">Zaproś uczestników do pokoju gry.</p>
-                <div class="welcome-counter">
-                    <div class="counter-icon">
-                        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 10a10 10 0 1 1-10 10 10 10 0 0 1 10-10zm22 0a10 10 0 1 1-10 10 10 10 0 0 1 10-10zM12 36h20a8 8 0 0 1 8 8v8H4v-8a8 8 0 0 1 8-8zm32 0h8a8 8 0 0 1 8 8v8H36v-8a8 8 0 0 1 8-8z"/></svg>
+                <div class="welcome-meta">
+                    <div class="welcome-counter">
+                        <div class="counter-icon">
+                            <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 10a10 10 0 1 1-10 10 10 10 0 0 1 10-10zm22 0a10 10 0 1 1-10 10 10 10 0 0 1 10-10zM12 36h20a8 8 0 0 1 8 8v8H4v-8a8 8 0 0 1 8-8zm32 0h8a8 8 0 0 1 8 8v8H36v-8a8 8 0 0 1 8-8z"/></svg>
+                        </div>
+                        <div class="counter-text">
+                            <span id="welcomeCount" class="counter-value">0/10</span>
+                            <span class="counter-label">graczy gotowych</span>
+                        </div>
                     </div>
-                    <div class="counter-text">
-                        <span id="welcomeCount" class="counter-value">0/10</span>
-                        <span class="counter-label">graczy gotowych</span>
+                    <div class="welcome-actions">
+                        <button class="btn primary" id="btnOverlayStart">Rozpocznij</button>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="welcome-actions">
-            <button class="btn primary" id="btnOverlayStart">Rozpocznij</button>
         </div>
     </div>
 </div>
