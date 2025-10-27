@@ -9,6 +9,38 @@
     <link rel="stylesheet" href="/css/display.css" />
 </head>
 <body>
+<div id="audioOverlay" class="audio-overlay">
+    <div class="audio-card">
+        <div class="audio-icon">
+            <svg viewBox="0 0 72 72" aria-hidden="true"><path d="M36 4c17.7 0 32 14.3 32 32S53.7 68 36 68 4 53.7 4 36 18.3 4 36 4zm-7.4 19.2a3 3 0 0 0-1.7.5L15.9 32.5A3 3 0 0 0 15 35v2a3 3 0 0 0 1 2.4l11 9.4c1.9 1.6 4.7.3 4.7-2.3V25a3 3 0 0 0-3-3zm18.6 1.3a3 3 0 0 0-1.9 5.7 8 8 0 0 1 0 15.6 3 3 0 1 0 1.9 5.7A14 14 0 0 0 53 36a14 14 0 0 0-5.8-11.5 3 3 0 0 0-1.9-.8zm-5.3 7a3 3 0 0 0-1.9 5.6 2 2 0 0 1 0 3.8 3 3 0 1 0 1.9 5.6 8 8 0 0 0 0-15z" fill="#3b6df6"/></svg>
+        </div>
+        <h1>Włącz dźwięk gry</h1>
+        <p>Jedno kliknięcie pozwoli odtworzyć intro oraz sygnały dźwiękowe programu.</p>
+        <div class="audio-actions">
+            <button id="audioUnlock" class="btn primary">Odblokuj dźwięk</button>
+            <button id="audioSkip" class="btn ghost">Kontynuuj bez dźwięku</button>
+        </div>
+    </div>
+</div>
+
+<div id="waitingBox" class="waiting-screen">
+    <div class="waiting-card">
+        <div class="waiting-avatar"><img src="/img/host.png" alt="Prowadzący"></div>
+        <h2 id="waitingTitle">Witaj w „1 z 10”</h2>
+        <p id="waitingStatus">Oczekiwanie na dołączenie graczy…</p>
+        <p id="waitingHint">Połącz urządzenia graczy i poproś o wpisanie imion.</p>
+        <div class="waiting-counter">
+            <div class="counter-icon">
+                <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M22 10a10 10 0 1 1-10 10 10 10 0 0 1 10-10zm22 0a10 10 0 1 1-10 10 10 10 0 0 1 10-10zM12 36h20a8 8 0 0 1 8 8v8H4v-8a8 8 0 0 1 8-8zm32 0h8a8 8 0 0 1 8 8v8H36v-8a8 8 0 0 1 8-8z" fill="#3b6df6"/></svg>
+            </div>
+            <div class="counter-info">
+                <span id="waitingCount" class="counter-value">0/10</span>
+                <span class="counter-label">graczy gotowych do gry</span>
+            </div>
+        </div>
+        <div id="waitingPlayers" class="waiting-players"></div>
+    </div>
+</div>
 
 <!-- HUD / statystyki -->
 <header id="hud">

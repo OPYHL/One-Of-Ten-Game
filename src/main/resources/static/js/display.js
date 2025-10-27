@@ -6,6 +6,7 @@ const hudQ       = document.getElementById('statQuestions');
 const hudPhase   = document.getElementById('statPhase');
 const setPhasePill = v => { if (hudPhase) hudPhase.textContent = v || '—'; };
 
+const body     = document.body;
 const gridWrap = document.getElementById('gridWrap');
 const grid     = document.getElementById('grid');
 const banner   = document.getElementById('banner');
@@ -23,6 +24,16 @@ const qCat  = document.getElementById('qCat');
 const qId   = document.getElementById('qId');
 const qText = document.getElementById('qText');
 const qAnswer = document.getElementById('qAnswer');
+
+const audioOverlay = document.getElementById('audioOverlay');
+const audioUnlockBtn = document.getElementById('audioUnlock');
+const audioSkipBtn   = document.getElementById('audioSkip');
+
+const waitingBox    = document.getElementById('waitingBox');
+const waitingStatus = document.getElementById('waitingStatus');
+const waitingHint   = document.getElementById('waitingHint');
+const waitingCount  = document.getElementById('waitingCount');
+const waitingPlayersList = document.getElementById('waitingPlayers');
 
 /* ===== Full-width timebar (tworzymy, jeśli brak) ===== */
 let timebarWrap = document.getElementById('timebarWrap');
@@ -57,30 +68,102 @@ let lastLives  = new Map();
 
 let lastHud = { players:0, q:0, phase:'' };
 
-/* ===== Popup odblokowania dźwięku ===== */
+/* ===== Odblokowanie dźwięku & ekran powitalny ===== */
 let audioUnlocked = false;
-ensureUnlockModal();
-function ensureUnlockModal(){
-  if (document.getElementById('unlockModal')) return;
-  const wrap = document.createElement('div');
-  wrap.id = 'unlockModal';
-  wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:200';
-  wrap.innerHTML = `
-    <div style="background:#111a2c;border:1px solid #23324d;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);width:min(520px,92vw);padding:18px;text-align:center">
-      <h2 style="margin:0 0 8px;color:#eaf2ff">Odblokuj dźwięk</h2>
-      <p style="margin:0 12px 14px;color:#9cb2d9">Aby słyszeć intro i sygnały gry, kliknij „Odblokuj”.</p>
-      <div style="display:flex;gap:10px;justify-content:center">
-        <button id="unlockYes" style="padding:10px 16px;border-radius:12px;border:0;background:#3b6df6;color:#fff;font-weight:800">Odblokuj</button>
-        <button id="unlockNo"  style="padding:10px 16px;border-radius:12px;border:1px solid #23324d;background:#0d1526;color:#eaf2ff;font-weight:800">Później</button>
-      </div>
-    </div>`;
-  document.body.appendChild(wrap);
-  document.getElementById('unlockYes').addEventListener('click', async ()=>{
-    try { await sounds.INTRO?.play(); sounds.INTRO.pause(); sounds.INTRO.currentTime=0; } catch {}
-    try { await sounds.BOOM ?.play();  sounds.BOOM .pause();  sounds.BOOM .currentTime =0; } catch {}
-    audioUnlocked = true; wrap.remove();
+let waitingEnabled = false;
+let waitingIsFull = false;
+
+function hideAudioOverlay(){
+  if (!audioOverlay) return;
+  audioOverlay.classList.add('hidden');
+  waitingEnabled = true;
+  applyWaitingVisibility();
+}
+
+if (audioUnlockBtn){
+  audioUnlockBtn.addEventListener('click', async ()=>{
+    try { await sounds.INTRO?.play(); sounds.INTRO.pause(); sounds.INTRO.currentTime = 0; } catch {}
+    try { await sounds.BOOM ?.play();  sounds.BOOM .pause();  sounds.BOOM .currentTime  = 0; } catch {}
+    audioUnlocked = true;
+    hideAudioOverlay();
   });
-  document.getElementById('unlockNo').addEventListener('click', ()=>{ audioUnlocked=false; wrap.remove(); });
+}
+
+if (audioSkipBtn){
+  audioSkipBtn.addEventListener('click', ()=>{
+    audioUnlocked = false;
+    hideAudioOverlay();
+  });
+}
+
+if (!audioOverlay || audioOverlay.classList.contains('hidden')){
+  waitingEnabled = true;
+  applyWaitingVisibility();
+}
+
+function updateWaitingCard(joinedCount = 0, totalSlots = 10, players = []){
+  if (!waitingBox) return;
+  const joined = Math.max(0, joinedCount);
+  const total  = Math.max(joined, totalSlots || 10);
+
+  if (waitingCount) waitingCount.textContent = `${joined}/${total}`;
+
+  let status = 'Oczekiwanie na dołączenie graczy…';
+  let hint   = 'Połącz urządzenia graczy i poproś o wpisanie imion.';
+  if (joined > 0 && joined < total){
+    status = 'Oczekiwanie na dołączenie reszty graczy…';
+    const left = Math.max(0, total - joined);
+    hint = left === 1 ? 'Pozostało 1 wolne miejsce.' : `Pozostało ${left} wolnych miejsc.`;
+  } else if (joined >= total && total > 0){
+    status = 'Oczekiwanie na rozpoczęcie przez gospodarza.';
+    hint = 'Gospodarz może teraz rozpocząć rozgrywkę w panelu sterowania.';
+  }
+
+  if (waitingStatus) waitingStatus.textContent = status;
+  if (waitingHint)   waitingHint.textContent   = hint;
+
+  waitingIsFull = joined >= total && total > 0;
+  renderWaitingPlayers(players);
+  applyWaitingVisibility();
+}
+
+function applyWaitingVisibility(){
+  if (!waitingBox) return;
+  const shouldShow = waitingEnabled && (!state || state.phase === 'IDLE');
+  waitingBox.classList.toggle('show', shouldShow);
+  waitingBox.classList.toggle('full', waitingIsFull);
+  if (body){
+    body.classList.toggle('waiting-mode', shouldShow);
+  }
+}
+
+function renderWaitingPlayers(players = []){
+  if (!waitingPlayersList) return;
+  waitingPlayersList.innerHTML = '';
+  const joined = (players || []).filter(isJoined);
+  waitingBox?.classList.toggle('has-players', joined.length > 0);
+  if (!joined.length){
+    waitingPlayersList.classList.add('empty');
+    const empty = document.createElement('div');
+    empty.className = 'waiting-empty';
+    empty.textContent = 'Czekamy na pierwszego gracza…';
+    waitingPlayersList.appendChild(empty);
+    return;
+  }
+  waitingPlayersList.classList.remove('empty');
+  joined.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'waiting-player';
+    const name = normName(p) || `Gracz ${p.id}`;
+    item.innerHTML = `
+      <div class="avatar"><img src="${avatarFor(p, 'idle')}" alt=""></div>
+      <div class="meta">
+        <div class="name">${escapeHtml(name)}</div>
+        <div class="seat">Stanowisko ${p.id}</div>
+      </div>
+    `;
+    waitingPlayersList.appendChild(item);
+  });
 }
 
 /* ===== Centralne komunikaty ===== */
@@ -233,6 +316,9 @@ function render(){
   const st = state; if (!st) return;
 
   const joined = (st.players||[]).filter(isJoined);
+  const totalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
+  updateWaitingCard(joined.length, totalSlots, st.players || []);
+  applyWaitingVisibility();
   TOTAL_ANS_MS = st.settings?.answerTimerMs ?? TOTAL_ANS_MS;
   COOLDOWN_MS = st.settings?.cooldownMs ?? COOLDOWN_MS;
 
@@ -265,10 +351,10 @@ function render(){
   } else if (st.phase === 'ANSWERING') {
     hideCenter(); banner.classList.remove('show');
   } else {
-    showCenter(
-      joined.length ? 'Czekamy na rozpoczęcie…' : 'Brak zawodników',
-      joined.length ? 'Prowadzący może rozpocząć rundę.' : 'Dołącz przez player.html i wpisz imię.'
-    );
+    hideCenter();
+    hideBanner();
+    hideCooldown();
+    applyWaitingVisibility();
   }
 
   // Scena – pokaż tylko kiedy wiadomo kto
@@ -317,6 +403,9 @@ function renderQuestionBoard(st){
 }
 
 function shouldShowAnswer(phase){
+  if (phase === 'IDLE' && body?.classList.contains('waiting-mode')){
+    return false;
+  }
   return phase === 'SELECTING' || phase === 'COOLDOWN' || phase === 'IDLE';
 }
 
