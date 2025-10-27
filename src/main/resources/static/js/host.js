@@ -294,14 +294,33 @@ const looksLikePlaceholder = p => {
   if (!nm) return true;
   return nm.toLowerCase() === (`gracz ${p?.id}`).toLowerCase();
 };
+function coerceJoinedFlag(val){
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'number'){
+    if (!Number.isFinite(val)) return null;
+    return val > 0;
+  }
+  if (typeof val === 'string'){
+    const norm = val.trim().toLowerCase();
+    if (!norm) return null;
+    if (norm === 'true' || norm === '1' || norm === 'yes') return true;
+    if (norm === 'false' || norm === '0' || norm === 'no') return false;
+  }
+  return null;
+}
 function isJoined(p){
   if (!p) return false;
-  if (typeof p.joined === 'boolean') return p.joined;
+  const explicit = coerceJoinedFlag(p.joined);
+  if (explicit != null) return explicit;
   return !looksLikePlaceholder(p);
+}
+function joinedPlayers(list){
+  if (!Array.isArray(list)) return [];
+  return list.filter(isJoined);
 }
 function stageCounts(st = state){
   const players = Array.isArray(st?.players) ? st.players : [];
-  const joined = players.filter(isJoined);
+  const joined = joinedPlayers(players);
   const joinedCount = joined.length;
   const totalSlots = players.length || 10;
   const activeQuestion = st?.hostDashboard?.activeQuestion || null;
@@ -325,7 +344,7 @@ function render(){
   }
   if (statPlayers){ statPlayers.textContent = joinedCount; }
   if (statPlayersMax){ statPlayersMax.textContent = totalSlots || 10; }
-  phaseEl.textContent = phaseLabel(st.phase);
+  if (phaseEl){ phaseEl.textContent = phaseLabel(st.phase); }
   const answerMs = st.settings?.answerTimerMs || 0;
   statAnswerTime.textContent = `${formatSecondsShort(answerMs)} s`;
 
@@ -783,7 +802,7 @@ function tryAutoAdvanceIntro(st, activeQuestion){
 
 function hasReadyPlayers(){
   if (!state) return false;
-  return (state.players || []).some(isJoined);
+  return joinedPlayers(state.players).length > 0;
 }
 
 function clearRuntimeTimer(){ if (runtimeTimer){ clearInterval(runtimeTimer); runtimeTimer = null; } }
