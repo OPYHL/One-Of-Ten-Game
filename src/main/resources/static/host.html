@@ -174,19 +174,19 @@
                         <img id="ansAv" src="/img/host.png" alt="">
                     </div>
                     <div class="player-details">
-                        <div id="ansName" class="player-name">—</div>
-                        <div id="ansSeat" class="player-seat">Stanowisko —</div>
-                    </div>
-                    <div class="player-chip">
-                        <span class="chip-icon" aria-hidden="true"></span>
-                        <span id="timerSummary" class="player-timer">0.0 s / 0.0 s</span>
+                        <div class="player-header">
+                            <div id="ansName" class="player-name">—</div>
+                            <div id="ansSeat" class="player-seat">Stanowisko —</div>
+                        </div>
+                        <div class="player-meta">
+                            <span id="timerSummary" class="player-metric">0.0 s / 0.0 s</span>
+                            <span id="ansTime" class="player-caption">Czas odpowiedzi ustawiony na 0.0 s</span>
+                        </div>
                     </div>
                 </div>
                 <div class="answer-timer" id="timerBox">
-                    <div class="timer-header">
-                        <span class="timer-label">Pozostały czas</span>
-                    </div>
-                    <div class="timer-main">
+                    <span class="timer-label">Pozostały czas</span>
+                    <div class="timer-display">
                         <span id="timerRemaining" class="timer-number">0.0</span>
                         <span class="timer-unit">s</span>
                     </div>
