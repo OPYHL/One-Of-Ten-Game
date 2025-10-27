@@ -169,26 +169,28 @@
                 <div id="ansJudge" class="judge"></div>
             </header>
             <div class="answer-body">
-                <div class="answer-person">
-                    <div class="answer-avatar"><img id="ansAv" src="/img/host.png" alt=""></div>
-                    <div class="answer-info">
-                        <div id="ansName" class="answer-name">—</div>
-                        <div id="ansSeat" class="answer-seat">Stanowisko —</div>
+                <div class="answer-player">
+                    <div class="player-avatar">
+                        <img id="ansAv" src="/img/host.png" alt="">
                     </div>
-                    <div class="answer-chip">
+                    <div class="player-details">
+                        <div id="ansName" class="player-name">—</div>
+                        <div id="ansSeat" class="player-seat">Stanowisko —</div>
+                    </div>
+                    <div class="player-chip">
                         <span class="chip-icon" aria-hidden="true"></span>
-                        <span id="timerSummary" class="timer-total">0.0 s / 0.0 s</span>
+                        <span id="timerSummary" class="player-timer">0.0 s / 0.0 s</span>
                     </div>
                 </div>
-                <div class="timer" id="timerBox">
-                    <div class="timer-head">
+                <div class="answer-timer" id="timerBox">
+                    <div class="timer-header">
                         <span class="timer-label">Pozostały czas</span>
                     </div>
-                    <div class="timer-count">
+                    <div class="timer-main">
                         <span id="timerRemaining" class="timer-number">0.0</span>
                         <span class="timer-unit">s</span>
                     </div>
-                    <div class="timer-bar" id="timerBar">
+                    <div class="timer-track" id="timerBar">
                         <div class="timer-fill" id="timerFill"></div>
                     </div>
                     <div id="ansTime" class="timer-caption">Czas odpowiedzi ustawiony na 0.0 s</div>
