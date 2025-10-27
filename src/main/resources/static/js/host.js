@@ -385,7 +385,7 @@ function render(){
   updateQuestion(activeQuestion);
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
-  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer);
+  updateStage(st, joinedCount, computedTotalSlots || 10, activeQuestion, answeringPlayer);
   maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
