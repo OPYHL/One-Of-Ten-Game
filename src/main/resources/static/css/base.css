@@ -82,6 +82,8 @@ button[disabled]{ background:#1a2336; cursor:not-allowed }
 .playerStat b{ display:block; font-size:22px; margin-top:4px }
 .playerBar{ margin-top:12px; height:12px; background:#13203a; border:1px solid #24406f; border-radius:999px; overflow:hidden }
 .playerBar>i{ display:block; height:100%; width:0%; background:var(--ok); transition:width .1s linear }
+.playerQuestion{ margin:12px 0; padding:12px; background:#0f1625; border:1px solid #2a3b5f; border-radius:12px; }
+.playerQuestionText{ margin-top:8px; font-size:16px; line-height:1.5; }
 
 /* Mobile tweaks */
 @media (max-width:680px){
