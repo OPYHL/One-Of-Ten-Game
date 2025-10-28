@@ -326,6 +326,10 @@ public class GameService {
         if (accept){
             answeringId = proposedTargetId;
             int chooser = currentChooserId;
+            boolean selfTarget = Objects.equals(answeringId, chooser);
+            if (selfTarget){
+                currentChooserId = null;
+            }
             proposedTargetId = null;
             enterReadingSetup();          // nowe pytanie -> czyść bany
             bus.publish(new Event("TARGET_ACCEPTED", answeringId, String.valueOf(chooser), null));
