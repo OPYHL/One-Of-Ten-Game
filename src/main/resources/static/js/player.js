@@ -16,6 +16,8 @@ const seatEl    = document.getElementById('seat');
 const phaseEl   = document.getElementById('phase');
 const avImg     = document.getElementById('av');
 const pb        = document.getElementById('pb');
+const questionWrap = document.getElementById('questionWrap');
+const questionTextEl = document.getElementById('questionText');
 
 const outOverlay = document.getElementById('outOverlay');
 const outStats   = document.getElementById('outStats');
@@ -146,6 +148,8 @@ const bus = connect({
         }
       }
     }
+
+    renderQuestion(st);
 
     // Fazy – status i highlighty
     if (phase === 'READING'){
@@ -390,6 +394,18 @@ function openChoosePopup(){
   });
 
   chooseBackdrop.classList.add('show');
+}
+
+function renderQuestion(st){
+  if (!questionWrap || !questionTextEl) return;
+  const active = st?.hostDashboard?.activeQuestion;
+  if (active && active.revealed){
+    questionTextEl.textContent = active.question || '—';
+    questionWrap.style.display = '';
+  } else {
+    questionTextEl.textContent = '—';
+    questionWrap.style.display = 'none';
+  }
 }
 function submitProposal(toId){
   disableChooseGrid();
