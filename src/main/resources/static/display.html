@@ -72,35 +72,27 @@
 <!-- SCENA na środku (nie przesuwa gridu) -->
 <section id="stage">
     <div class="stage-card">
-        <header class="stage-top">
-            <div class="stage-seat">
-                <span class="seat-label">Stanowisko</span>
-                <span id="stageSeat" class="seat-number">—</span>
-            </div>
-            <div class="stage-scorebox">
-                <span class="score-label">Punkty</span>
-                <span id="stageScore" class="score-value">0</span>
-            </div>
-        </header>
+        <div class="stage-avatar">
+            <div id="stageSeat" class="stage-seat">Stanowisko —</div>
+            <img id="stageAv" src="/img/male.png" alt="">
+        </div>
 
-        <div class="stage-main">
-            <div class="stage-avatar">
-                <img id="stageAv" src="/img/male.png" alt="">
-            </div>
-
-            <div class="stage-content">
+        <div class="stage-body">
+            <div class="stage-header">
                 <div id="stageName" class="stage-name">—</div>
-                <div class="stage-meta">
-                    <div id="stageLives" class="stage-lives"></div>
-                    <div id="stageTimer" class="stage-timer hidden">
-                        <span class="stage-timer-label">Czas</span>
-                        <div id="stageCountdown" class="stage-countdown">10</div>
-                    </div>
+                <div id="stageScore" class="stage-score">0 pkt</div>
+            </div>
+
+            <div class="stage-stats">
+                <div id="stageLives" class="stage-lives"></div>
+                <div id="stageTimer" class="stage-timer hidden">
+                    <span class="stage-timer-label">Czas</span>
+                    <div id="stageCountdown" class="stage-countdown">10</div>
                 </div>
             </div>
-
-            <div id="stageJudge" class="stage-judge"></div>
         </div>
+
+        <div id="stageJudge" class="stage-judge"></div>
     </div>
 </section>
 

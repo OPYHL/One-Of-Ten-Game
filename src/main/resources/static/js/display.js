@@ -266,7 +266,13 @@ function computeLayout(n, containerWidth, containerHeight){
 
   // siatka zajmuje ok. 40% wysokości ekranu
   const maxH = Math.max(220, Math.round(containerHeight * 0.40));
-  const scale = Math.max(0.6, Math.min(1, maxH / desiredH));
+  const dynamicScale = Math.min(1, maxH / desiredH);
+
+  // Przy większej liczbie graczy (2 rzędy) zmniejszamy całą siatkę do ~60%,
+  // natomiast przy jednym rzędzie utrzymujemy ją w okolicach 80%.
+  const preferredScale = rows === 1 ? 0.8 : 0.6;
+
+  const scale = Math.max(0.5, Math.min(preferredScale, dynamicScale));
 
   return { rows, colsTop, colsBottom, widthTop, widthBottom, height: desiredH, scale, gap };
 }
@@ -466,12 +472,12 @@ function cardFor(p, st, w){
 function showStage(p, phase){
   const name = normName(p);
   stageName.textContent = name || `Gracz ${p.id}`;
-  stageSeat.textContent = typeof p.id === 'number' ? p.id : '—';
+  stageSeat.textContent = `Stanowisko ${p.id}`;
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
 
   if (stageScore){
     const score = typeof p.score === 'number' ? p.score : 0;
-    stageScore.textContent = score.toString();
+    stageScore.textContent = `${score} pkt`;
   }
   if (stageLives){
     const livesRaw = typeof p.lives === 'number' ? p.lives : 3;
