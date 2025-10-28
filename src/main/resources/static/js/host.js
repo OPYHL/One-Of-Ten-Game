@@ -93,7 +93,7 @@ const btnTargetApprove = document.getElementById('btnTargetApprove');
 const btnTargetReject  = document.getElementById('btnTargetReject');
 
 if (btnHudToggle && topbarEl){
-  const hudMedia = window.matchMedia('(max-width: 640px)');
+  const hudMedia = window.matchMedia('(max-width: 480px)');
   const closeHud = () => {
     topbarEl.classList.remove('hud-open');
     btnHudToggle.setAttribute('aria-expanded', 'false');

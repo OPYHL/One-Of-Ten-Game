@@ -150,7 +150,20 @@ a{color:inherit}
   .clock{order:-1;width:100%;justify-content:space-between}
 }
 
-@media (max-width: 640px){
+@media (max-width: 560px){
+  #topbar{gap:16px;padding:14px 20px}
+  .hud{gap:14px}
+  .scoreboard{gap:12px}
+  .score-card,.answer-card{padding:10px 14px;border-radius:16px}
+  .score-card svg,.answer-icon svg{width:22px;height:22px}
+  .score-value{font-size:1.1rem}
+  .answer-value{font-size:1rem}
+  .top-actions{gap:10px}
+  .btn.glass{padding:10px 16px}
+  .clock{padding:10px 14px}
+}
+
+@media (max-width: 480px){
   .hud-toggle{display:inline-flex}
   .hud{
     display:none;
