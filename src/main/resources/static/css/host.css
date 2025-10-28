@@ -164,8 +164,10 @@ a{color:inherit}
   .clock{padding:10px 14px}
 }
 
+#topbar.topbar-collapsed{flex-wrap:nowrap;gap:16px;align-items:center}
+#topbar.topbar-collapsed .brand{flex:1 1 auto;min-width:0}
+#topbar.topbar-collapsed .hud-toggle{display:inline-flex;margin-left:auto}
 #topbar.topbar-collapsed>.top-actions{display:none}
-#topbar.topbar-collapsed .hud-toggle{display:inline-flex}
 #topbar.topbar-collapsed .hud{
   display:none;
   position:absolute;

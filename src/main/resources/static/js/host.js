@@ -164,13 +164,26 @@ function measureCollapseNeeded(){
     }
   }
 
-  const topbarRect = topbarEl.getBoundingClientRect();
+  const style = window.getComputedStyle(topbarEl);
+  const gapRaw = style.columnGap || style.gap || '0';
+  const gap = parseFloat(gapRaw) || 0;
+
   const brandEl = topbarEl.querySelector('.brand');
-  const referenceTop = brandEl ? brandEl.getBoundingClientRect().top : topbarRect.top;
+  const brandWidth = brandEl ? brandEl.getBoundingClientRect().width : 0;
+  const hudWidth = hudMenu && hudMenu.offsetParent ? hudMenu.getBoundingClientRect().width : 0;
+  const actionsWidth = topActionsEl.getBoundingClientRect().width;
+
+  const visibleWidths = [brandWidth, hudWidth, actionsWidth].filter(w => w > 0);
+  const gapsTotal = gap * Math.max(visibleWidths.length - 1, 0);
+  const totalRequiredWidth = visibleWidths.reduce((sum, width) => sum + width, 0) + gapsTotal;
+  const availableWidth = topbarEl.clientWidth;
+
+  const topbarRect = topbarEl.getBoundingClientRect();
   const hudRect = hudMenu ? hudMenu.getBoundingClientRect() : topbarRect;
   const topActionsRect = topActionsEl.getBoundingClientRect();
-  const wrapDetected = (hudRect.top - referenceTop) > 32 || (topActionsRect.top - referenceTop) > 32;
-  const overflowDetected = (topbarEl.scrollWidth - topbarEl.clientWidth) > 1;
+  const wrapDetected = (hudRect.top - topbarRect.top) > 8 || (topActionsRect.top - topbarRect.top) > 8;
+
+  const shouldCollapse = totalRequiredWidth > (availableWidth + 2) || wrapDetected;
 
   if (wasCollapsed){
     if (movedToHud && hudExtras){
@@ -179,7 +192,7 @@ function measureCollapseNeeded(){
     topbarEl.classList.add('topbar-collapsed');
   }
 
-  return wrapDetected || overflowDetected;
+  return shouldCollapse;
 }
 
 function updateTopbarLayout(){
