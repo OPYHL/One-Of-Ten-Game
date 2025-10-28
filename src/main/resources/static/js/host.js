@@ -173,7 +173,9 @@ function measureCollapseNeeded(){
   const availableWidth = topbarEl.clientWidth;
 
   const topbarRect = topbarEl.getBoundingClientRect();
-  const wrapDetected = (actionsRect.top - topbarRect.top) > 8;
+  const wrapDetected = brandRect.width > 0
+    ? (actionsRect.top - brandRect.top) > 8
+    : (actionsRect.top - topbarRect.top) > 8;
 
   const baseGap = (brandRect.width > 0 && actionsRect.width > 0) ? gap : 0;
   const essentialWidth = brandRect.width + actionsRect.width + baseGap;
