@@ -253,7 +253,7 @@ a{color:inherit}
 
 .answering-card{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(300px,360px);
+  grid-template-columns:minmax(0,1fr) auto;
   grid-template-areas:
     "head side"
     "body side"
@@ -336,9 +336,9 @@ a{color:inherit}
   grid-area:side;
   display:flex;
   align-items:stretch;
-  justify-content:flex-start;
+  justify-content:flex-end;
   gap:20px;
-  flex-wrap:nowrap;
+  flex-wrap:wrap;
 }
 .answer-judge{
   display:grid;
