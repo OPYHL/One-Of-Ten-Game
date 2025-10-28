@@ -378,14 +378,21 @@ function renderGrid(players, st){
   const n  = players.length;
   const cw = grid.clientWidth || window.innerWidth;
   const ch = window.innerHeight;
-  const L  = computeLayout(n, cw, ch);
+  const baseFloor = 18;
+  const bottomMargin = n > 0
+    ? Math.min(160, Math.max(54, Math.round(ch * 0.08)))
+    : baseFloor;
+  const usableHeight = Math.max(0, ch - bottomMargin);
+  const L  = computeLayout(n, cw, usableHeight);
 
   grid.style.setProperty('--scale', L.scale.toFixed(3));
   grid.style.setProperty('--grid-gap-x', L.gap + 'px');
   grid.style.setProperty('--grid-gap-y', L.gap + 'px');
 
   const scaledH = Math.round(L.height * L.scale);
-  gridWrap.style.height = (scaledH + 42) + 'px';
+  gridWrap.style.height = (scaledH + bottomMargin) + 'px';
+  gridWrap.style.bottom = bottomMargin + 'px';
+  gridWrap.style.paddingBottom = Math.max(0, bottomMargin - baseFloor) + 'px';
 
   if (!L.rows){ return; }
 
