@@ -426,35 +426,20 @@ function cardFor(p, st, w){
   const name  = normName(p);
 
   el.innerHTML = `
-    <header class="card-header">
-      <div class="seat" aria-label="Stanowisko">
-        <span class="seat-label">Stanowisko</span>
-        <span class="seat-number">${p.id}</span>
-      </div>
-      <div class="ptsBox">
-        <span class="medal"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 4.8L20 8l-4 3.9L17 18l-5-2.6L7 18l1-6.1L4 8l5.6-.8L12 2z"/></svg></span>
-        <div class="score-info">
-          <span class="label">Punkty</span>
-          <span class="value" id="pts-${p.id}">${p.score}</span>
-        </div>
-      </div>
-    </header>
+    <div class="seat" aria-label="Stanowisko">${p.id}</div>
+    <div class="name">${escapeHtml(name || '')}</div>
+    <div class="avatar"><img src="${avatarFor(p,'idle')}" alt=""></div>
 
-    <div class="card-body">
-      <div class="avatar"><img src="${avatarFor(p,'idle')}" alt=""></div>
-      <div class="card-meta">
-        <div class="name">${escapeHtml(name || '')}</div>
-        <div class="card-stats">
-          <div class="livesBox" id="lives-${p.id}">
-            ${heartsSvg(false)}${heartsSvg(false)}${heartsSvg(false)}
-          </div>
-        </div>
-      </div>
+    <div class="ptsBox">
+      <span class="medal"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 4.8L20 8l-4 3.9L17 18l-5-2.6L7 18l1-6.1L4 8l5.6-.8L12 2z"/></svg></span>
+      <span class="value" id="pts-${p.id}">${p.score}</span>
     </div>
 
-    <footer class="card-footer">
-      <div class="judge" id="judge-${p.id}"></div>
-    </footer>
+    <div class="livesBox" id="lives-${p.id}">
+      ${heartsSvg(false)}${heartsSvg(false)}${heartsSvg(false)}
+    </div>
+
+    <div class="judge" id="judge-${p.id}"></div>
   `;
 
   const hearts = el.querySelectorAll('.livesBox .heart');
@@ -481,12 +466,12 @@ function cardFor(p, st, w){
 function showStage(p, phase){
   const name = normName(p);
   stageName.textContent = name || `Gracz ${p.id}`;
-  stageSeat.textContent = typeof p.id === 'number' ? p.id : '—';
+  stageSeat.textContent = `Stanowisko ${p.id}`;
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
 
   if (stageScore){
     const score = typeof p.score === 'number' ? p.score : 0;
-    stageScore.textContent = score.toString();
+    stageScore.textContent = `${score} pkt`;
   }
   if (stageLives){
     const livesRaw = typeof p.lives === 'number' ? p.lives : 3;
