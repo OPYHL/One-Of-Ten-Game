@@ -383,6 +383,7 @@ a{color:inherit}
   color:inherit;
 }
 .answer-progress{
+  grid-area:progress;
   display:flex;
   flex-direction:column;
   align-items:flex-start;
