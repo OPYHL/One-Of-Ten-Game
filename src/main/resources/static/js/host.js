@@ -526,7 +526,7 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
     steps: buildStageSteps(st, activeQuestion, answering, phase, actualPhase),
   };
 
-  const allowQuestionPick = phase === 'INTRO' || phase === 'READING' || phase === 'SELECTING';
+  const allowQuestionPick = phase === 'INTRO' || phase === 'READING';
   if (btnSelectQuestion){ btnSelectQuestion.disabled = !allowQuestionPick; }
 
   if (stageCardEl){
@@ -616,14 +616,12 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
         const chooser = st.players?.find(p=>p.id===targetProposal.fromId);
         const target = st.players?.find(p=>p.id===targetProposal.toId);
         stage.title = 'Potwierdź wybór gracza';
-        stage.message = `${formatPlayerLabel(chooser)} wskazał ${formatPlayerLabel(target)}.`;
+        stage.message = `${formatPlayerLabel(chooser)} wskazał ${formatPlayerLabel(target)}. Potwierdź wybór, aby przejść dalej.`;
         stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary', disabled: true });
-        stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz kolejne pytanie', variant: 'ghost' });
       } else {
         stage.title = 'Czekamy na wybór gracza';
-        stage.message = 'Zwycięzca wskazuje kolejnego odpowiadającego — obserwuj ekran operatora.';
-        stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary' });
-        stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz kolejne pytanie', variant: 'ghost' });
+        stage.message = 'Zwycięzca wskazuje kolejnego odpowiadającego — poczekaj na potwierdzenie operatora.';
+        stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary', disabled: true });
       }
       break;
     }
