@@ -481,12 +481,12 @@ function cardFor(p, st, w){
 function showStage(p, phase){
   const name = normName(p);
   stageName.textContent = name || `Gracz ${p.id}`;
-  stageSeat.textContent = `Stanowisko ${p.id}`;
+  stageSeat.textContent = typeof p.id === 'number' ? p.id : '—';
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
 
   if (stageScore){
     const score = typeof p.score === 'number' ? p.score : 0;
-    stageScore.textContent = `${score} pkt`;
+    stageScore.textContent = score.toString();
   }
   if (stageLives){
     const livesRaw = typeof p.lives === 'number' ? p.lives : 3;
