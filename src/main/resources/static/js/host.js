@@ -104,7 +104,7 @@ let activeCategory = null;
 let runtimeTimer = null;
 let lastMetrics = null;
 let currentQuestionId = null;
-let questionPrompted = false;
+let questionCatalogManualUnlock = false;
 let latestTimerRemainingMs = 0;
 let toastTimer = null;
 let toastHideTimer = null;
@@ -215,14 +215,28 @@ function confirmQuestion(q){
   closeModal();
 }
 
-function openModal(){
+function openModal(opts = {}){
+  if (!questionModal) return;
+  const manual = !!opts.manual;
+  const force = !!opts.force;
+  if (manual){
+    questionCatalogManualUnlock = true;
+  }
+  if (!force && !questionCatalogManualUnlock){
+    return;
+  }
+  questionCatalogManualUnlock = false;
   if (!catalog){ loadCatalog(); }
   questionModal.classList.remove('hidden');
 }
-function closeModal(){ questionModal.classList.add('hidden'); }
+function closeModal(){
+  questionCatalogManualUnlock = false;
+  if (!questionModal) return;
+  questionModal.classList.add('hidden');
+}
 
-if (btnQuestion) btnQuestion.addEventListener('click', openModal);
-if (btnSelectQuestion) btnSelectQuestion.addEventListener('click', openModal);
+if (btnQuestion) btnQuestion.addEventListener('click', () => openModal({ manual: true }));
+if (btnSelectQuestion) btnSelectQuestion.addEventListener('click', () => openModal({ manual: true }));
 if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
 if (questionModal) {
   questionModal.addEventListener('click', e => {
@@ -388,7 +402,6 @@ function render(){
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
   updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, uiPhase);
-  maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
 
@@ -415,7 +428,6 @@ function updateQuestion(active){
     questionLabel.textContent   = `#${active.order?.toString().padStart(2,'0') || '--'} • ${active.id || ''}`;
     questionText.textContent    = active.question || '—';
     questionAnswer.textContent  = active.answer || '—';
-    questionPrompted = false;
   } else {
     badgeDifficulty.textContent = '—';
     badgeCategory.textContent   = '—';
@@ -861,20 +873,6 @@ function updateStageButtons(buttons){
     const badEl  = stageButtons.btnBad?.el;
     const judgeActive = !!(goodEl && goodEl.dataset.available === 'true') || !!(badEl && badEl.dataset.available === 'true');
     answerActionsEl.classList.toggle('hidden', !nextVisible && !judgeActive);
-  }
-}
-
-function maybePromptQuestion(st, activeQuestion){
-  if (!questionModal) return;
-  const phase = st.phase;
-  const canSelect = phase === 'READING' || phase === 'INTRO';
-  const needQuestion = canSelect && !activeQuestion;
-  if (needQuestion && !questionPrompted){
-    questionPrompted = true;
-    openModal();
-  }
-  if (!needQuestion){
-    questionPrompted = false;
   }
 }
 
