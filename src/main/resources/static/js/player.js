@@ -158,14 +158,6 @@ const bus = connect({
       avImg.classList.remove('ping');
       setKnowLabel('Znam odpowiedź!');
     }
-    else if (phase === 'COOLDOWN'){
-      setStatus('Chwila przerwy… zaraz zgłaszanie.');
-      lockKnow(true, true);
-      document.body.classList.remove('me-won','me-answering','me-choosing','me-picked');
-      avImg.classList.remove('ping');
-      // me-banned zostaje — ban dotyczy bieżącego pytania, czyścimy go dopiero na READING nowego pytania
-      setKnowLabel('Znam odpowiedź!');
-    }
     else if (phase === 'BUZZING'){
       setStatus('Kliknij „Znam odpowiedź!”, jeśli znasz!');
       const banned = document.body.classList.contains('me-banned');

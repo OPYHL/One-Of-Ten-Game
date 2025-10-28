@@ -121,7 +121,6 @@ const PHASE_LABELS = {
   BUZZING: 'Zgłoszenia',
   ANSWERING: 'Odpowiedź',
   SELECTING: 'Wybór',
-  COOLDOWN: 'Przerwa',
 };
 
 const bus = connect({
@@ -527,7 +526,7 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
     steps: buildStageSteps(st, activeQuestion, answering, phase, actualPhase),
   };
 
-  const allowQuestionPick = phase === 'INTRO' || phase === 'READING' || phase === 'COOLDOWN' || phase === 'SELECTING';
+  const allowQuestionPick = phase === 'INTRO' || phase === 'READING' || phase === 'SELECTING';
   if (btnSelectQuestion){ btnSelectQuestion.disabled = !allowQuestionPick; }
 
   if (stageCardEl){
@@ -626,13 +625,6 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
         stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary' });
         stage.buttons.push({ id: 'btnQuestion', label: 'Wybierz kolejne pytanie', variant: 'ghost' });
       }
-      break;
-    }
-    case 'COOLDOWN': {
-      stage.badge = 'Przerwa';
-      stage.title = 'Chwila przerwy';
-      stage.message = 'Za moment przygotujemy kolejne pytanie.';
-      stage.buttons.push({ id: 'btnQuestion', label: 'Przygotuj następne pytanie', variant: 'ghost' });
       break;
     }
     default:
@@ -736,12 +728,6 @@ function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
       steps[4].desc = targetProposal
         ? 'Zwycięzca wskazał gracza — potwierdź wybór.'
         : 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
-      break;
-    case 'COOLDOWN':
-      steps[3].status = 'active';
-      steps[3].desc = 'Krótka przerwa przed kolejnym pytaniem.';
-      steps[4].status = 'done';
-      steps[4].desc = 'Ocena zakończona. Przygotuj kolejne pytanie.';
       break;
     default:
       break;
