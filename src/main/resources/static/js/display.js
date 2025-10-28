@@ -407,6 +407,12 @@ function renderGrid(players, st){
       bottomMargin = marginFloor;
       L = layoutForMargin(bottomMargin);
     }
+
+    const elevatedFloor = clamp(Math.round(ch * 0.086), marginFloor + extraBoost, Math.round(ch * 0.18));
+    if (bottomMargin < elevatedFloor){
+      bottomMargin = elevatedFloor;
+      L = layoutForMargin(bottomMargin);
+    }
   }
 
   const safetyPad = L.rows > 1
@@ -426,7 +432,7 @@ function renderGrid(players, st){
   gridWrap.style.height = (scaledH + bottomMargin) + 'px';
   gridWrap.style.bottom = bottomMargin + 'px';
   const paddingBottom = L.rows > 1
-    ? Math.max(10, Math.round(bottomMargin * 0.55))
+    ? Math.max(14, Math.round(bottomMargin * 0.6))
     : Math.max(0, bottomMargin - baseFloor);
   gridWrap.style.paddingBottom = paddingBottom + 'px';
 
