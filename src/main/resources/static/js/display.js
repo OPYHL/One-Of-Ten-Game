@@ -60,7 +60,6 @@ let lastPhase  = 'IDLE';
 let askedCount = 0;
 
 let TOTAL_ANS_MS = 10_000;
-let COOLDOWN_MS  = 3_000;
 
 let lastIds    = [];
 let lastScores = new Map();
@@ -203,53 +202,6 @@ function showBuzzingCallout(){
   showCenter('Gracze, zgłaszamy się!', 'Kliknij „Znam odpowiedź!” na swoim urządzeniu.', true);
 }
 
-/* ===== 3…2…1 overlay + lokalny fallback ===== */
-let cd = document.getElementById('cd');
-if (!cd){
-  cd = document.createElement('div');
-  cd.id = 'cd';
-  cd.style.cssText = `
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:25;
-    pointer-events:none; background:rgba(0,0,0,0);
-  `;
-  cd.innerHTML = `
-    <div id="cdRing" style="
-      width:min(34vmin, 320px); height:min(34vmin, 320px); border-radius:50%;
-      background:conic-gradient(var(--accent) 0%, transparent 0%);
-      display:grid; place-items:center; filter: drop-shadow(0 10px 30px rgba(0,0,0,.6));">
-      <div style="
-        width:86%; height:86%; border-radius:50%;
-        background:rgba(5,10,20,.85); border:1px solid #20304b; display:grid; place-items:center;">
-        <div id="cdNum" style="font-size:min(18vmin, 170px); line-height:1; font-weight:800; color:#dbe7ff; text-shadow:0 8px 30px rgba(0,0,0,.45)">3</div>
-      </div>
-    </div>`;
-  document.body.appendChild(cd);
-}
-const cdRing = cd.querySelector('#cdRing');
-const cdNum  = cd.querySelector('#cdNum');
-
-let cdRAF = null;
-let cdEndTime = 0;
-function startLocalCooldown(ms = COOLDOWN_MS){
-  stopLocalCooldown();
-  cdEndTime = performance.now() + ms;
-  cd.style.display = 'flex';
-  const tick = () => {
-    const now = performance.now();
-    const left = Math.max(0, cdEndTime - now);
-    const sec = Math.max(1, Math.ceil(left/1000));
-    cdNum.textContent = String(sec);
-    const prog = 100 - Math.round((left/ms)*100);
-    cdRing.style.background = `conic-gradient(var(--accent) ${prog}%, transparent ${prog}%)`;
-    if (left <= 0){
-      hideCooldown(); showBuzzingCallout(); cdRAF = null; return;
-    }
-    cdRAF = requestAnimationFrame(tick);
-  };
-  cdRAF = requestAnimationFrame(tick);
-}
-function stopLocalCooldown(){ if (cdRAF){ cancelAnimationFrame(cdRAF); cdRAF=null; } cdEndTime=0; }
-
 /* ================= BUS ================= */
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -325,7 +277,6 @@ function render(){
   updateWaitingCard(joined.length, totalSlots, st.players || []);
   applyWaitingVisibility();
   TOTAL_ANS_MS = st.settings?.answerTimerMs ?? TOTAL_ANS_MS;
-  COOLDOWN_MS = st.settings?.cooldownMs ?? COOLDOWN_MS;
 
   renderQuestionBoard(st);
 
@@ -349,16 +300,13 @@ function render(){
     } else {
       showBanner('Prowadzący czyta pytanie…');
     }
-  } else if (st.phase === 'COOLDOWN') {
-    hideCenter(); hideBanner(); startLocalCooldown(COOLDOWN_MS);
   } else if (st.phase === 'BUZZING') {
-    hideCooldown(); showBuzzingCallout();
+    showBuzzingCallout();
   } else if (st.phase === 'ANSWERING') {
     hideCenter(); banner.classList.remove('show');
   } else {
     hideCenter();
     hideBanner();
-    hideCooldown();
     applyWaitingVisibility();
   }
 
@@ -411,7 +359,7 @@ function shouldShowAnswer(phase){
   if (phase === 'IDLE' && body?.classList.contains('waiting-mode')){
     return false;
   }
-  return phase === 'SELECTING' || phase === 'COOLDOWN' || phase === 'IDLE';
+  return phase === 'SELECTING' || phase === 'IDLE';
 }
 
 function renderGrid(players, st){
@@ -528,8 +476,6 @@ function hideStage(){
 /* ===== Banery / Cooldown ===== */
 function showBanner(t){ banner.textContent = t; banner.classList.add('show'); }
 function hideBanner(){ banner.classList.remove('show'); }
-function hideCooldown(){ cd.style.display = 'none'; stopLocalCooldown(); }
-
 /* ============== Events ============== */
 function handleEvent(ev){
   if (!ev) return;
@@ -601,17 +547,15 @@ function handleEvent(ev){
     }
   }
   else if (ev.type === 'PHASE'){
-    if (ev.value === 'COOLDOWN') {
-      hideBanner(); startLocalCooldown(COOLDOWN_MS);
-    } else if (ev.value === 'READING') {
-      hideCooldown(); hideCenter();
+    if (ev.value === 'READING') {
+      hideCenter();
       if (state?.hostDashboard?.activeQuestion?.preparing){
         showBanner('Prowadzący przygotowuje pytanie…');
       } else {
         showBanner('Prowadzący czyta pytanie…');
       }
     } else if (ev.value === 'BUZZING') {
-      hideCooldown(); showBuzzingCallout();
+      showBuzzingCallout();
     } else if (ev.value === 'IDLE') {
       showCenter('Czekamy na rozpoczęcie…','Prowadzący może rozpocząć rundę.');
     }
@@ -642,22 +586,6 @@ function handleTimer(t){
     stageCd.classList.add('hidden');
   }
 
-  // Cooldown 3–2–1 (tick z backendu ma priorytet nad fallbackiem)
-  if (state?.phase === 'COOLDOWN'){
-    timebarWrap.classList.remove('show');
-    if (typeof ms === 'number' && active){
-      stopLocalCooldown();
-      cd.style.display = 'flex';
-      const sec = Math.max(1, Math.ceil(ms/1000));
-      cdNum.textContent = String(sec);
-      const prog = 100 - Math.round((ms/COOLDOWN_MS)*100);
-      cdRing.style.background = `conic-gradient(var(--accent) ${prog}%, transparent ${prog}%)`;
-    }
-    if (!active && cd.style.display === 'flex'){
-      hideCooldown();
-      showBuzzingCallout();
-    }
-  }
 }
 
 /* ============== Misc ============== */

@@ -198,5 +198,5 @@ window.setAns    = (id)         => send('/app/setAnswering',{playerId:id});
 window.judge     = (id, ok)     => send('/app/judge',{playerId:id, correct:ok});
 
 function disableSetAnswering(state){
-  return (state.phase==='BUZZING' || state.phase==='COOLDOWN' || (timer.active)) ? 'disabled' : '';
+  return (state.phase==='BUZZING' || (timer.active)) ? 'disabled' : '';
 }

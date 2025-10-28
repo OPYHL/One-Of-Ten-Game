@@ -313,9 +313,6 @@ body.waiting-mode #gridWrap{ display:none; }
   box-shadow:0 0 26px rgba(32,201,151,.4) inset, 0 0 12px rgba(32,201,151,.25);
 }
 
-/* ==================== COOLDOWN 3–2–1 ==================== */
-#cdNum{ will-change:transform,opacity; transition:transform .15s ease, opacity .15s ease }
-
 /* ================ UTYLITY / MEDIA ================ */
 @media (max-width:1200px){
   :root{ --grid-gap-x: 14px; --grid-gap-y: 14px }

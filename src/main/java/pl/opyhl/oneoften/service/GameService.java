@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.*;
 
 /**
  * Logika gry 1 z 10 – wersja „pancerna” na timeout:
@@ -60,14 +59,6 @@ public class GameService {
 
     /** BAN w bieżącym pytaniu dla trybu „otwartego” (BUZZING). */
     private final Set<Integer> bannedThisQuestion = new HashSet<>();
-
-    /** Straż dla cooldownu – wymusi BUZZING nawet, gdyby callback timera nie przyszedł. */
-    private final ScheduledExecutorService guardExec = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread t = new Thread(r, "CooldownGuard");
-        t.setDaemon(true);
-        return t;
-    });
-    private ScheduledFuture<?> cooldownGuard = null;
 
     public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService) {
         this.bus = bus;
@@ -406,57 +397,10 @@ public class GameService {
         applyWrongFor(id);
     }
 
-    private void startCooldown(int ms){
-        // twardy reset
-        timer.stop();
-        timerActive = true;
-        timerRemainingMs = ms;
-
-        answeringId = null;              // w cooldownie nikt nie odpowiada
-        phase = GamePhase.COOLDOWN;
-        pushState();
-
-        // kluczowe: natychmiast wyślij pierwszy tik 3.000 ms, żeby „3” nie wisiała bez tików
-        bus.timer(timerRemainingMs, true);
-        bus.publish(new Event("PHASE", null, "COOLDOWN", null));
-
-        // Guard – gdyby callback timera nie przyszedł (sieć, przycinka, itp.)
-        if (cooldownGuard != null) { cooldownGuard.cancel(false); cooldownGuard = null; }
-        cooldownGuard = guardExec.schedule(() -> {
-            synchronized (GameService.this){
-                if (phase == GamePhase.COOLDOWN){
-                    // Wymuś przejście do BUZZING
-                    timerActive = false; timerRemainingMs = 0;
-                    phase = GamePhase.BUZZING;
-                    pushState();
-                    bus.publish(new Event("PHASE", null, "BUZZING", null));
-                    bus.publish(new Event("BUZZ_OPEN", null, null, null));
-                }
-            }
-        }, ms + 150L, TimeUnit.MILLISECONDS);
-
-        timer.start(ms, (left, active) -> {
-            synchronized (GameService.this){
-                timerRemainingMs = left;
-                timerActive = active;
-                bus.timer(timerRemainingMs, timerActive);
-                if (!active){
-                    // KONIEC COOLDOWNU → od razu otwarte zgłaszanie
-                    if (cooldownGuard != null) { cooldownGuard.cancel(false); cooldownGuard = null; }
-                    phase = GamePhase.BUZZING;
-                    pushState();
-                    bus.publish(new Event("PHASE", null, "BUZZING", null));
-                    bus.publish(new Event("BUZZ_OPEN", null, null, null));
-                }
-            }
-        });
-    }
-
     private void stopTimer(){
         timer.stop();
         timerActive = false;
         timerRemainingMs = 0;
-        if (cooldownGuard != null) { cooldownGuard.cancel(false); cooldownGuard = null; }
     }
 
     /* =================== helpers =================== */
@@ -504,9 +448,11 @@ public class GameService {
             bus.publish(new Event("SELECT_START", currentChooserId, null, null));
             bus.publish(new Event("CUE", null, "BOOM", null));
         } else {
-            // Tryb: otwarte zgłaszanie – BAN dla tego gracza i cooldown 3s
-            bannedThisQuestion.add(id);
-            startCooldown(settings.getCooldownMs());
+            // Tryb: otwarte zgłaszanie – natychmiast przygotuj kolejne pytanie
+            answeringId = null;
+            proposedTargetId = null;
+            enterReadingSetup();
+            bus.publish(new Event("PHASE", null, "READING", null));
         }
     }
 
