@@ -30,7 +30,7 @@ const chooseGrid     = document.getElementById('chooseGrid');
 let myId = null, myGender = 'MALE', phase = 'IDLE';
 let myLives = 3, myScore = 0, answeredTotal = 0, correctTotal = 0;
 let lastState = null;
-const TOTAL = 10000;
+let totalAnswerMs = 10000;
 
 function isSeatJoined(p){
   if (!p) return false;
@@ -125,6 +125,11 @@ const bus = connect({
   onState: st => {
     lastState = st;
     phase = st.phase; phaseEl.textContent = 'Faza: ' + phase;
+
+    const settingsTotal = st?.settings?.answerTimerMs;
+    if (Number.isFinite(settingsTotal) && settingsTotal > 0) {
+      totalAnswerMs = settingsTotal;
+    }
 
     if (myId){
       const me = st.players.find(p=>p.id===myId);
@@ -321,7 +326,9 @@ const bus = connect({
     }
   },
   onTimer: t => {
-    const ms = t.remainingMs||0; const pct = Math.max(0, Math.min(1, (TOTAL - ms)/TOTAL));
+    const total = Number.isFinite(totalAnswerMs) && totalAnswerMs > 0 ? totalAnswerMs : 10000;
+    const ms = Math.max(0, t.remainingMs||0);
+    const pct = Math.max(0, Math.min(1, (total - ms)/total));
     pb.style.width = (pct*100).toFixed(1)+'%';
   }
 });
