@@ -1,4 +1,5 @@
 import { connect } from '/js/ws.js';
+import { loadInitialData, getAnswerTimerMs, setAnswerTimerMs } from '/js/dataStore.js';
 
 /* ====== DOM ====== */
 const qs = new URLSearchParams(location.search);
@@ -30,7 +31,28 @@ const chooseGrid     = document.getElementById('chooseGrid');
 let myId = null, myGender = 'MALE', phase = 'IDLE';
 let myLives = 3, myScore = 0, answeredTotal = 0, correctTotal = 0;
 let lastState = null;
-const TOTAL = 10000;
+let totalAnswerMs = 10000;
+let latestTimerRemainingMs = 0;
+
+function updateProgressBar(totalMs, remainingMs){
+  const total = Number.isFinite(totalMs) && totalMs > 0 ? totalMs : 10000;
+  const remaining = Math.max(0, Math.min(Number.isFinite(remainingMs) ? remainingMs : total, total));
+  const pct = total > 0 ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0;
+  pb.style.width = (pct * 100).toFixed(1) + '%';
+}
+
+async function ensureInitialData(){
+  try {
+    await loadInitialData();
+  } catch (e) {
+    console.warn('Nie udało się wczytać danych operatora', e);
+  }
+  totalAnswerMs = getAnswerTimerMs();
+  latestTimerRemainingMs = totalAnswerMs;
+  updateProgressBar(totalAnswerMs, totalAnswerMs);
+}
+
+ensureInitialData();
 
 function isSeatJoined(p){
   if (!p) return false;
@@ -125,6 +147,17 @@ const bus = connect({
   onState: st => {
     lastState = st;
     phase = st.phase; phaseEl.textContent = 'Faza: ' + phase;
+
+    const settingsTotal = st?.settings?.answerTimerMs;
+    setAnswerTimerMs(settingsTotal);
+    totalAnswerMs = getAnswerTimerMs();
+    const stateRemaining = Number.isFinite(st?.timerRemainingMs) ? st.timerRemainingMs : null;
+    if (st?.timerActive && stateRemaining != null){
+      latestTimerRemainingMs = Math.max(0, stateRemaining);
+    } else if (!st?.timerActive){
+      latestTimerRemainingMs = totalAnswerMs;
+    }
+    updateProgressBar(totalAnswerMs, latestTimerRemainingMs);
 
     if (myId){
       const me = st.players.find(p=>p.id===myId);
@@ -321,8 +354,11 @@ const bus = connect({
     }
   },
   onTimer: t => {
-    const ms = t.remainingMs||0; const pct = Math.max(0, Math.min(1, (TOTAL - ms)/TOTAL));
-    pb.style.width = (pct*100).toFixed(1)+'%';
+    if (Number.isFinite(t?.remainingMs)) {
+      latestTimerRemainingMs = Math.max(0, t.remainingMs);
+    }
+    totalAnswerMs = getAnswerTimerMs();
+    updateProgressBar(totalAnswerMs, latestTimerRemainingMs);
   }
 });
 
