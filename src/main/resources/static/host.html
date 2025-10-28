@@ -166,10 +166,6 @@
                     <h3>Aktualnie odpowiada</h3>
                     <div id="ansJudge" class="judge" aria-live="polite"></div>
                 </div>
-                <div class="answer-judge is-idle">
-                    <button class="btn bad judge-btn" id="btnBad" data-label="✗ Zła" data-icon="✗" aria-label="Zła odpowiedź">✗ Zła</button>
-                    <button class="btn good judge-btn" id="btnGood" data-label="✓ Dobra" data-icon="✓" aria-label="Dobra odpowiedź">✓ Dobra</button>
-                </div>
             </header>
             <div class="answer-body">
                 <div class="answer-info">
@@ -185,13 +181,23 @@
                     </div>
                 </div>
             </div>
-            <div class="answer-progress" id="timerBox">
-                <div class="progress-head">
-                    <span class="progress-label">Pozostały czas</span>
-                    <span class="progress-value" id="timerSummary">0.0 s</span>
+            <div class="answer-side">
+                <div class="answer-progress" id="timerBox">
+                    <div class="progress-head">
+                        <span class="progress-label">Pozostały czas</span>
+                        <span class="progress-value" id="timerSummary">0.0 s</span>
+                    </div>
+                    <div class="timer-track" id="timerBar">
+                        <div class="timer-fill" id="timerFill"></div>
+                    </div>
                 </div>
-                <div class="timer-track" id="timerBar">
-                    <div class="timer-fill" id="timerFill"></div>
+                <div class="answer-judge is-idle">
+                    <button class="btn bad judge-btn" id="btnBad" data-label="✗ Zła" data-icon="✗" aria-label="Zła odpowiedź">
+                        <span class="sr-only">Zła odpowiedź</span>
+                    </button>
+                    <button class="btn good judge-btn" id="btnGood" data-label="✓ Dobra" data-icon="✓" aria-label="Dobra odpowiedź">
+                        <span class="sr-only">Dobra odpowiedź</span>
+                    </button>
                 </div>
             </div>
             <div class="answer-actions">
