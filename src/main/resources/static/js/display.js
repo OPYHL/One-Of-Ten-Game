@@ -380,7 +380,7 @@ function renderGrid(players, st){
   const ch = window.innerHeight;
   const baseFloor = 18;
   const bottomMargin = n > 0
-    ? Math.min(160, Math.max(54, Math.round(ch * 0.08)))
+    ? Math.min(48, Math.max(24, Math.round(ch * 0.04)))
     : baseFloor;
   const usableHeight = Math.max(0, ch - bottomMargin);
   const L  = computeLayout(n, cw, usableHeight);
