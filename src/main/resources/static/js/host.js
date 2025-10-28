@@ -104,6 +104,7 @@ let activeCategory = null;
 let runtimeTimer = null;
 let lastMetrics = null;
 let currentQuestionId = null;
+let questionCatalogManualUnlock = false;
 let latestTimerRemainingMs = 0;
 let toastTimer = null;
 let toastHideTimer = null;
@@ -214,14 +215,28 @@ function confirmQuestion(q){
   closeModal();
 }
 
-function openModal(){
+function openModal(opts = {}){
+  if (!questionModal) return;
+  const manual = !!opts.manual;
+  const force = !!opts.force;
+  if (manual){
+    questionCatalogManualUnlock = true;
+  }
+  if (!force && !questionCatalogManualUnlock){
+    return;
+  }
+  questionCatalogManualUnlock = false;
   if (!catalog){ loadCatalog(); }
   questionModal.classList.remove('hidden');
 }
-function closeModal(){ questionModal.classList.add('hidden'); }
+function closeModal(){
+  questionCatalogManualUnlock = false;
+  if (!questionModal) return;
+  questionModal.classList.add('hidden');
+}
 
-if (btnQuestion) btnQuestion.addEventListener('click', openModal);
-if (btnSelectQuestion) btnSelectQuestion.addEventListener('click', openModal);
+if (btnQuestion) btnQuestion.addEventListener('click', () => openModal({ manual: true }));
+if (btnSelectQuestion) btnSelectQuestion.addEventListener('click', () => openModal({ manual: true }));
 if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
 if (questionModal) {
   questionModal.addEventListener('click', e => {
