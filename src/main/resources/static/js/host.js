@@ -642,13 +642,20 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
   if (answering){
     const nm = (answering.name || '').trim();
     const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
-    if (phase !== 'ANSWERING' && (phase === 'BUZZING' || phase === 'READING' || phase === 'INTRO')){
+    const isJudgingPhase = actualPhase === 'ANSWERING';
+    const waitingForQuestion = actualPhase === 'READING' && (!activeQuestion || !!activeQuestion.preparing);
+
+    if (isJudgingPhase){
       stage.badge = `Gracz ${answering.id}`;
       stage.title = `${label} odpowiada`;
       stage.message = 'Słuchaj uważnie i oceń odpowiedź.';
+    } else if (waitingForQuestion || phase === 'INTRO' || phase === 'READING'){
+      stage.badge = `Gracz ${answering.id}`;
+      stage.title = `${label} będzie odpowiadać`;
+      stage.message = 'Wybierz pytanie i przygotuj się na ocenę odpowiedzi.';
     }
-    const judgingBlocked = phase === 'SELECTING' || phase === 'COOLDOWN' || actualPhase === 'SELECTING' || actualPhase === 'COOLDOWN';
-    if (!judgingBlocked){
+
+    if (isJudgingPhase){
       if (!stage.buttons.some(btn => btn?.id === 'btnGood')){
         stage.buttons.push({ id: 'btnGood', label: '✓ Dobra', variant: 'good' });
       }
@@ -743,10 +750,14 @@ function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
   if (answering){
     const nm = (answering.name || '').trim();
     const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+    const isJudgingPhase = actualPhase === 'ANSWERING';
     steps[3].status = 'done';
-    if (phase !== 'SELECTING' && phase !== 'COOLDOWN' && actualPhase !== 'SELECTING' && actualPhase !== 'COOLDOWN'){
+    if (isJudgingPhase){
       steps[4].status = 'active';
       steps[4].desc = `${label} odpowiada. Oceń jego wypowiedź.`;
+    } else if (actualPhase === 'READING' || phase === 'INTRO' || phase === 'READING'){
+      steps[4].status = steps[4].status === 'done' ? 'done' : 'pending';
+      steps[4].desc = `${label} będzie odpowiadać w tej turze.`;
     }
   } else if (phase === 'ANSWERING'){
     steps[4].status = 'active';
