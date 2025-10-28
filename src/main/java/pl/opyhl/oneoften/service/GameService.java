@@ -351,6 +351,7 @@ public class GameService {
             metrics.setLastQuestionTimeMs(duration);
             questionStartTimestamp = 0L;
         }
+        activeQuestion = null;
     }
 
     private void revealCurrentQuestion(){

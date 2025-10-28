@@ -602,13 +602,13 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
         stage.badge = `Gracz ${answering.id}`;
         stage.title = `${label} odpowiada`;
         stage.message = 'Słuchaj uważnie i oceń odpowiedź.';
+        stage.buttons.push({ id: 'btnGood', label: '✓ Dobra', variant: 'good' });
+        stage.buttons.push({ id: 'btnBad', label: '✗ Zła', variant: 'bad' });
       } else {
         stage.badge = 'Ocena';
-        stage.title = 'Oceń odpowiedź';
-        stage.message = 'Kliknij „Dobra” lub „Zła”, aby zamknąć pytanie.';
+        stage.title = 'Oczekiwanie na odpowiedź';
+        stage.message = 'Przyciski oceny pojawią się, gdy ktoś będzie odpowiadał.';
       }
-      stage.buttons.push({ id: 'btnGood', label: '✓ Dobra', variant: 'good' });
-      stage.buttons.push({ id: 'btnBad', label: '✗ Zła', variant: 'bad' });
       break;
     }
     case 'SELECTING': {
