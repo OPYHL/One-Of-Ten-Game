@@ -413,6 +413,12 @@ function renderGrid(players, st){
       bottomMargin = elevatedFloor;
       L = layoutForMargin(bottomMargin);
     }
+
+    const stackedRowsFloor = clamp(Math.round(ch * 0.12), elevatedFloor + extraBoost, Math.round(ch * 0.26));
+    if (bottomMargin < stackedRowsFloor){
+      bottomMargin = stackedRowsFloor;
+      L = layoutForMargin(bottomMargin);
+    }
   }
 
   const safetyPad = L.rows > 1
