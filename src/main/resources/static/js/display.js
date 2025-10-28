@@ -266,7 +266,13 @@ function computeLayout(n, containerWidth, containerHeight){
 
   // siatka zajmuje ok. 40% wysokości ekranu
   const maxH = Math.max(220, Math.round(containerHeight * 0.40));
-  const scale = Math.max(0.6, Math.min(1, maxH / desiredH));
+  const dynamicScale = Math.min(1, maxH / desiredH);
+
+  // Przy większej liczbie graczy (2 rzędy) zmniejszamy całą siatkę do ~60%,
+  // natomiast przy jednym rzędzie utrzymujemy ją w okolicach 80%.
+  const preferredScale = rows === 1 ? 0.8 : 0.6;
+
+  const scale = Math.min(preferredScale, dynamicScale);
 
   return { rows, colsTop, colsBottom, widthTop, widthBottom, height: desiredH, scale, gap };
 }
@@ -372,14 +378,42 @@ function renderGrid(players, st){
   const n  = players.length;
   const cw = grid.clientWidth || window.innerWidth;
   const ch = window.innerHeight;
-  const L  = computeLayout(n, cw, ch);
+  const baseFloor = 18;
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  const layoutForMargin = margin => {
+    const usableHeight = Math.max(0, ch - margin);
+    return computeLayout(n, cw, usableHeight);
+  };
+
+  const baseMargin = n > 0
+    ? clamp(Math.round(ch * 0.04), 24, 48)
+    : baseFloor;
+
+  let bottomMargin = baseMargin;
+  let L = layoutForMargin(bottomMargin);
+
+  if (n > 0 && L.rows > 1){
+    const extraBoost = Math.round(ch * 0.02);
+    const preferredMultiRow = clamp(Math.round(ch * 0.052), baseFloor + extraBoost, 72);
+    const marginForRows = Math.max(bottomMargin, preferredMultiRow);
+    if (marginForRows !== bottomMargin){
+      bottomMargin = marginForRows;
+      L = layoutForMargin(bottomMargin);
+    }
+  }
 
   grid.style.setProperty('--scale', L.scale.toFixed(3));
   grid.style.setProperty('--grid-gap-x', L.gap + 'px');
   grid.style.setProperty('--grid-gap-y', L.gap + 'px');
 
   const scaledH = Math.round(L.height * L.scale);
-  gridWrap.style.height = (scaledH + 42) + 'px';
+  gridWrap.style.height = (scaledH + bottomMargin) + 'px';
+  gridWrap.style.bottom = bottomMargin + 'px';
+  const paddingBottom = L.rows > 1
+    ? Math.max(6, bottomMargin - baseFloor)
+    : Math.max(0, bottomMargin - baseFloor);
+  gridWrap.style.paddingBottom = paddingBottom + 'px';
 
   if (!L.rows){ return; }
 
