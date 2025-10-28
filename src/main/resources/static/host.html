@@ -15,7 +15,11 @@
             <div class="brand-sub">Panel sterowania</div>
         </div>
     </div>
-    <div class="hud">
+    <button class="btn icon-only hud-toggle" id="btnHudToggle" aria-label="Panel statystyk" aria-expanded="false" aria-controls="hudMenu">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 14a2 2 0 0 1 0-4h28a2 2 0 0 1 0 4H10Zm0 12a2 2 0 0 1 0-4h28a2 2 0 0 1 0 4H10Zm-2 10a2 2 0 0 1 2-2h28a2 2 0 0 1 0 4H10a2 2 0 0 1-2-2Z"/></svg>
+        <span class="sr-only">Pokaż statystyki</span>
+    </button>
+    <div class="hud" id="hudMenu">
         <div class="scoreboard">
             <div class="score-card" role="group" aria-label="Gracze">
                 <div class="score-icon" aria-hidden="true">
@@ -47,8 +51,8 @@
                 <span class="clock-value" id="hostClock">00:00</span>
             </div>
         </div>
-        <button class="btn ghost" id="btnReset">Reset gry</button>
-        <button class="btn ghost" id="btnNew">Nowa gra</button>
+        <button class="btn glass" id="btnReset">Reset gry</button>
+        <button class="btn glass" id="btnNew">Nowa gra</button>
     </div>
 </header>
 
