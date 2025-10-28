@@ -252,10 +252,15 @@ a{color:inherit}
 .answer-text{flex:1}
 
 .answering-card{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  padding:16px 18px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(240px,300px);
+  grid-template-areas:
+    "head head"
+    "body progress"
+    "actions progress";
+  align-items:start;
+  gap:16px 20px;
+  padding:18px 20px;
   min-height:0;
 }
 .answer-head{
@@ -264,6 +269,7 @@ a{color:inherit}
   justify-content:space-between;
   gap:14px;
   flex-wrap:wrap;
+  grid-area:head;
 }
 .answer-title{
   display:flex;
@@ -280,12 +286,13 @@ a{color:inherit}
   position:static;
 }
 .answer-body{
+  grid-area:body;
   display:flex;
   align-items:center;
   justify-content:flex-start;
   gap:16px;
   flex-wrap:wrap;
-  min-height:96px;
+  min-height:0;
 }
 .answer-info{
   display:flex;
@@ -371,13 +378,17 @@ a{color:inherit}
   color:inherit;
 }
 .answer-progress{
+  grid-area:progress;
   display:flex;
-  align-items:center;
+  flex-direction:column;
+  align-items:flex-start;
   gap:12px;
-  padding:12px 14px;
+  padding:14px 16px;
   border-radius:16px;
   background:var(--panel-soft);
   border:1px solid rgba(47,84,235,.1);
+  align-self:stretch;
+  justify-content:space-between;
 }
 .answer-progress .progress-head{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}
 .progress-label{text-transform:uppercase;letter-spacing:.22rem;font-weight:700;font-size:.7rem}
@@ -401,17 +412,31 @@ a{color:inherit}
 #timerBar.critical .timer-fill{background:var(--bad)}
 
 .answer-actions{
+  grid-area:actions;
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-start;
   gap:10px;
   flex-wrap:wrap;
 }
-.answer-actions .btn{flex:1 1 190px}
+.answer-actions .btn{flex:1 1 200px}
 .judge{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;border:1px solid rgba(47,84,235,.12);background:var(--panel-soft);font-size:1.35rem;font-weight:800;color:var(--text-strong);opacity:0;transform:translateY(-6px);transition:.2s}
 .judge.show{opacity:1;transform:translateY(0)}
 .judge.good{background:rgba(39,177,115,.18);border-color:rgba(39,177,115,.45);color:var(--text-strong)}
 .judge.bad{background:rgba(239,78,90,.18);border-color:rgba(239,78,90,.45);color:var(--text-strong)}
+
+@media (max-width:900px){
+  .answering-card{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "head"
+      "body"
+      "progress"
+      "actions";
+  }
+  .answer-progress{align-self:stretch;width:100%}
+  .answer-actions{justify-content:space-between}
+}
 
 @media (max-width:1100px){
   .answer-head{align-items:flex-start}
