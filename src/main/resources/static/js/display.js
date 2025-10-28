@@ -8,6 +8,7 @@ const setPhasePill = v => { if (hudPhase) hudPhase.textContent = v || '—'; };
 
 const body     = document.body;
 const gridWrap = document.getElementById('gridWrap');
+const gridClamp = document.getElementById('gridClamp');
 const grid     = document.getElementById('grid');
 const banner   = document.getElementById('banner');
 
@@ -413,6 +414,12 @@ function renderGrid(players, st){
       bottomMargin = elevatedFloor;
       L = layoutForMargin(bottomMargin);
     }
+
+    const stackedRowsFloor = clamp(Math.round(ch * 0.12), elevatedFloor + extraBoost, Math.round(ch * 0.26));
+    if (bottomMargin < stackedRowsFloor){
+      bottomMargin = stackedRowsFloor;
+      L = layoutForMargin(bottomMargin);
+    }
   }
 
   const safetyPad = L.rows > 1
@@ -429,14 +436,29 @@ function renderGrid(players, st){
   grid.style.setProperty('--grid-gap-y', L.gap + 'px');
 
   const scaledH = Math.round(L.height * L.scale);
-  gridWrap.style.height = (scaledH + bottomMargin) + 'px';
-  gridWrap.style.bottom = bottomMargin + 'px';
+  const baseBottom = baseFloor;
+  const lift = L.rows > 0 ? Math.max(0, bottomMargin - baseBottom) : 0;
   const paddingBottom = L.rows > 1
-    ? Math.max(14, Math.round(bottomMargin * 0.6))
-    : Math.max(0, bottomMargin - baseFloor);
-  gridWrap.style.paddingBottom = paddingBottom + 'px';
+    ? Math.max(18, Math.round((baseBottom + lift) * 0.65))
+    : Math.max(0, Math.round((baseBottom + lift) * 0.4));
+  const availableWrap = Math.max(0, ch - baseBottom);
+  const wrapHeight = L.rows > 0
+    ? Math.max(scaledH, Math.min(availableWrap, scaledH + paddingBottom))
+    : 0;
 
-  if (!L.rows){ return; }
+  gridWrap.style.height = wrapHeight ? wrapHeight + 'px' : '';
+  gridWrap.style.bottom = '';
+  gridWrap.style.paddingBottom = '';
+  gridWrap.style.setProperty('--grid-lift', `${lift}px`);
+  gridWrap.style.setProperty('--grid-bottom-pad', `${paddingBottom}px`);
+  if (gridClamp){
+    gridClamp.style.maxHeight = wrapHeight ? wrapHeight + 'px' : '';
+  }
+
+  if (!L.rows){
+    grid.innerHTML = '';
+    return;
+  }
 
   const rowTop    = document.createElement('div');
   const rowBottom = document.createElement('div');
