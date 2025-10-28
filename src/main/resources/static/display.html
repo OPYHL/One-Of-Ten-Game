@@ -98,11 +98,13 @@
 
 <!-- PODŁOGA: zawodnicy zawsze na dole -->
 <section id="gridWrap">
-    <div id="grid">
-        <!-- rows są tworzone w JS: .row.top i .row.bottom -->
+    <div id="gridClamp">
+        <div id="grid">
+            <!-- rows są tworzone w JS: .row.top i .row.bottom -->
+        </div>
+        <!-- Pasek 10 sekund na dole ekranu (tylko ANSWERING) -->
+        <div id="timebar"><div id="pb"></div></div>
     </div>
-    <!-- Pasek 10 sekund na dole ekranu (tylko ANSWERING) -->
-    <div id="timebar"><div id="pb"></div></div>
 </section>
 
 <!-- DŹWIĘKI (autoodtwarzanie wymaga popupu — JS doda modal) -->
