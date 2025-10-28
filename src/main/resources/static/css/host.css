@@ -62,7 +62,7 @@ a{color:inherit}
   font-size:1.1rem;
   box-shadow:0 14px 30px rgba(47,84,235,.35);
 }
-.brand-copy{display:flex;flex-direction:column;gap:2px}
+.brand-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
 .brand-title{font-size:1.05rem;font-weight:800;letter-spacing:.2px;color:var(--text-strong)}
 .brand-sub{text-transform:uppercase;font-size:.72rem;font-weight:700;letter-spacing:.28rem;color:var(--muted)}
 
@@ -194,6 +194,35 @@ a{color:inherit}
 #topbar.topbar-collapsed .hud .top-actions{display:flex;flex-direction:column;gap:14px;align-items:stretch}
 #topbar.topbar-collapsed .hud .top-actions .btn{width:100%;justify-content:center}
 #topbar.topbar-collapsed .hud .clock{order:-1;width:100%;justify-content:space-between}
+
+@media (max-width: 520px){
+  #topbar.topbar-collapsed{
+    gap:12px;
+    padding:12px 16px;
+  }
+  #topbar.topbar-collapsed .brand{
+    gap:12px;
+  }
+  #topbar.topbar-collapsed .brand-logo{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    font-size:1rem;
+  }
+  #topbar.topbar-collapsed .brand-title{
+    font-size:1rem;
+  }
+  #topbar.topbar-collapsed .brand-sub{
+    font-size:.62rem;
+    letter-spacing:.18rem;
+  }
+  #topbar.topbar-collapsed .hud-toggle,
+  #topbar.topbar-collapsed .btn.icon-only{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+  }
+}
 
 .btn{
   padding:11px 18px;
