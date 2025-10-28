@@ -11,12 +11,15 @@ const gridWrap = document.getElementById('gridWrap');
 const grid     = document.getElementById('grid');
 const banner   = document.getElementById('banner');
 
-const stage      = document.getElementById('stage');
-const stageName  = document.getElementById('stageName');
-const stageAv    = document.getElementById('stageAv');
-const stageSeat  = document.getElementById('stageSeat');
-const stageJudge = document.getElementById('stageJudge');
-const stageCd    = document.getElementById('stageCountdown');
+const stage       = document.getElementById('stage');
+const stageName   = document.getElementById('stageName');
+const stageAv     = document.getElementById('stageAv');
+const stageSeat   = document.getElementById('stageSeat');
+const stageJudge  = document.getElementById('stageJudge');
+const stageCd     = document.getElementById('stageCountdown');
+const stageScore  = document.getElementById('stageScore');
+const stageLives  = document.getElementById('stageLives');
+const stageTimer  = document.getElementById('stageTimer');
 
 const questionBoard = document.getElementById('questionBoard');
 const qDiff = document.getElementById('qDiff');
@@ -401,7 +404,10 @@ function renderGrid(players, st){
   }
 }
 
-function heartsSvg(dead){ return `<svg class="heart${dead?' dead':''}" viewBox="0 0 32 29" aria-hidden="true"><path d="M23.6 0c-2.7 0-5 1.6-7.6 4.7C13.4 1.6 11.1 0 8.4 0 3.8 0 0 3.7 0 8.2 0 16.1 15.9 29 16 29s16-12.9 16-20.8C32 3.7 28.2 0 23.6 0z"/></svg>`; }
+function heartsSvg(dead, variant='grid'){
+  const cls = variant === 'stage' ? 'heart stage' : 'heart';
+  return `<svg class="${cls}${dead?' dead':''}" viewBox="0 0 32 29" aria-hidden="true"><path d="M23.6 0c-2.7 0-5 1.6-7.6 4.7C13.4 1.6 11.1 0 8.4 0 3.8 0 0 3.7 0 8.2 0 16.1 15.9 29 16 29s16-12.9 16-20.8C32 3.7 28.2 0 23.6 0z"/></svg>`;
+}
 
 function cardFor(p, st, w){
   const el = document.createElement('div');
@@ -459,17 +465,33 @@ function cardFor(p, st, w){
 /* ============== Scena (środek) ============== */
 function showStage(p, phase){
   const name = normName(p);
-  stageName.textContent = name ? `${p.id}. ${name}` : `Gracz ${p.id}`;
+  stageName.textContent = name || `Gracz ${p.id}`;
   stageSeat.textContent = `Stanowisko ${p.id}`;
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
 
+  if (stageScore){
+    const score = typeof p.score === 'number' ? p.score : 0;
+    stageScore.textContent = `${score} pkt`;
+  }
+  if (stageLives){
+    const livesRaw = typeof p.lives === 'number' ? p.lives : 3;
+    const lives = Math.max(0, Math.min(3, livesRaw));
+    let html = '';
+    for (let i=0;i<3;i++){ html += heartsSvg(i >= lives, 'stage'); }
+    stageLives.innerHTML = html;
+  }
+
   stage.classList.add('show');
   hideCenter();
-  stageCd.classList.toggle('hidden', phase!=='ANSWERING');
+
+  const isAnswering = phase === 'ANSWERING';
+  stageTimer?.classList.toggle('hidden', !isAnswering);
+  stageCd.classList.toggle('hidden', !isAnswering);
 }
 function hideStage(){
   stage.classList.remove('show');
-  stageJudge.className = 'judge';
+  stageJudge.className = 'stage-judge';
+  stageTimer?.classList.add('hidden');
   stageCd.classList.add('hidden');
 }
 
@@ -496,7 +518,8 @@ function handleEvent(ev){
       setTimeout(()=>{ el.className = 'judge'; }, 1200);
     }
     stageJudge.textContent = ev.value === 'CORRECT' ? '✓' : '✗';
-    stageJudge.className = 'judge show ' + (ev.value === 'CORRECT' ? 'good':'bad');
+    stageJudge.className = 'stage-judge show ' + (ev.value === 'CORRECT' ? 'good':'bad');
+    setTimeout(()=>{ stageJudge.className = 'stage-judge'; }, 1200);
 
     play(ev.value === 'CORRECT' ? 'GOOD' : 'WRONG');
 
@@ -580,10 +603,12 @@ function handleTimer(t){
     const sec = Math.max(0, Math.ceil(ms/1000));
     stageCd.textContent = String(sec);
     stageCd.classList.remove('hidden');
+    stageTimer?.classList.remove('hidden');
   } else {
     timebarWrap.classList.remove('show');
     pb.style.width = '0%';
     stageCd.classList.add('hidden');
+    stageTimer?.classList.add('hidden');
   }
 
 }
