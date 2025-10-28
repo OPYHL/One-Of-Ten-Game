@@ -253,7 +253,7 @@ a{color:inherit}
 
 .answering-card{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(220px,260px);
+  grid-template-columns:minmax(0,1fr) minmax(300px,360px);
   grid-template-areas:
     "head side"
     "body side"
@@ -334,21 +334,26 @@ a{color:inherit}
 .answer-caption{font-size:.74rem;color:var(--muted);line-height:1.35}
 .answer-side{
   grid-area:side;
-  display:grid;
-  gap:12px;
-  align-content:start;
-  justify-items:stretch;
+  display:flex;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:20px;
+  flex-wrap:nowrap;
 }
 .answer-judge{
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:10px;
-  padding:10px 12px;
+  grid-template-columns:repeat(2,minmax(68px,1fr));
+  gap:12px;
+  padding:12px 14px;
   border-radius:16px;
   background:var(--panel-soft);
   border:1px solid rgba(47,84,235,.12);
   box-shadow:0 10px 22px rgba(35,58,124,.12);
   transition:opacity .2s ease,transform .2s ease;
+  align-self:stretch;
+  flex:0 0 auto;
+  min-width:140px;
+  margin-left:auto;
 }
 .answer-judge.is-idle{
   opacity:.45;
@@ -372,7 +377,7 @@ a{color:inherit}
 .judge-btn:disabled{opacity:.5;box-shadow:none;transform:none}
 .answer-judge .judge-btn{
   font-size:0;
-  max-width:78px;
+  max-width:82px;
   justify-self:center;
 }
 .answer-judge .judge-btn::before{
@@ -388,13 +393,16 @@ a{color:inherit}
   flex-direction:column;
   align-items:flex-start;
   gap:12px;
-  padding:14px 16px;
+  padding:14px 18px;
   border-radius:16px;
   background:var(--panel-soft);
   border:1px solid rgba(47,84,235,.1);
+  box-shadow:0 10px 22px rgba(35,58,124,.12);
   align-self:stretch;
   justify-content:space-between;
-  width:100%;
+  flex:0 1 240px;
+  min-width:200px;
+  max-width:240px;
 }
 .answer-progress .progress-head{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:var(--muted)}
 .progress-label{text-transform:uppercase;letter-spacing:.22rem;font-weight:700;font-size:.7rem}
@@ -440,8 +448,19 @@ a{color:inherit}
       "side"
       "actions";
   }
-  .answer-side{width:100%}
-  .answer-judge{justify-items:center}
+  .answer-side{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+  .answer-progress,
+  .answer-judge{
+    width:100%;
+    flex:1 1 100%;
+    min-width:0;
+  }
+  .answer-progress{max-width:none}
+  .answer-judge{justify-items:center;margin-left:0}
   .answer-actions{justify-content:space-between}
 }
 
@@ -598,5 +617,6 @@ a{color:inherit}
   .answer-name{text-align:center;width:100%}
   .answer-seat{text-align:center}
   .answer-actions{flex-direction:column;align-items:stretch}
-  .answer-judge{justify-content:stretch;width:100%}
+  .answer-side{justify-content:center}
+  .answer-judge{justify-items:stretch;width:100%;margin-left:0}
 }
