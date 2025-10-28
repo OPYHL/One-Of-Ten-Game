@@ -426,8 +426,14 @@ function renderGrid(players, st){
     : Math.max(18, Math.round(ch * 0.025));
   const maxVisibleHeight = Math.max(160, ch - bottomMargin - safetyPad);
   const scaleCap = Math.min(1, maxVisibleHeight / Math.max(1, L.height));
-  if (scaleCap > 0 && scaleCap < L.scale){
-    L = { ...L, scale: Math.max(0.42, scaleCap) };
+  // Allow the grid to shrink more aggressively on short viewports so that
+  // player cards stay visible instead of sliding out of frame.
+  const minScale = L.rows > 1 ? 0.12 : 0.18;
+  if (scaleCap <= 0){
+    L = { ...L, scale: minScale };
+  } else if (scaleCap < L.scale){
+    const safeScale = Math.max(minScale, scaleCap);
+    L = { ...L, scale: safeScale };
   }
 
   grid.style.setProperty('--scale', L.scale.toFixed(3));
