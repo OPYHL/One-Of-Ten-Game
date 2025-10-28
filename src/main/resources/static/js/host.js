@@ -11,6 +11,8 @@ const btnNext     = document.getElementById('btnNext');
 const btnReset    = document.getElementById('btnReset');
 const btnNew      = document.getElementById('btnNew');
 const btnSelectQuestion = document.getElementById('btnSelectQuestion');
+const btnHudToggle = document.getElementById('btnHudToggle');
+const topbarEl       = document.getElementById('topbar');
 
 const phaseEl       = document.getElementById('phase');
 const statPlayers   = document.getElementById('statPlayers');
@@ -89,6 +91,45 @@ const targetOverlay = document.getElementById('targetOverlay');
 const targetMessage = document.getElementById('targetMessage');
 const btnTargetApprove = document.getElementById('btnTargetApprove');
 const btnTargetReject  = document.getElementById('btnTargetReject');
+
+if (btnHudToggle && topbarEl){
+  const hudMedia = window.matchMedia('(max-width: 480px)');
+  const closeHud = () => {
+    topbarEl.classList.remove('hud-open');
+    btnHudToggle.setAttribute('aria-expanded', 'false');
+  };
+  btnHudToggle.addEventListener('click', event => {
+    event.stopPropagation();
+    const expanded = btnHudToggle.getAttribute('aria-expanded') === 'true';
+    if (expanded){
+      closeHud();
+    } else {
+      topbarEl.classList.add('hud-open');
+      btnHudToggle.setAttribute('aria-expanded', 'true');
+    }
+  });
+  document.addEventListener('click', event => {
+    if (!topbarEl.classList.contains('hud-open')) return;
+    if (!topbarEl.contains(event.target)){
+      closeHud();
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape'){
+      closeHud();
+    }
+  });
+  const handleMedia = event => {
+    if (!event.matches){
+      closeHud();
+    }
+  };
+  if (hudMedia.addEventListener){
+    hudMedia.addEventListener('change', handleMedia);
+  } else if (hudMedia.addListener){
+    hudMedia.addListener(handleMedia);
+  }
+}
 
 if (welcomeOverlay){
   welcomeOverlay.classList.remove('hidden');
