@@ -104,7 +104,6 @@ let activeCategory = null;
 let runtimeTimer = null;
 let lastMetrics = null;
 let currentQuestionId = null;
-let questionPrompted = false;
 let latestTimerRemainingMs = 0;
 let toastTimer = null;
 let toastHideTimer = null;
@@ -388,7 +387,6 @@ function render(){
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
   updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, uiPhase);
-  maybePromptQuestion(st, activeQuestion);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
 
@@ -415,7 +413,6 @@ function updateQuestion(active){
     questionLabel.textContent   = `#${active.order?.toString().padStart(2,'0') || '--'} • ${active.id || ''}`;
     questionText.textContent    = active.question || '—';
     questionAnswer.textContent  = active.answer || '—';
-    questionPrompted = false;
   } else {
     badgeDifficulty.textContent = '—';
     badgeCategory.textContent   = '—';
@@ -861,20 +858,6 @@ function updateStageButtons(buttons){
     const badEl  = stageButtons.btnBad?.el;
     const judgeActive = !!(goodEl && goodEl.dataset.available === 'true') || !!(badEl && badEl.dataset.available === 'true');
     answerActionsEl.classList.toggle('hidden', !nextVisible && !judgeActive);
-  }
-}
-
-function maybePromptQuestion(st, activeQuestion){
-  if (!questionModal) return;
-  const phase = st.phase;
-  const canSelect = phase === 'READING' || phase === 'INTRO';
-  const needQuestion = canSelect && !activeQuestion;
-  if (needQuestion && !questionPrompted){
-    questionPrompted = true;
-    openModal();
-  }
-  if (!needQuestion){
-    questionPrompted = false;
   }
 }
 
