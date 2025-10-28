@@ -426,20 +426,35 @@ function cardFor(p, st, w){
   const name  = normName(p);
 
   el.innerHTML = `
-    <div class="seat" aria-label="Stanowisko">${p.id}</div>
-    <div class="name">${escapeHtml(name || '')}</div>
-    <div class="avatar"><img src="${avatarFor(p,'idle')}" alt=""></div>
+    <header class="card-header">
+      <div class="seat" aria-label="Stanowisko">
+        <span class="seat-label">Stanowisko</span>
+        <span class="seat-number">${p.id}</span>
+      </div>
+      <div class="ptsBox">
+        <span class="medal"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 4.8L20 8l-4 3.9L17 18l-5-2.6L7 18l1-6.1L4 8l5.6-.8L12 2z"/></svg></span>
+        <div class="score-info">
+          <span class="label">Punkty</span>
+          <span class="value" id="pts-${p.id}">${p.score}</span>
+        </div>
+      </div>
+    </header>
 
-    <div class="ptsBox">
-      <span class="medal"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 4.8L20 8l-4 3.9L17 18l-5-2.6L7 18l1-6.1L4 8l5.6-.8L12 2z"/></svg></span>
-      <span class="value" id="pts-${p.id}">${p.score}</span>
+    <div class="card-body">
+      <div class="avatar"><img src="${avatarFor(p,'idle')}" alt=""></div>
+      <div class="card-meta">
+        <div class="name">${escapeHtml(name || '')}</div>
+        <div class="card-stats">
+          <div class="livesBox" id="lives-${p.id}">
+            ${heartsSvg(false)}${heartsSvg(false)}${heartsSvg(false)}
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="livesBox" id="lives-${p.id}">
-      ${heartsSvg(false)}${heartsSvg(false)}${heartsSvg(false)}
-    </div>
-
-    <div class="judge" id="judge-${p.id}"></div>
+    <footer class="card-footer">
+      <div class="judge" id="judge-${p.id}"></div>
+    </footer>
   `;
 
   const hearts = el.querySelectorAll('.livesBox .heart');
