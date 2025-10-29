@@ -70,7 +70,7 @@ public class GameService {
 
     private AnnotationNext pendingAnnotation = AnnotationNext.NONE;
 
-    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService) {
+    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, QuestionUsageService questionUsageService, OperatorConfigService configService) {
         this.bus = bus;
         this.timer = timer;
         this.questionBank = questionBank;
