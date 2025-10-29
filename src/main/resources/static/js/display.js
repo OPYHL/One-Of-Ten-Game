@@ -337,16 +337,16 @@ function renderQuestionBoard(st){
   if (!questionBoard) return;
   const active = st.hostDashboard?.activeQuestion;
   if (!active){
-    qDiff.textContent = '—';
-    qCat.textContent = '—';
-    qId.textContent = 'Pytanie —';
+    qDiff.textContent = '';
+    qCat.textContent = '';
+    qId.textContent = '';
     qText.textContent = 'Czekamy na pytanie prowadzącego…';
     qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
     qAnswer.classList.add('hidden');
     questionBoard.classList.remove('revealed');
-    qDiff.classList.remove('hidden');
-    qCat.classList.remove('hidden');
-    qId.classList.remove('hidden');
+    qDiff.classList.add('hidden');
+    qCat.classList.add('hidden');
+    qId.classList.add('hidden');
     return;
   }
   const phase = st.phase || '';
