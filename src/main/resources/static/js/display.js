@@ -437,20 +437,37 @@ function renderGrid(players, st){
     L = { ...L, scale: safeScale };
   }
 
-  grid.style.setProperty('--scale', L.scale.toFixed(3));
-  grid.style.setProperty('--grid-gap-x', L.gap + 'px');
-  grid.style.setProperty('--grid-gap-y', L.gap + 'px');
-
-  const scaledH = Math.round(L.height * L.scale);
   const baseBottom = baseFloor;
-  const lift = L.rows > 0 ? Math.max(0, bottomMargin - baseBottom) : 0;
+  const availableWrap = Math.max(0, ch - baseBottom);
+  const minHeadroom = L.rows > 1
+    ? Math.max(38, Math.round(ch * 0.055))
+    : Math.max(26, Math.round(ch * 0.04));
+
+  let scaledH = Math.round(L.height * L.scale);
+
+  if (L.rows > 0 && scaledH > Math.max(0, availableWrap - minHeadroom)){
+    const safeScale = Math.max(minScale, (availableWrap - minHeadroom) / Math.max(1, L.height));
+    if (safeScale < L.scale){
+      L = { ...L, scale: safeScale };
+      scaledH = Math.round(L.height * L.scale);
+    }
+  }
+
+  const desiredLift = L.rows > 0 ? Math.max(0, bottomMargin - baseBottom) : 0;
+  const maxLift = Math.max(0, availableWrap - scaledH);
+  const enforcedLift = L.rows > 0 ? Math.min(maxLift, Math.max(0, Math.round(minHeadroom * 0.45))) : 0;
+  const lift = Math.max(enforcedLift, Math.min(desiredLift, maxLift));
   const paddingBottom = L.rows > 1
     ? Math.max(18, Math.round((baseBottom + lift) * 0.65))
     : Math.max(0, Math.round((baseBottom + lift) * 0.4));
-  const availableWrap = Math.max(0, ch - baseBottom);
+  const desiredWrap = scaledH + lift + paddingBottom;
   const wrapHeight = L.rows > 0
-    ? Math.max(scaledH, Math.min(availableWrap, scaledH + paddingBottom))
+    ? Math.min(availableWrap, Math.max(scaledH + lift, desiredWrap))
     : 0;
+
+  grid.style.setProperty('--scale', L.scale.toFixed(3));
+  grid.style.setProperty('--grid-gap-x', L.gap + 'px');
+  grid.style.setProperty('--grid-gap-y', L.gap + 'px');
 
   gridWrap.style.height = wrapHeight ? wrapHeight + 'px' : '';
   gridWrap.style.bottom = '';
