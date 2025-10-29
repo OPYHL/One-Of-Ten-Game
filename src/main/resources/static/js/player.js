@@ -19,6 +19,9 @@ const avImg     = document.getElementById('av');
 const pb        = document.getElementById('pb');
 const questionWrap = document.getElementById('questionWrap');
 const questionTextEl = document.getElementById('questionText');
+const avatarFx  = document.getElementById('avatarFx');
+const avatarFxResult = document.getElementById('avatarFxResult');
+const avatarFxResultIcon = document.getElementById('avatarFxResultIcon');
 
 const outOverlay = document.getElementById('outOverlay');
 const outStats   = document.getElementById('outStats');
@@ -33,12 +36,14 @@ let myLives = 3, myScore = 0, answeredTotal = 0, correctTotal = 0;
 let lastState = null;
 let totalAnswerMs = 10000;
 let latestTimerRemainingMs = 0;
+let resultHideTimer = null;
 
 function updateProgressBar(totalMs, remainingMs){
   const total = Number.isFinite(totalMs) && totalMs > 0 ? totalMs : 10000;
   const remaining = Math.max(0, Math.min(Number.isFinite(remainingMs) ? remainingMs : total, total));
   const pct = total > 0 ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0;
   pb.style.width = (pct * 100).toFixed(1) + '%';
+  updateClockProgress(pct);
 }
 
 async function ensureInitialData(){
@@ -178,6 +183,8 @@ const bus = connect({
           outOverlay.style.display='block';
           outStats.textContent = `Wynik: ${myScore} pkt • Poprawne: ${correctTotal}/${answeredTotal}`;
           btnKnow.disabled = true;
+          setClockActive(false);
+          resetResultFx();
         }
       }
     }
@@ -191,6 +198,8 @@ const bus = connect({
       lockKnow(true);
       if (meAns) { showRole('Odpowiadasz', 'ok'); }
       else { hideRole(); }
+      resetResultFx();
+      setClockActive(false);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
       avImg.classList.remove('ping');
       setKnowLabel('Znam odpowiedź!');
@@ -207,6 +216,8 @@ const bus = connect({
         setKnowLabel('Już odpowiadałeś');
         showRole('Nie możesz w tej rundzie odpowiadać', 'bad');
       }
+      resetResultFx();
+      setClockActive(false);
     }
     else if (phase === 'ANSWERING'){
       const meAns = st.answeringId === myId;
@@ -219,10 +230,13 @@ const bus = connect({
         avImg.classList.add('ping');
         if (navigator.vibrate) try{ navigator.vibrate([90,40,90]); }catch{}
         setKnowLabel('ODPOWIADASZ!');
+        resetResultFx();
+        setClockActive(true);
       } else {
         document.body.classList.remove('me-answering');
         avImg.classList.remove('ping');
         setKnowLabel('Znam odpowiedź!');
+        setClockActive(false);
       }
       document.body.classList.remove('me-won','me-pending','me-choosing','me-picked');
       pendingBuzz = false;
@@ -230,6 +244,7 @@ const bus = connect({
     else if (phase === 'SELECTING'){
       setStatus('Zwycięzca wybiera przeciwnika…');
       lockKnow(true);
+      setClockActive(false);
       // rola i highlighty ustawią się w onEvent
     }
     else if (phase === 'ANNOTATION'){
@@ -237,6 +252,7 @@ const bus = connect({
       lockKnow(true);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked');
       avImg.classList.remove('ping');
+      setClockActive(false);
     }
     else if (phase === 'INTRO'){
       setStatus('Intro…');
@@ -245,6 +261,8 @@ const bus = connect({
       avImg.classList.remove('ping');
       hideRole();
       setKnowLabel('Znam odpowiedź!');
+      resetResultFx();
+      setClockActive(false);
     }
     else {
       setStatus('Czekaj na kolejne pytanie…');
@@ -254,6 +272,7 @@ const bus = connect({
       avImg.classList.remove('ping');
       hideRole();
       setKnowLabel('Znam odpowiedź!');
+      setClockActive(false);
     }
   },
   onEvent: ev => {
@@ -353,8 +372,8 @@ const bus = connect({
 
     // Ocena (dla mnie)
     if (ev.type === 'JUDGE' && ev.playerId === myId){
-      if (ev.value === 'CORRECT'){ correctTotal++; showToast('✓ DOBRA ODPOWIEDŹ', 'ok'); }
-      else { showToast('✗ ZŁA ODPOWIEDŹ', 'bad'); shakeToast(); }
+      if (ev.value === 'CORRECT'){ correctTotal++; showToast('✓ DOBRA ODPOWIEDŹ', 'ok'); showResultFx('ok'); }
+      else { showToast('✗ ZŁA ODPOWIEDŹ', 'bad'); shakeToast(); showResultFx('bad'); }
       document.body.classList.remove('me-won','me-answering','me-choosing','me-picked');
       setKnowLabel('Znam odpowiedź!');
     }
@@ -476,3 +495,59 @@ function setKnowLabel(t){
   if (span) span.textContent = t; else btnKnow.textContent = t;
 }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+/* ====== AVATAR FX (timer + wynik) ====== */
+function updateClockProgress(pct){
+  if (!avatarFx) return;
+  const deg = Math.max(0, Math.min(360, (Number.isFinite(pct) ? pct : 0) * 360));
+  avatarFx.style.setProperty('--elapsed-deg', deg + 'deg');
+}
+
+function setClockActive(active){
+  if (!avatarFx) return;
+  if (active){
+    stopResultFxTimer();
+    avatarFx.classList.add('show-clock');
+  } else {
+    avatarFx.classList.remove('show-clock');
+  }
+}
+
+function stopResultFxTimer(){
+  if (resultHideTimer){
+    clearTimeout(resultHideTimer);
+    resultHideTimer = null;
+  }
+}
+
+function resetResultFx(){
+  if (!avatarFx) return;
+  stopResultFxTimer();
+  avatarFx.classList.remove('show-result','result-ok','result-bad');
+  if (avatarFxResult) avatarFxResult.classList.remove('pulse');
+  if (avatarFxResultIcon) avatarFxResultIcon.classList.remove('pop');
+}
+
+function showResultFx(kind){
+  if (!avatarFx) return;
+  resetResultFx();
+  avatarFx.classList.remove('show-clock');
+  avatarFx.classList.add('show-result');
+  avatarFx.classList.add(kind === 'ok' ? 'result-ok' : 'result-bad');
+  if (avatarFxResult){
+    avatarFxResult.classList.remove('pulse');
+    void avatarFxResult.offsetWidth;
+    avatarFxResult.classList.add('pulse');
+  }
+  if (avatarFxResultIcon){
+    avatarFxResultIcon.classList.remove('pop');
+    void avatarFxResultIcon.offsetWidth;
+    avatarFxResultIcon.classList.add('pop');
+  }
+  resultHideTimer = setTimeout(()=>{
+    if (avatarFxResult) avatarFxResult.classList.remove('pulse');
+    if (avatarFxResultIcon) avatarFxResultIcon.classList.remove('pop');
+    avatarFx.classList.remove('show-result','result-ok','result-bad');
+    resultHideTimer = null;
+  }, 1600);
+}
