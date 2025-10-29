@@ -122,50 +122,18 @@ img{ max-width:100%; display:block }
 .btn.ghost{ background:rgba(9,16,32,.62); border-color:rgba(57,91,170,.4); color:var(--text); }
 .btn.ghost:hover{ background:rgba(12,20,40,.82); }
 
-body.waiting-mode #hud,
 body.waiting-mode #questionBoard,
 body.waiting-mode #stage,
 body.waiting-mode #centerBox,
-body.waiting-mode #timebarWrap,
-body.waiting-mode #banner{
+body.waiting-mode #timebarWrap{
   display:none !important;
 }
 body.waiting-mode #gridWrap{ display:none; }
 
-/* ======================== HUD ========================= */
-#hud{
-  position:fixed; inset:12px 12px auto 12px; display:flex; align-items:center; gap:16px; z-index:40;
-}
-.hud-left,.hud-right{ display:flex; align-items:center; gap:8px }
-.hud-center{ flex:1; display:flex; justify-content:center }
-.pill{
-  display:inline-flex; gap:8px; align-items:center; padding:7px 10px;
-  background:linear-gradient(180deg, #0f1830 0%, #0e1628 100%);
-  border:1px solid #1c2a44; border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,.28);
-  transform-origin:50% 50%;
-}
-.pill .k{ color:#a9bce1; font-weight:700; opacity:.9; margin-right:6px }
-.pill .v{ background:#0b1324; border:1px solid #1a2942; border-radius:10px; padding:3px 8px; min-width:22px; text-align:center }
-.pill.phase .v{ background:#14203a; color:#d7e6ff; border-color:#213358 }
-.pill.bump{ animation: hudBump .34s ease }
-@keyframes hudBump{ 50%{ transform:scale(1.08) } }
-
-/* --------- baner (komunikaty nad siatką) ---------- */
-.banner{
-  transform:translateY(-16px);
-  min-width:min(980px,76vw);
-  padding:12px 16px; border-radius:14px;
-  background:linear-gradient(180deg,#101a31 0%, #0f172b 100%);
-  border:1px solid #213358; color:#dbe7ff;
-  box-shadow:0 18px 60px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.02);
-  opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
-}
-.banner.show{ opacity:1; transform:none }
-
 
 /* ===================== TABLICA PYTANIA ===================== */
 #questionBoard{
-  position:fixed; top:88px; left:50%; transform:translateX(-50%);
+  position:fixed; top:56px; left:50%; transform:translateX(-50%);
   width:min(1100px,88vw); z-index:28;
 }
 #questionBoard .question-card{
@@ -175,7 +143,20 @@ body.waiting-mode #gridWrap{ display:none; }
   padding:22px 26px; display:grid; gap:14px;
 }
 #questionBoard .meta{display:flex; gap:12px; flex-wrap:wrap}
-#questionBoard .pill{background:rgba(15,27,46,.8); border-color:#243659;}
+#questionBoard .pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  background:rgba(15,27,46,.8);
+  border:1px solid #243659;
+  color:#a9bce1;
+}
 #questionBoard .text{font:800 28px/1.2 Inter,system-ui,sans-serif; color:#f2f7ff; min-height:72px}
 #questionBoard .answer{font:700 20px/1.2 Inter,system-ui,sans-serif; color:rgba(32,201,151,.85); opacity:.3; transition:opacity .25s ease}
 #questionBoard.revealed .answer{opacity:1}
@@ -428,7 +409,6 @@ body.waiting-mode #gridWrap{ display:none; }
 }
 @media (max-width:760px){
   #hud{ inset:8px }
-  .banner{ min-width:auto; width:96vw }
   #stage{ inset:96px 0 10px }
   #stage .stage-card{
     grid-template-columns:1fr;
