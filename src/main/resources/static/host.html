@@ -223,9 +223,27 @@
         <div class="modal-body">
             <aside id="difficultyList"></aside>
             <div class="modal-content">
-                <div id="categoryHeader" class="modal-section-title">Kategorie</div>
-                <div id="categoryList" class="category-grid"></div>
-                <div id="questionList" class="question-list"></div>
+                <div class="modal-toolbar">
+                    <div id="questionModeToggle" class="mode-toggle" role="tablist" aria-label="Sposób wyboru pytania">
+                        <button type="button" class="mode-btn" data-mode="RANDOM">Losuj pytanie</button>
+                        <button type="button" class="mode-btn active" data-mode="LIST">Wybierz z listy</button>
+                    </div>
+                    <div id="usageFilter" class="usage-filter" role="tablist" aria-label="Filtr pytań">
+                        <button type="button" class="usage-btn active" data-filter="UNUSED">NIEWYKORZYSTANE</button>
+                        <button type="button" class="usage-btn" data-filter="USED">WYKORZYSTANE</button>
+                        <button type="button" class="usage-btn" data-filter="ALL">WSZYSTKIE</button>
+                    </div>
+                </div>
+                <div id="randomPanel" class="random-panel hidden" aria-live="polite">
+                    <p>Wylosuj pytanie z wybranego poziomu trudności i filtra stanu. Wylosowane pytanie zostanie ustawione automatycznie.</p>
+                    <button class="btn primary" id="btnRandomQuestion">Losuj pytanie</button>
+                    <div id="randomNotice" class="random-notice"></div>
+                </div>
+                <div id="listPanel" class="list-panel">
+                    <div id="categoryHeader" class="modal-section-title">Kategorie</div>
+                    <div id="categoryList" class="category-grid"></div>
+                    <div id="questionList" class="question-list"></div>
+                </div>
             </div>
         </div>
     </div>

@@ -38,6 +38,7 @@ public class GameService {
     private final RoundTimer timer;
     private final QuestionBank questionBank;
     private final OperatorConfigService configService;
+    private final QuestionUsageService questionUsageService;
     private final GameSettings settings;
     private final HostMetrics metrics = new HostMetrics();
 
@@ -60,11 +61,12 @@ public class GameService {
     /** BAN w bieżącym pytaniu dla trybu „otwartego” (BUZZING). */
     private final Set<Integer> bannedThisQuestion = new HashSet<>();
 
-    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService) {
+    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService, QuestionUsageService questionUsageService) {
         this.bus = bus;
         this.timer = timer;
         this.questionBank = questionBank;
         this.configService = configService;
+        this.questionUsageService = questionUsageService;
 
         OperatorConfig cfg = configService.getConfig();
         TimerSlider answer = (cfg != null) ? cfg.getAnswer() : null;
@@ -126,6 +128,9 @@ public class GameService {
         questionStartTimestamp = 0L;
         pushState();
         bus.publish(new Event("QUESTION_SELECTED", null, detail.getId(), null));
+        if (questionUsageService.markUsed(detail.getDifficulty(), detail.getCategory(), detail.getId())) {
+            bus.publish(new Event("QUESTION_USAGE_MARKED", null, usageToken(detail.getDifficulty(), detail.getCategory(), detail.getId()), null));
+        }
     }
 
     public synchronized void updateAnswerTimer(int seconds){
@@ -529,4 +534,11 @@ public class GameService {
 
     private Optional<Player> get(int id){ return players.stream().filter(p -> p.getId()==id).findFirst(); }
     private void pushState(){ bus.state(getState()); }
+
+    private String usageToken(String difficulty, String category, String questionId) {
+        return String.join("::",
+                difficulty != null ? difficulty : "",
+                category != null ? category : "",
+                questionId != null ? questionId : "");
+    }
 }
