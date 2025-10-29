@@ -466,13 +466,15 @@ function openChoosePopup(){
   self.onclick = () => submitProposal(myId);
   chooseGrid.appendChild(self);
 
-  // pozostali nieeliminowani
-  st.players.filter(p=>!p.eliminated && p.id!==myId).forEach(p=>{
-    const b = document.createElement('div');
-    b.className = 'item';
-    b.innerHTML = `
-      <div style="font-weight:700" title="${escapeHtml(p.name||'')}">
-        ${p.id}. ${escapeHtml(p.name||'')}
+  // pozostali aktywni i nieeliminowani gracze
+  st.players
+    .filter(p => !p.eliminated && p.id !== myId && isSeatJoined(p))
+    .forEach(p=>{
+      const b = document.createElement('div');
+      b.className = 'item';
+      b.innerHTML = `
+        <div style="font-weight:700" title="${escapeHtml(p.name||'')}">
+          ${p.id}. ${escapeHtml(p.name||'')}
       </div>
       <div class="mini">${p.gender==='FEMALE'?'Kobieta':'Mężczyzna'}</div>
     `;
