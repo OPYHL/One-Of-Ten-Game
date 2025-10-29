@@ -37,6 +37,22 @@ let lastState = null;
 let totalAnswerMs = 10000;
 let latestTimerRemainingMs = 0;
 let resultHideTimer = null;
+let clockActive = false;
+
+function updateClockProgress(pct){
+  const clamped = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : 0;
+  if (pb){
+    pb.setAttribute('aria-valuenow', Math.round(clamped * 100));
+  }
+  document.body.style.setProperty('--player-clock-progress', clamped.toFixed(4));
+}
+
+function setClockActive(active){
+  const shouldActivate = !!active;
+  if (shouldActivate === clockActive) return;
+  clockActive = shouldActivate;
+  document.body.classList.toggle('clock-active', shouldActivate);
+}
 
 function updateProgressBar(totalMs, remainingMs){
   const total = Number.isFinite(totalMs) && totalMs > 0 ? totalMs : 10000;
