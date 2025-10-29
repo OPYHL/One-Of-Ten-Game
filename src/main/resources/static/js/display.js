@@ -312,6 +312,8 @@ function render(){
     }
   } else if (st.phase === 'BUZZING') {
     showBuzzingCallout();
+  } else if (st.phase === 'ANNOTATION') {
+    showCenter('Prowadzący omawia adnotację…','Za chwilę kolejny krok.');
   } else if (st.phase === 'ANSWERING') {
     hideCenter(); banner.classList.remove('show');
   } else {
@@ -322,7 +324,7 @@ function render(){
 
   // Scena – pokaż tylko kiedy wiadomo kto
   const p = st.players?.find(x=>x.id===st.answeringId);
-  if (p && (st.phase==='ANSWERING' || st.phase==='SELECTING' || st.phase==='READING')){
+  if (p && (st.phase==='ANSWERING' || st.phase==='SELECTING' || st.phase==='READING' || st.phase==='ANNOTATION')){
     showStage(p, st.phase);
   } else if (st.phase!=='SELECTING') {
     hideStage();
@@ -369,7 +371,7 @@ function shouldShowAnswer(phase){
   if (phase === 'IDLE' && body?.classList.contains('waiting-mode')){
     return false;
   }
-  return phase === 'SELECTING' || phase === 'IDLE';
+  return phase === 'SELECTING' || phase === 'ANNOTATION' || phase === 'IDLE';
 }
 
 function renderGrid(players, st){
@@ -679,6 +681,9 @@ function handleEvent(ev){
       }
     } else if (ev.value === 'BUZZING') {
       showBuzzingCallout();
+    } else if (ev.value === 'ANNOTATION') {
+      hideBanner();
+      showCenter('Prowadzący omawia adnotację…','Za chwilę kolejny krok.');
     } else if (ev.value === 'IDLE') {
       showCenter('Czekamy na rozpoczęcie…','Prowadzący może rozpocząć rundę.');
     }

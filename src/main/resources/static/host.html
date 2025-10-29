@@ -125,6 +125,7 @@
                     <button class="btn" id="btnQuestion" data-label="Wybierz pytanie">Wybierz pytanie</button>
                     <button class="btn" id="btnRead" data-label="Czytam">Czytam</button>
                     <button class="btn" id="btnReadDone" data-label="Przeczytałem">Przeczytałem</button>
+                    <button class="btn" id="btnAnnotationDone" data-label="Przeczytałem adnotację">Przeczytałem adnotację</button>
                 </div>
                 <div class="stage-placeholder" id="stagePlaceholder">Sterowanie pojawi się automatycznie, gdy będzie potrzebne.</div>
             </div>
@@ -154,6 +155,10 @@
             <div class="question-answer">
                 <span class="answer-tag">ODP:</span>
                 <span class="answer-text" id="questionAnswer">—</span>
+            </div>
+            <div class="question-annotation hidden" id="questionAnnotationWrap">
+                <div class="annotation-label">Adnotacja</div>
+                <div class="annotation-text" id="questionAnnotation">—</div>
             </div>
         </article>
 

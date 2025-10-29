@@ -9,18 +9,21 @@ public class GameState {
     private GamePhase phase;
     private boolean timerActive;
     private int timerRemainingMs;
+    private Integer currentChooserId;
     private HostDashboard hostDashboard;
     private GameSettings settings;
 
     public GameState() {}
     public GameState(List<Player> players, Integer answeringId, boolean startBuzzOpen,
-                     GamePhase phase, boolean timerActive, int timerRemainingMs, HostDashboard hostDashboard, GameSettings settings) {
+                     GamePhase phase, boolean timerActive, int timerRemainingMs,
+                     Integer currentChooserId, HostDashboard hostDashboard, GameSettings settings) {
         this.players = players;
         this.answeringId = answeringId;
         this.startBuzzOpen = startBuzzOpen;
         this.phase = phase;
         this.timerActive = timerActive;
         this.timerRemainingMs = timerRemainingMs;
+        this.currentChooserId = currentChooserId;
         this.hostDashboard = hostDashboard;
         this.settings = settings;
     }
@@ -31,6 +34,7 @@ public class GameState {
     public GamePhase getPhase(){ return phase; }
     public boolean isTimerActive(){ return timerActive; }
     public int getTimerRemainingMs(){ return timerRemainingMs; }
+    public Integer getCurrentChooserId(){ return currentChooserId; }
     public HostDashboard getHostDashboard(){ return hostDashboard; }
     public GameSettings getSettings(){ return settings; }
 }

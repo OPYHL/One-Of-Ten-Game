@@ -90,7 +90,13 @@ public class QuestionBank {
         if (id != null && index.containsKey(id)) {
             QuestionEntry entry = index.get(id);
             return Optional.of(new QuestionDetail(
-                    entry.getId(), entry.getDifficulty(), entry.getCategory(), entry.getQuestion(), entry.getAnswer(), entry.getOrder()
+                    entry.getId(),
+                    entry.getDifficulty(),
+                    entry.getCategory(),
+                    entry.getQuestion(),
+                    entry.getAnswer(),
+                    entry.getAnnotation(),
+                    entry.getOrder()
             ));
         }
         LinkedHashMap<String, List<QuestionEntry>> diff = catalog.get(difficulty);
@@ -100,6 +106,14 @@ public class QuestionBank {
         return entries.stream()
                 .filter(q -> Objects.equals(q.getId(), id))
                 .findFirst()
-                .map(q -> new QuestionDetail(q.getId(), q.getDifficulty(), q.getCategory(), q.getQuestion(), q.getAnswer(), q.getOrder()));
+                .map(q -> new QuestionDetail(
+                        q.getId(),
+                        q.getDifficulty(),
+                        q.getCategory(),
+                        q.getQuestion(),
+                        q.getAnswer(),
+                        q.getAnnotation(),
+                        q.getOrder()
+                ));
     }
 }
