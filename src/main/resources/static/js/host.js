@@ -174,17 +174,19 @@ function measureCollapseNeeded(){
   const gap = parseFloat(gapRaw) || 0;
 
   const brandEl = topbarEl.querySelector('.brand');
+  const hudEl = topbarEl.querySelector('.hud');
+
   const brandRect = brandEl ? brandEl.getBoundingClientRect() : { width: 0, top: 0 };
+  const hudRect = hudEl ? hudEl.getBoundingClientRect() : { width: 0, top: 0 };
   const actionsRect = topActionsEl.getBoundingClientRect();
   const availableWidth = topbarEl.clientWidth;
 
-  const topbarRect = topbarEl.getBoundingClientRect();
-  const wrapDetected = brandRect.width > 0
-    ? (actionsRect.top - brandRect.top) > 8
-    : (actionsRect.top - topbarRect.top) > 8;
+  const rects = [brandRect, hudRect, actionsRect].filter(rect => rect.width > 0);
+  const tops = rects.map(rect => rect.top);
+  const wrapDetected = tops.length > 1 ? (Math.max(...tops) - Math.min(...tops)) > 8 : false;
 
-  const baseGap = (brandRect.width > 0 && actionsRect.width > 0) ? gap : 0;
-  const essentialWidth = brandRect.width + actionsRect.width + baseGap;
+  const baseGap = rects.length > 1 ? gap * (rects.length - 1) : 0;
+  const essentialWidth = rects.reduce((total, rect) => total + rect.width, 0) + baseGap;
   const topRowOverflow = essentialWidth > (availableWidth + 2);
 
   const shouldCollapse = topRowOverflow || wrapDetected;
@@ -365,6 +367,225 @@ function isQuestionUsed(difficultyId, categoryId, questionId){
 function clearQuestionUsage(){
   if (usedQuestions.size === 0) return;
   usedQuestions.clear();
+  refreshQuestionLists();
+}
+
+function refreshQuestionLists(){
+  if (questionMode === QUESTION_MODE.LIST){
+    buildQuestionList();
+  }
+  updateRandomNotice();
+}
+
+function buildQuestionPool(){
+  const diff = activeDifficulty;
+  if (!diff || !Array.isArray(diff?.categories)) return [];
+  const pool = [];
+  diff.categories.forEach(cat => {
+    const questions = Array.isArray(cat?.questions) ? cat.questions : [];
+    questions.forEach(q => {
+      const used = isQuestionUsed(diff.id, cat.id, q.id);
+      if (questionUsageFilter === USAGE_FILTER.UNUSED && used) return;
+      if (questionUsageFilter === USAGE_FILTER.USED && !used) return;
+      pool.push({ difficulty: diff, category: cat, question: q, used });
+    });
+  });
+  if (questionUsageFilter === USAGE_FILTER.ALL){
+    pool.sort((a, b) => {
+      if (a.used === b.used){
+        const ao = a.question?.order ?? 0;
+        const bo = b.question?.order ?? 0;
+        return ao - bo;
+      }
+      return a.used ? 1 : -1;
+    });
+  }
+  return pool;
+}
+
+function updateRandomNotice(){
+  if (!randomNotice || !btnRandomQuestion){
+    return;
+  }
+  const diff = activeDifficulty;
+  const pool = buildQuestionPool();
+  const count = pool.length;
+  btnRandomQuestion.disabled = count === 0 || !diff;
+  if (!diff){
+    randomNotice.textContent = 'Wybierz poziom trudności, aby losować pytania.';
+    return;
+  }
+  if (count === 0){
+    if (questionUsageFilter === USAGE_FILTER.UNUSED){
+      randomNotice.textContent = 'Brak niewykorzystanych pytań w tym poziomie.';
+    } else if (questionUsageFilter === USAGE_FILTER.USED){
+      randomNotice.textContent = 'Brak wykorzystanych pytań w tym poziomie.';
+    } else {
+      randomNotice.textContent = 'Brak pytań spełniających kryteria.';
+    }
+    return;
+  }
+  randomNotice.textContent = `Dostępnych pytań: ${count}.`;
+}
+
+function setQuestionMode(mode){
+  const upper = typeof mode === 'string' ? mode.toUpperCase() : '';
+  const next = upper === QUESTION_MODE.RANDOM ? QUESTION_MODE.RANDOM : QUESTION_MODE.LIST;
+  if (next === questionMode){
+    updateModeButtons();
+    return;
+  }
+  questionMode = next;
+  updateModeButtons();
+  if (questionMode === QUESTION_MODE.LIST){
+    buildCategoryList();
+    buildQuestionList();
+  }
+  updateRandomNotice();
+}
+
+function updateModeButtons(){
+  if (modeToggleEl){
+    const buttons = modeToggleEl.querySelectorAll('button');
+    buttons.forEach(btn => {
+      const btnMode = (btn.dataset?.mode || '').toUpperCase();
+      const active = btnMode === questionMode;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+  if (listPanel){
+    listPanel.classList.toggle('hidden', questionMode !== QUESTION_MODE.LIST);
+  }
+  if (randomPanel){
+    randomPanel.classList.toggle('hidden', questionMode !== QUESTION_MODE.RANDOM);
+  }
+}
+
+function setUsageFilter(filter){
+  const upper = typeof filter === 'string' ? filter.toUpperCase() : '';
+  const resolved = USAGE_FILTER[upper] || USAGE_FILTER.UNUSED;
+  if (resolved === questionUsageFilter){
+    updateUsageButtons();
+    return;
+  }
+  questionUsageFilter = resolved;
+  updateUsageButtons();
+  refreshQuestionLists();
+}
+
+function updateUsageButtons(){
+  if (!usageFilterEl) return;
+  const buttons = usageFilterEl.querySelectorAll('button');
+  buttons.forEach(btn => {
+    const val = (btn.dataset?.filter || '').toUpperCase();
+    const active = val === questionUsageFilter;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function randomQuestion(){
+  const pool = buildQuestionPool();
+  if (!pool.length){
+    updateRandomNotice();
+    return;
+  }
+  const idx = Math.floor(Math.random() * pool.length);
+  const choice = pool[idx];
+  if (!choice) return;
+  const question = choice.question;
+  const context = { difficulty: choice.difficulty, category: choice.category };
+  if (question?.display){
+    showToast('Wylosowano pytanie ' + question.display + '.');
+  } else {
+    showToast('Wylosowano pytanie.');
+  }
+  confirmQuestion(question, context);
+}
+
+function recordActiveQuestionUsage(active){
+  if (!active) return;
+  markQuestionUsed(active.difficulty, active.category, active.id);
+}
+
+function usageKey(difficultyId, categoryId){
+  return `${difficultyId || ''}::${categoryId || ''}`;
+}
+
+function loadUsedQuestions(){
+  const store = new Map();
+  try {
+    if (typeof window === 'undefined' || !window.localStorage){
+      return store;
+    }
+    const raw = window.localStorage.getItem('oneoften.usedQuestions');
+    if (!raw) return store;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return store;
+    Object.entries(parsed).forEach(([key, list]) => {
+      if (!Array.isArray(list)) return;
+      const normalized = list
+        .map(val => (val != null ? String(val) : null))
+        .filter(Boolean);
+      if (normalized.length){
+        store.set(key, new Set(normalized));
+      }
+    });
+  } catch (error){
+    console.warn('Nie udało się odczytać stanu pytań', error);
+  }
+  return store;
+}
+
+function persistUsedQuestions(){
+  try {
+    if (typeof window === 'undefined' || !window.localStorage){
+      return;
+    }
+    const payload = {};
+    usedQuestions.forEach((set, key) => {
+      if (set && set.size){
+        payload[key] = Array.from(set);
+      }
+    });
+    if (Object.keys(payload).length){
+      window.localStorage.setItem('oneoften.usedQuestions', JSON.stringify(payload));
+    } else {
+      window.localStorage.removeItem('oneoften.usedQuestions');
+    }
+  } catch (error){
+    console.warn('Nie udało się zapisać stanu pytań', error);
+  }
+}
+
+function markQuestionUsed(difficultyId, categoryId, questionId){
+  if (!difficultyId || !categoryId || !questionId) return;
+  const key = usageKey(difficultyId, categoryId);
+  let set = usedQuestions.get(key);
+  if (!set){
+    set = new Set();
+    usedQuestions.set(key, set);
+  }
+  const normalizedId = String(questionId);
+  if (set.has(normalizedId)) return;
+  set.add(normalizedId);
+  persistUsedQuestions();
+  refreshQuestionLists();
+}
+
+function isQuestionUsed(difficultyId, categoryId, questionId){
+  if (!difficultyId || !categoryId || !questionId) return false;
+  const key = usageKey(difficultyId, categoryId);
+  const set = usedQuestions.get(key);
+  if (!set) return false;
+  return set.has(String(questionId));
+}
+
+function clearQuestionUsage(){
+  if (usedQuestions.size === 0) return;
+  usedQuestions.clear();
+  persistUsedQuestions();
   refreshQuestionLists();
 }
 
@@ -1522,6 +1743,9 @@ function completeReading(){
 /* ====== events & timer ====== */
 function handleEvent(ev){
   if (!ev) return;
+  if (ev.type === 'RESET' || ev.type === 'NEW_GAME'){
+    clearQuestionUsage();
+  }
   if (ev.type === 'JUDGE'){
     ansJudge.textContent = ev.value==='CORRECT' ? '✓' : '✗';
     ansJudge.className   = 'judge show ' + (ev.value==='CORRECT'?'good':'bad');
