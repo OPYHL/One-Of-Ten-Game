@@ -190,6 +190,11 @@ body.playerPage{
 .playerQuestion{ margin:18px 0; padding:18px; background:#0f1625; border:1px solid #2a3b5f; border-radius:16px; }
 .playerQuestion .mini{ font-size:14px }
 .playerQuestionText{ margin-top:12px; font-size:18px; line-height:1.6; }
+.out-card{ display:grid; gap:8px; text-align:center; padding:22px; }
+.out-card .out-title{ font-size:20px; font-weight:800; letter-spacing:.3px; }
+.out-card .out-stats{ font-size:16px; line-height:1.6; }
+.out-card .out-place{ font-size:15px; color:var(--muted); }
+.out-card .out-thanks{ font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
 
 @media (max-width:680px){
   body.playerPage{ padding:28px 16px; align-items:flex-start }
