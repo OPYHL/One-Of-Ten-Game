@@ -88,11 +88,11 @@ img{ max-width:100%; display:block }
 .waiting-screen.full .waiting-card p{ color:rgba(230,238,255,.9); }
 .waiting-screen.full .waiting-card p:last-of-type{ color:rgba(196,214,255,.85); }
 .waiting-screen.full .waiting-counter{ background:rgba(63,110,246,.28); border-color:rgba(96,138,255,.6); }
-.waiting-roster{ position:fixed; left:50%; bottom:32px; transform:translateX(-50%); width:min(1120px,92vw); display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; z-index:110; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; justify-items:stretch; }
+.waiting-roster{ position:fixed; left:50%; bottom:32px; transform:translateX(-50%); width:min(1120px,92vw); display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,280px)); gap:16px; z-index:110; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; justify-content:center; justify-items:center; }
 .waiting-roster.show{ opacity:1; transform:translate(-50%,0); }
 .waiting-roster.empty{ grid-template-columns:1fr; }
 .waiting-roster .waiting-empty{ padding:12px 0; text-align:center; font-weight:600; color:rgba(180,202,244,.8); }
-.waiting-roster-item{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:18px; background:rgba(12,22,40,.78); border:1px solid rgba(70,108,198,.5); box-shadow:0 24px 60px rgba(5,10,25,.55); min-height:72px; width:100%; }
+.waiting-roster-item{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-radius:18px; background:rgba(12,22,40,.78); border:1px solid rgba(70,108,198,.5); box-shadow:0 24px 60px rgba(5,10,25,.55); min-height:72px; width:100%; max-width:320px; }
 .waiting-roster-item .avatar{ width:48px; height:48px; border-radius:16px; background:radial-gradient(64px 64px at 50% 24%, rgba(70,110,210,.28), rgba(10,20,40,.95)); display:grid; place-items:center; border:1px solid rgba(92,134,240,.6); }
 .waiting-roster-item .avatar img{ width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 10px 22px rgba(3,8,20,.75)); }
 .waiting-roster-item .meta{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; font-weight:700; color:#ecf2ff; }
