@@ -54,6 +54,15 @@ const stageStepsEl = document.getElementById('stageSteps');
 const answerActionsEl = document.querySelector('.answer-actions');
 const answerJudgeWrap = document.querySelector('.answer-judge');
 const stageCardEl = document.querySelector('.stage-card');
+const statusCardEl = document.getElementById('statusCard');
+const statusPhaseIndicator = document.getElementById('statusPhase');
+const statusBuzzRow = document.getElementById('statusBuzzRow');
+const statusBuzzValue = document.getElementById('statusBuzz');
+const statusAnswerRow = document.getElementById('statusAnswerRow');
+const statusAnswerValue = document.getElementById('statusAnswering');
+const statusNextRow = document.getElementById('statusNextRow');
+const statusNextValue = document.getElementById('statusNext');
+const statusLogList = document.getElementById('statusLog');
 
 const stageButtons = {};
 [btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnAnnotationDone, btnGood, btnBad, btnNext].forEach(btn => {
@@ -275,6 +284,14 @@ let clockTimer = null;
 let prevPhase = null;
 let annotationAttentionKey = null;
 let annotationAttentionTimer = null;
+let lastStageSteps = [];
+let lastKnownUiPhase = null;
+let lastAnsweringPlayer = null;
+let lastAnsweringPlayerId = null;
+let lastNextStepKey = null;
+let lastLoggedUiPhase = null;
+let lastBuzzPlayerId = null;
+const statusLogEntries = [];
 
 const QUESTION_MODE = { RANDOM: 'RANDOM', LIST: 'LIST' };
 const USAGE_FILTER = { UNUSED: 'UNUSED', USED: 'USED', ALL: 'ALL' };
@@ -291,6 +308,19 @@ const PHASE_LABELS = {
   ANNOTATION: 'Adnotacja',
   SELECTING: 'Wybór',
 };
+
+const PHASE_STATUS_MESSAGES = {
+  IDLE: 'Gra oczekuje na rozpoczęcie.',
+  INTRO: 'Trwa wybór pytania.',
+  READING: 'Pytanie jest czytane na głos.',
+  BUZZING: 'Otwarta runda zgłoszeń — czekamy na graczy.',
+  ANSWERING: 'Gracz udziela odpowiedzi.',
+  ANNOTATION: 'Czytana jest adnotacja do pytania.',
+  SELECTING: 'Zwycięzca wskazuje kolejnego odpowiadającego.',
+};
+
+const MAX_STATUS_LOG_ITEMS = 8;
+const STATUS_LOG_TYPES = new Set(['info', 'buzz', 'answer', 'warning', 'phase']);
 
 const bus = connect({
   onState: s => { state = s; render(); },
@@ -925,6 +955,186 @@ function stageCounts(st = state){
   return { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer, currentChooser };
 }
 
+function highlightStatusRow(row){
+  if (!row) return;
+  row.classList.remove('flash');
+  void row.offsetWidth;
+  row.classList.add('flash');
+}
+
+function highlightPhaseIndicator(){
+  if (!statusPhaseIndicator) return;
+  statusPhaseIndicator.classList.remove('flash');
+  void statusPhaseIndicator.offsetWidth;
+  statusPhaseIndicator.classList.add('flash');
+}
+
+function normalizeStatusType(type){
+  if (STATUS_LOG_TYPES.has(type)) return type;
+  return 'info';
+}
+
+function formatLogTime(date){
+  const dt = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(dt.getTime())) return '--:--:--';
+  const hours = dt.getHours().toString().padStart(2, '0');
+  const minutes = dt.getMinutes().toString().padStart(2, '0');
+  const seconds = dt.getSeconds().toString().padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function renderStatusLog(){
+  if (!statusLogList) return;
+  statusLogList.innerHTML = '';
+  if (!statusLogEntries.length){
+    const empty = document.createElement('li');
+    empty.className = 'status-log-empty';
+    empty.textContent = 'Brak zdarzeń.';
+    statusLogList.appendChild(empty);
+    return;
+  }
+  statusLogEntries.forEach(entry => {
+    const li = document.createElement('li');
+    li.className = `status-log-item status-${entry.type}`;
+    li.innerHTML = `
+      <span class="status-log-time">${escapeHtml(formatLogTime(entry.timestamp))}</span>
+      <span class="status-log-message">${escapeHtml(entry.message)}</span>
+    `;
+    statusLogList.appendChild(li);
+  });
+}
+
+function appendStatusLog(message, type = 'info'){
+  if (!message) return;
+  const normalizedMessage = String(message).trim();
+  if (!normalizedMessage) return;
+  const normalizedType = normalizeStatusType(type);
+  const timestamp = new Date();
+  const lastEntry = statusLogEntries[0];
+  if (lastEntry && lastEntry.message === normalizedMessage && lastEntry.type === normalizedType){
+    lastEntry.timestamp = timestamp;
+    renderStatusLog();
+    return;
+  }
+  statusLogEntries.unshift({ message: normalizedMessage, type: normalizedType, timestamp });
+  if (statusLogEntries.length > MAX_STATUS_LOG_ITEMS){
+    statusLogEntries.length = MAX_STATUS_LOG_ITEMS;
+  }
+  renderStatusLog();
+}
+
+function setLastBuzzPlayer(id, context){
+  if (typeof id !== 'number' || Number.isNaN(id)) return;
+  lastBuzzPlayerId = id;
+  const player = state?.players?.find(p => p.id === id) || null;
+  const seat = player?.id != null ? player.id : id;
+  const label = player ? formatPlayerLabel(player) : `Gracz ${seat}`;
+  let message;
+  switch (context){
+    case 'START':
+      message = `${label} rozpoczyna grę jako pierwszy.`;
+      break;
+    case 'MANUAL':
+      message = `${label} został ustawiony jako odpowiadający.`;
+      break;
+    default:
+      message = `${label} zgłosił się do odpowiedzi.`;
+      break;
+  }
+  appendStatusLog(message, 'buzz');
+  highlightStatusRow(statusBuzzRow);
+  refreshStatusPanel();
+}
+
+function resetStatusTracking(message){
+  lastBuzzPlayerId = null;
+  lastStageSteps = [];
+  lastKnownUiPhase = null;
+  lastAnsweringPlayer = null;
+  lastAnsweringPlayerId = null;
+  lastNextStepKey = null;
+  lastLoggedUiPhase = null;
+  statusLogEntries.length = 0;
+  renderStatusLog();
+  if (message){
+    appendStatusLog(message, 'info');
+  }
+  refreshStatusPanel();
+}
+
+function updateStatusPanel(uiPhase, answering, steps){
+  if (!statusCardEl) return;
+  if (statusPhaseIndicator){
+    statusPhaseIndicator.textContent = phaseLabel(uiPhase);
+  }
+  const answeringId = answering?.id ?? null;
+  if (statusAnswerValue){
+    if (answeringId != null){
+      statusAnswerValue.textContent = `${formatPlayerLabel(answering)} — Stanowisko ${answeringId}`;
+    } else {
+      statusAnswerValue.textContent = 'Nikt nie odpowiada.';
+    }
+  }
+  if (answeringId !== lastAnsweringPlayerId){
+    if (answeringId != null){
+      highlightStatusRow(statusAnswerRow);
+    }
+    lastAnsweringPlayerId = answeringId;
+  }
+  if (statusBuzzValue){
+    if (typeof lastBuzzPlayerId === 'number'){
+      const buzzPlayer = state?.players?.find(p => p.id === lastBuzzPlayerId) || null;
+      const buzzSeat = buzzPlayer?.id != null ? buzzPlayer.id : lastBuzzPlayerId;
+      const buzzLabel = buzzPlayer ? formatPlayerLabel(buzzPlayer) : `Gracz ${buzzSeat}`;
+      statusBuzzValue.textContent = `${buzzLabel} — Stanowisko ${buzzSeat}`;
+    } else {
+      statusBuzzValue.textContent = 'Brak zgłoszeń.';
+    }
+  }
+  if (statusNextValue){
+    let nextStep = null;
+    if (Array.isArray(steps)){
+      nextStep = steps.find(step => step.status === 'active') || steps.find(step => step.status === 'pending');
+    }
+    if (nextStep){
+      const title = (nextStep.title || '').trim();
+      const desc = (nextStep.desc || '').trim();
+      const combined = desc ? `${title}: ${desc}` : title || desc || '—';
+      statusNextValue.textContent = combined || '—';
+      const key = `${nextStep.number ?? ''}|${title}|${desc}|${nextStep.status || ''}`;
+      if (key !== lastNextStepKey){
+        lastNextStepKey = key;
+        highlightStatusRow(statusNextRow);
+      }
+    } else {
+      const fallback = PHASE_STATUS_MESSAGES[uiPhase] || '—';
+      statusNextValue.textContent = fallback;
+      const key = `fallback::${uiPhase || ''}`;
+      if (key !== lastNextStepKey){
+        lastNextStepKey = key;
+        highlightStatusRow(statusNextRow);
+      }
+    }
+  }
+  lastKnownUiPhase = uiPhase || null;
+  lastAnsweringPlayer = answering || null;
+}
+
+function refreshStatusPanel(){
+  if (!state) return;
+  const counts = stageCounts(state);
+  const answering = lastAnsweringPlayer || counts.answeringPlayer;
+  const uiPhase = lastKnownUiPhase || resolveUiPhase(state, counts.activeQuestion, answering);
+  let steps = Array.isArray(lastStageSteps) && lastStageSteps.length ? lastStageSteps : null;
+  if (!steps){
+    steps = buildStageSteps(state, counts.activeQuestion, answering, counts.currentChooser, uiPhase, state.phase);
+    lastStageSteps = steps;
+  }
+  updateStatusPanel(uiPhase, answering, steps);
+}
+
+renderStatusLog();
+
 function refreshStageCard(){
   if (!state) return;
   const snap = stageCounts(state);
@@ -939,6 +1149,7 @@ function render(){
   const counts = stageCounts(st);
   const { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer } = counts;
   const uiPhase = resolveUiPhase(st, activeQuestion, answeringPlayer);
+  const phaseChanged = uiPhase !== lastLoggedUiPhase;
   if (st.phase !== 'SELECTING' && targetOverlay && !targetOverlay.classList.contains('hidden')){
     hideTargetOverlay();
   }
@@ -975,6 +1186,12 @@ function render(){
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
   updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, counts.currentChooser, uiPhase);
+  if (phaseChanged){
+    const msg = PHASE_STATUS_MESSAGES[uiPhase] || `Faza: ${phaseLabel(uiPhase)}.`;
+    appendStatusLog(msg, 'phase');
+    highlightPhaseIndicator();
+    lastLoggedUiPhase = uiPhase;
+  }
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
   maybeHighlightAnnotation(st.phase, activeQuestion);
@@ -1173,8 +1390,8 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, cur
     title: 'Sterowanie',
     message: 'Działania pojawią się w odpowiednim momencie.',
     buttons: [],
-    steps: buildStageSteps(st, activeQuestion, answering, currentChooserId, phase, actualPhase),
   };
+  const stageSteps = buildStageSteps(st, activeQuestion, answering, currentChooserId, phase, actualPhase);
   const chooserPlayer = typeof currentChooserId === 'number'
     ? st.players?.find(p => p.id === currentChooserId) || null
     : null;
@@ -1336,6 +1553,9 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, cur
     }
   }
 
+  stage.steps = stageSteps;
+  lastStageSteps = Array.isArray(stageSteps) ? stageSteps : [];
+  updateStatusPanel(phase, answering, stageSteps);
   applyStage(stage);
 }
 
@@ -1718,12 +1938,31 @@ function handleEvent(ev){
   if (!ev) return;
   if (ev.type === 'RESET' || ev.type === 'NEW_GAME'){
     clearQuestionUsage();
+    const resetMessage = ev.type === 'RESET'
+      ? 'Gra została zresetowana.'
+      : 'Rozpoczynamy nową grę.';
+    resetStatusTracking(resetMessage);
+  }
+  if (ev.type === 'ROUND_WINNER'){
+    setLastBuzzPlayer(ev.playerId, 'ROUND');
+  }
+  if (ev.type === 'BUZZ_RESULT'){
+    setLastBuzzPlayer(ev.playerId, 'START');
+  }
+  if (ev.type === 'ANSWERING_STARTED'){
+    setLastBuzzPlayer(ev.playerId, 'MANUAL');
   }
   if (ev.type === 'JUDGE'){
     ansJudge.textContent = ev.value==='CORRECT' ? '✓' : '✗';
     ansJudge.className   = 'judge show ' + (ev.value==='CORRECT'?'good':'bad');
     setTimeout(()=> ansJudge.className='judge', 1000);
     playSound(ev.value === 'CORRECT' ? 'GOOD' : 'WRONG');
+    const player = state?.players?.find(p => p.id === ev.playerId) || null;
+    const label = player ? formatPlayerLabel(player) : (ev.playerId != null ? `Gracz ${ev.playerId}` : 'Gracz');
+    const correct = ev.value === 'CORRECT';
+    appendStatusLog(correct ? `${label} odpowiedział poprawnie.` : `${label} odpowiedział błędnie.`, correct ? 'answer' : 'warning');
+    highlightStatusRow(statusAnswerRow);
+    refreshStatusPanel();
   }
   if (ev.type === 'CUE'){
     const cue = (ev.value || '').toUpperCase();
@@ -1742,6 +1981,18 @@ function handleEvent(ev){
       autoAdvanceIntroPending = true;
     }
     refreshStageCard();
+    const active = state?.hostDashboard?.activeQuestion;
+    if (active){
+      const parts = [];
+      if (active.difficulty) parts.push(active.difficulty);
+      if (active.category) parts.push(active.category);
+      if (active.id) parts.push(`#${active.id}`);
+      const details = parts.length ? parts.join(' • ') : null;
+      appendStatusLog(details ? `Wybrano pytanie ${details}.` : 'Wybrano pytanie.', 'info');
+    } else {
+      appendStatusLog('Wybrano pytanie.', 'info');
+    }
+    refreshStatusPanel();
   }
   if (ev.type === 'QUESTION_USAGE_MARKED'){
     const usage = parseUsageToken(ev.value);
@@ -1753,6 +2004,8 @@ function handleEvent(ev){
     clearQuestionUsage();
     fetchQuestionUsageSnapshot();
     showToast('Lista pytań została zresetowana.');
+    appendStatusLog('Lista pytań została zresetowana.', 'info');
+    refreshStatusPanel();
   }
   if (ev.type === 'TARGET_PROPOSED'){
     const fromId = ev.playerId;
@@ -1761,17 +2014,30 @@ function handleEvent(ev){
     const to   = state?.players?.find(p=>p.id===toId);
     showTargetOverlay(from, to);
     targetProposal = { fromId, toId };
+    const fromLabel = from ? formatPlayerLabel(from) : (fromId != null ? `Gracz ${fromId}` : 'Gracz');
+    const toLabel = to ? formatPlayerLabel(to) : (Number.isFinite(toId) ? `Gracz ${toId}` : 'Gracz');
+    appendStatusLog(`${fromLabel} wskazuje ${toLabel}.`, 'info');
+    refreshStatusPanel();
   }
   if (ev.type === 'TARGET_ACCEPTED'){
     hideTargetOverlay();
     const chosen = state?.players?.find(p=>p.id===ev.playerId);
     showToast(`Następny odpowiada ${formatPlayerLabel(chosen)}.`);
     targetProposal = null;
+    const chooserId = parseInt(ev.value || '0', 10);
+    const chooser = state?.players?.find(p => p.id === chooserId) || null;
+    const chooserLabel = chooser ? formatPlayerLabel(chooser) : (Number.isFinite(chooserId) ? `Gracz ${chooserId}` : 'Gracz');
+    const chosenLabel = chosen ? formatPlayerLabel(chosen) : (ev.playerId != null ? `Gracz ${ev.playerId}` : 'Gracz');
+    appendStatusLog(`${chooserLabel} wybiera ${chosenLabel} do odpowiedzi.`, 'info');
+    highlightStatusRow(statusAnswerRow);
+    refreshStatusPanel();
   }
   if (ev.type === 'TARGET_REJECTED'){
     hideTargetOverlay();
     showToast('Wybór odrzucony. Poproś o inną osobę.');
     targetProposal = null;
+    appendStatusLog('Wybór przeciwnika został odrzucony.', 'warning');
+    refreshStatusPanel();
   }
 }
 function handleTimer(t){
