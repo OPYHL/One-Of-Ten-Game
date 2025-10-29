@@ -342,13 +342,19 @@ function renderQuestionBoard(st){
     qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
     qAnswer.classList.add('hidden');
     questionBoard.classList.remove('revealed');
+    qDiff.classList.remove('hidden');
     qCat.classList.remove('hidden');
     qId.classList.remove('hidden');
     return;
   }
-  qDiff.textContent = active.difficulty || '—';
-  const orderNum = typeof active.order === 'number' ? active.order : null;
   const isRevealed = Boolean(active.revealed);
+  if (isRevealed){
+    qDiff.textContent = active.difficulty || '—';
+  } else {
+    qDiff.textContent = '—';
+  }
+  const orderNum = typeof active.order === 'number' ? active.order : null;
+  qDiff.classList.toggle('hidden', !isRevealed);
   if (isRevealed){
     qCat.textContent = active.category || '—';
     qId.textContent  = orderNum ? `Pytanie ${orderNum.toString().padStart(2,'0')}` : 'Pytanie —';
@@ -361,11 +367,8 @@ function renderQuestionBoard(st){
   if (active.revealed){
     qText.textContent = active.question || '—';
     questionBoard.classList.add('revealed');
-  } else if (active.preparing){
-    qText.textContent = 'Prowadzący przygotowuje pytanie…';
-    questionBoard.classList.remove('revealed');
   } else {
-    qText.textContent = 'Prowadzący czyta pytanie…';
+    qText.textContent = 'Czekamy na pytanie prowadzącego…';
     questionBoard.classList.remove('revealed');
   }
   if (shouldShowAnswer(st.phase)){
