@@ -464,9 +464,25 @@ function renderGrid(players, st){
   const paddingBottom = L.rows > 1
     ? Math.max(8, Math.round((baseBottom + lift) * 0.35))
     : Math.max(0, Math.round((baseBottom + lift) * 0.4));
-  const desiredWrap = scaledH + lift + paddingBottom;
+  let headroom = 0;
+  if (L.rows > 1){
+    const minTopPad = Math.max(32, Math.round(ch * 0.05));
+    const maxContentHeight = Math.max(0, availableWrap - minTopPad - paddingBottom);
+    if (maxContentHeight > 0 && scaledH > maxContentHeight){
+      const safeScale = Math.max(minScale, maxContentHeight / Math.max(1, L.height));
+      if (safeScale < L.scale){
+        L = { ...L, scale: safeScale };
+        scaledH = Math.round(L.height * L.scale);
+      }
+    }
+    const availableHeadroom = Math.max(0, availableWrap - scaledH - paddingBottom);
+    headroom = Math.min(minTopPad, availableHeadroom);
+  }
+
+  const totalLift = lift + headroom;
+  const desiredWrap = scaledH + totalLift + paddingBottom;
   const wrapHeight = L.rows > 0
-    ? Math.min(availableWrap, Math.max(scaledH + lift, desiredWrap))
+    ? Math.min(availableWrap, Math.max(scaledH + totalLift, desiredWrap))
     : 0;
 
   grid.style.setProperty('--scale', L.scale.toFixed(3));
@@ -476,7 +492,7 @@ function renderGrid(players, st){
   gridWrap.style.height = wrapHeight ? wrapHeight + 'px' : '';
   gridWrap.style.bottom = '';
   gridWrap.style.paddingBottom = '';
-  gridWrap.style.setProperty('--grid-lift', `${lift}px`);
+  gridWrap.style.setProperty('--grid-lift', `${totalLift}px`);
   gridWrap.style.setProperty('--grid-bottom-pad', `${paddingBottom}px`);
   if (gridClamp){
     gridClamp.style.maxHeight = wrapHeight ? wrapHeight + 'px' : '';
