@@ -72,15 +72,21 @@
 <!-- SCENA na środku (nie przesuwa gridu) -->
 <section id="stage">
     <div class="stage-card">
-        <div class="stage-avatar">
-            <div id="stageSeat" class="stage-seat">Stanowisko —</div>
-            <img id="stageAv" src="/img/male.png" alt="">
+        <div class="stage-avatar" id="stageAvatar">
+            <div class="stage-seat" id="stageSeat">Stanowisko —</div>
+            <div class="stage-avatar-frame">
+                <img id="stageAv" src="/img/male.png" alt="">
+                <div id="stageAvatarFallback" class="stage-avatar-fallback">—</div>
+            </div>
         </div>
 
         <div class="stage-body">
             <div class="stage-header">
                 <div id="stageName" class="stage-name">—</div>
-                <div id="stageScore" class="stage-score">0 pkt</div>
+                <div class="stage-meta">
+                    <div id="stageScore" class="stage-score">0 pkt</div>
+                    <div id="stageJudge" class="stage-judge"></div>
+                </div>
             </div>
 
             <div class="stage-stats">
@@ -91,8 +97,6 @@
                 </div>
             </div>
         </div>
-
-        <div id="stageJudge" class="stage-judge"></div>
     </div>
 </section>
 

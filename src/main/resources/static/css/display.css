@@ -191,31 +191,57 @@ body.waiting-mode #gridWrap{ display:none; }
 }
 #stage.show{ opacity:1; transform:none }
 #stage .stage-card{
-  width:min(1220px,84vw); min-height:240px;
+  width:min(1220px,84vw); min-height:260px;
   background:linear-gradient(180deg, #101a31 0%, #0f1729 100%);
   border:1px solid #213358; border-radius:20px;
   box-shadow:0 30px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
-  padding:28px 32px;
-  display:flex; align-items:center; gap:32px;
-  flex-wrap:wrap;
+  padding:32px 36px;
+  display:grid; grid-template-columns:auto minmax(0,1fr);
+  align-items:center; gap:36px;
   pointer-events:auto; position:relative;
 }
 #stage .stage-avatar{
-  position:relative; width:148px; height:148px;
-  border-radius:24px; border:1px solid #22324d;
-  background:radial-gradient(140px 110px at 50% 32%, rgba(32,53,98,.82), rgba(14,24,44,.95));
-  display:grid; place-items:center; box-shadow:0 24px 70px rgba(2,8,20,.55);
+  position:relative;
+  display:grid; place-items:center;
+  gap:18px;
 }
-#stage .stage-avatar img{ width:110px; height:110px; object-fit:contain; filter:drop-shadow(0 16px 36px rgba(0,0,0,.45)); }
+#stage .stage-avatar-frame{
+  width:168px; height:168px;
+  border-radius:28px; border:1px solid #22324d;
+  background:radial-gradient(160px 130px at 50% 28%, rgba(34,58,108,.88), rgba(12,22,42,.95));
+  box-shadow:0 26px 80px rgba(2,8,20,.6);
+  display:grid; place-items:center;
+  overflow:hidden; position:relative;
+}
+#stage .stage-avatar img{
+  width:120px; height:120px; object-fit:contain;
+  filter:drop-shadow(0 18px 40px rgba(0,0,0,.45));
+  transition:opacity .18s ease;
+}
+#stage .stage-avatar-fallback{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  font-size:58px; font-weight:900; letter-spacing:.12em;
+  text-transform:uppercase; color:#eaf2ff;
+  background:linear-gradient(195deg, rgba(54,92,180,.35), rgba(17,28,52,.85));
+  opacity:0; transition:opacity .22s ease;
+}
+#stage .stage-avatar.empty img{ opacity:0; }
+#stage .stage-avatar.empty .stage-avatar-fallback{ opacity:1; }
 #stage .stage-seat{
-  position:absolute; bottom:100%; left:-8px; transform:translateY(-12px);
-  padding:8px 18px; border-radius:999px;
-  background:rgba(14,24,44,.9); border:1px solid rgba(74,110,202,.55);
-  color:#e1ecff; font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase;
-  box-shadow:0 14px 40px rgba(3,8,22,.45);
+  position:absolute; left:50%; top:-12px; transform:translate(-50%, -100%);
+  padding:9px 22px; border-radius:999px;
+  background:rgba(14,24,44,.94); border:1px solid rgba(74,110,202,.55);
+  color:#e1ecff; font-weight:800; font-size:13px; letter-spacing:.18em; text-transform:uppercase;
+  box-shadow:0 16px 44px rgba(3,8,22,.45);
+  white-space:nowrap;
 }
-#stage .stage-body{ flex:1 1 420px; min-width:0; display:flex; flex-direction:column; gap:24px; }
-#stage .stage-header{ display:flex; flex-wrap:nowrap; align-items:center; gap:18px; width:100%; }
+#stage .stage-body{ min-width:0; display:flex; flex-direction:column; gap:28px; align-items:flex-start; }
+#stage .stage-header{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:18px; width:100%;
+}
+#stage .stage-meta{ display:flex; align-items:center; gap:18px; }
 #stage .stage-name{
   flex:1 1 auto; min-width:0;
   font-size:44px; font-weight:900; letter-spacing:.5px; color:#f4f8ff;
@@ -229,7 +255,6 @@ body.waiting-mode #gridWrap{ display:none; }
   background:rgba(59,109,246,.14); color:#d7e5ff;
   font-weight:800; font-size:18px; letter-spacing:.04em;
   box-shadow:0 16px 44px rgba(5,12,30,.35);
-  margin-left:auto;
   font-variant-numeric:tabular-nums;
 }
 #stage .stage-score::before{
@@ -256,12 +281,10 @@ body.waiting-mode #gridWrap{ display:none; }
   box-shadow:0 16px 44px rgba(6,12,28,.45);
 }
 #stage .stage-judge{
-  flex:0 0 auto;
-  min-width:0;
+  min-width:100px;
   display:flex; align-items:center; justify-content:center;
-  padding:0;
+  padding:0 12px;
   text-align:center;
-  margin-left:auto;
   font-weight:900; font-size:58px; opacity:0; transform:scale(.9);
   transition:opacity .22s ease, transform .22s ease;
 }
@@ -269,10 +292,6 @@ body.waiting-mode #gridWrap{ display:none; }
 #stage .stage-judge.show{ opacity:1; transform:none }
 #stage .stage-judge.good{ color:#1fdf9e }
 #stage .stage-judge.bad{ color:#ff5b6b }
-#stage .stage-judge.show{
-  min-width:140px;
-  padding:0 24px;
-}
 
 /* ===================== CENTER-CARD (info & buzzing) ===================== */
 #centerBox{
@@ -399,24 +418,36 @@ body.waiting-mode #gridWrap{ display:none; }
 @media (max-width:1200px){
   :root{ --grid-gap-x: 14px; --grid-gap-y: 14px }
   #stage{ inset:110px 0 10px }
+  #stage .stage-card{ padding:28px 30px; gap:28px; }
+  #stage .stage-avatar-frame{ width:150px; height:150px; }
+  #stage .stage-avatar img{ width:108px; height:108px; }
+  #stage .stage-avatar-fallback{ font-size:52px; }
   #stage .stage-name{ font-size:36px }
+  #stage .stage-score{ font-size:17px; padding:11px 16px; }
   #centerBox .title{ font-size:26px }
 }
 @media (max-width:760px){
   #hud{ inset:8px }
   .banner{ min-width:auto; width:96vw }
   #stage{ inset:96px 0 10px }
-  #stage .stage-card{ padding:24px; gap:22px; justify-content:center }
-  #stage .stage-body{ flex:1 1 100%; align-items:center; text-align:center }
-  #stage .stage-header{ flex-direction:column; gap:14px }
-  #stage .stage-name{ white-space:normal }
-  #stage .stage-score{ margin-left:0; width:100%; justify-content:center }
-  #stage .stage-stats{ justify-content:center }
-  #stage .stage-judge{ width:100%; margin-left:0 }
-  #stage .stage-avatar{ width:120px; height:120px }
+  #stage .stage-card{
+    grid-template-columns:1fr;
+    padding:28px 24px;
+    gap:24px;
+    text-align:center;
+  }
+  #stage .stage-avatar{ gap:14px; }
+  #stage .stage-seat{ transform:translate(-50%, -110%); font-size:12px; letter-spacing:.16em; }
+  #stage .stage-avatar-frame{ width:132px; height:132px; }
   #stage .stage-avatar img{ width:92px; height:92px }
-  #stage .stage-name{ font-size:28px }
-  #stage .stage-score{ font-size:16px }
+  #stage .stage-avatar-fallback{ font-size:42px; }
+  #stage .stage-body{ align-items:center; text-align:center; gap:22px; }
+  #stage .stage-header{ flex-direction:column; align-items:center; gap:14px }
+  #stage .stage-name{ white-space:normal; font-size:28px }
+  #stage .stage-meta{ flex-direction:column; align-items:center; gap:12px; width:100%; }
+  #stage .stage-score{ width:100%; justify-content:center; font-size:16px }
+  #stage .stage-stats{ flex-direction:column; align-items:center; gap:20px; justify-content:center }
+  #stage .stage-judge{ min-width:0; width:100%; font-size:52px }
   #stage .stage-countdown{ width:58px; height:58px; font-size:24px }
   .centerCard{ grid-template-columns:72px 1fr }
   .centerCard .hostAv{ width:72px; height:72px }
