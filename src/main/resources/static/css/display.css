@@ -252,8 +252,11 @@ body.waiting-mode #gridWrap{ display:none; }
 }
 #stage .stage-body{ min-width:0; display:flex; flex-direction:column; gap:28px; align-items:flex-start; }
 #stage .stage-header{
-  display:flex; align-items:flex-start; justify-content:space-between;
-  gap:18px; width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  width:100%;
 }
 #stage .stage-meta{ display:flex; align-items:center; gap:18px; }
 #stage .stage-name{
@@ -263,18 +266,31 @@ body.waiting-mode #gridWrap{ display:none; }
 }
 #stage .stage-score{
   flex:0 0 auto;
-  display:inline-flex; align-items:center; justify-content:center; gap:10px;
-  padding:12px 18px;
-  border-radius:16px; border:1px solid rgba(74,110,202,.45);
-  background:rgba(59,109,246,.14); color:#d7e5ff;
-  font-weight:800; font-size:18px; letter-spacing:.04em;
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:14px 20px;
+  border-radius:16px;
+  border:1px solid rgba(74,110,202,.45);
+  background:rgba(59,109,246,.14);
+  color:#d7e5ff;
+  font-weight:800;
+  font-size:18px;
+  letter-spacing:.04em;
   box-shadow:0 16px 44px rgba(5,12,30,.35);
   font-variant-numeric:tabular-nums;
+  text-align:center;
 }
 #stage .stage-score::before{
   content:"Wynik";
-  font-size:12px; letter-spacing:.18em; font-weight:700; text-transform:uppercase;
+  font-size:12px;
+  letter-spacing:.18em;
+  font-weight:700;
+  text-transform:uppercase;
   color:rgba(156,178,217,.78);
+  display:block;
 }
 #stage .stage-info{
   width:100%;
@@ -282,7 +298,7 @@ body.waiting-mode #gridWrap{ display:none; }
   flex-wrap:wrap;
   gap:22px;
   align-items:stretch;
-  justify-content:center;
+  justify-content:flex-start;
 }
 #stage .stage-lives{
   flex:0 1 320px;
@@ -328,6 +344,7 @@ body.waiting-mode #gridWrap{ display:none; }
   border:1px solid rgba(59,109,246,.36);
   background:rgba(15,25,46,.82);
   box-shadow:0 18px 60px rgba(3,8,20,.42);
+  margin-left:auto;
 }
 #stage .stage-timer.hidden{ display:none; }
 #stage .stage-timer-head{
@@ -540,7 +557,7 @@ body.waiting-mode #gridWrap{ display:none; }
   #stage .stage-score{ width:100%; justify-content:center; font-size:16px }
   #stage .stage-info{ flex-direction:column; align-items:center; gap:20px; justify-content:center }
   #stage .stage-lives{ width:100%; justify-content:center; }
-  #stage .stage-timer{ width:100%; max-width:360px; }
+  #stage .stage-timer{ width:100%; max-width:360px; margin-left:0; }
   #stage .stage-judge{ min-width:0; width:100%; font-size:52px }
   #stage .stage-countdown{ width:58px; height:58px; font-size:24px }
   .centerCard{ grid-template-columns:72px 1fr }
