@@ -335,27 +335,68 @@ function render(){
 
 function renderQuestionBoard(st){
   if (!questionBoard) return;
+  const phase = st.phase || '';
   const active = st.hostDashboard?.activeQuestion;
+
+  const hideMeta = () => {
+    qDiff.classList.add('hidden');
+    qCat.classList.add('hidden');
+    qId.classList.add('hidden');
+  };
+  const showMeta = () => {
+    qDiff.classList.remove('hidden');
+    qCat.classList.remove('hidden');
+    qId.classList.remove('hidden');
+  };
+  const hideAnswer = () => {
+    qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
+    qAnswer.classList.add('hidden');
+  };
+
+  if (phase === 'SELECTING'){
+    qDiff.textContent = '—';
+    qCat.textContent = '—';
+    qId.textContent = '';
+    hideMeta();
+    qText.textContent = 'Wskazywanie gracza…';
+    questionBoard.classList.remove('revealed');
+    hideAnswer();
+    return;
+  }
+
+  if (phase === 'ANNOTATION'){
+    qDiff.textContent = '—';
+    qCat.textContent = '—';
+    qId.textContent = '';
+    hideMeta();
+    qText.textContent = 'Gospodarz opowiada…';
+    questionBoard.classList.remove('revealed');
+    if (shouldShowAnswer(phase) && active){
+      qAnswer.textContent = `Odpowiedź: ${active.answer || '—'}`;
+      qAnswer.classList.remove('hidden');
+    } else {
+      hideAnswer();
+    }
+    return;
+  }
+
   if (!active){
     qDiff.textContent = '—';
     qCat.textContent = '—';
     qId.textContent = 'Pytanie —';
     qText.textContent = 'Czekamy na pytanie prowadzącego…';
-    qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
-    qAnswer.classList.add('hidden');
+    hideAnswer();
     questionBoard.classList.remove('revealed');
-    qDiff.classList.remove('hidden');
-    qCat.classList.remove('hidden');
-    qId.classList.remove('hidden');
+    showMeta();
     return;
   }
-  const phase = st.phase || '';
+
   const isReadingPhase = phase === 'SELECTING' || phase === 'READING';
-  const showMeta = Boolean(active.revealed) && !isReadingPhase;
-  qDiff.textContent = showMeta ? (active.difficulty || '—') : '—';
-  qCat.textContent  = showMeta ? (active.category || '—')   : '—';
-  qDiff.classList.toggle('hidden', !showMeta);
-  qCat.classList.toggle('hidden', !showMeta);
+  const showMetaNow = Boolean(active.revealed) && !isReadingPhase;
+  qDiff.textContent = showMetaNow ? (active.difficulty || '—') : '—';
+  qCat.textContent  = showMetaNow ? (active.category || '—')   : '—';
+  qDiff.classList.toggle('hidden', !showMetaNow);
+  qCat.classList.toggle('hidden', !showMetaNow);
   qId.textContent = '';
   qId.classList.add('hidden');
   if (active.revealed){
@@ -369,8 +410,7 @@ function renderQuestionBoard(st){
     qAnswer.textContent = `Odpowiedź: ${active.answer || '—'}`;
     qAnswer.classList.remove('hidden');
   } else {
-    qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
-    qAnswer.classList.add('hidden');
+    hideAnswer();
   }
 }
 
