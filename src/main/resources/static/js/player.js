@@ -17,6 +17,7 @@ const seatEl    = document.getElementById('seat');
 const phaseEl   = document.getElementById('phase');
 const avImg     = document.getElementById('av');
 const pb        = document.getElementById('pb');
+const playerBarEl = pb ? pb.parentElement : null;
 const questionWrap = document.getElementById('questionWrap');
 const questionTextEl = document.getElementById('questionText');
 const avatarFx  = document.getElementById('avatarFx');
@@ -25,6 +26,7 @@ const avatarFxResultIcon = document.getElementById('avatarFxResultIcon');
 
 const outOverlay = document.getElementById('outOverlay');
 const outStats   = document.getElementById('outStats');
+const outPlace   = document.getElementById('outPlace');
 
 /* Modal wyboru */
 const chooseBackdrop = document.getElementById('chooseBackdrop');
@@ -37,6 +39,22 @@ let lastState = null;
 let totalAnswerMs = 10000;
 let latestTimerRemainingMs = 0;
 let resultHideTimer = null;
+let clockActive = false;
+
+function updateClockProgress(pct){
+  const clamped = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : 0;
+  if (pb){
+    pb.setAttribute('aria-valuenow', Math.round(clamped * 100));
+  }
+  document.body.style.setProperty('--player-clock-progress', clamped.toFixed(4));
+}
+
+function setClockActive(active){
+  const shouldActivate = !!active;
+  if (shouldActivate === clockActive) return;
+  clockActive = shouldActivate;
+  document.body.classList.toggle('clock-active', shouldActivate);
+}
 
 function updateProgressBar(totalMs, remainingMs){
   const total = Number.isFinite(totalMs) && totalMs > 0 ? totalMs : 10000;
@@ -173,20 +191,30 @@ const bus = connect({
           setTimeout(()=>scoreEl.parentElement.classList.remove('scorePulse'), 500);
           myScore = me.score;
         }
+        const prevLives = myLives;
         if (me.lives !== myLives){
           livesEl.textContent = me.lives;
           livesEl.parentElement.classList.add('lifeShake');
           setTimeout(()=>livesEl.parentElement.classList.remove('lifeShake'), 600);
           myLives = me.lives;
+          if (!me.eliminated && prevLives === 0 && me.lives > prevLives){
+            answeredTotal = 0;
+            correctTotal = 0;
+          }
         }
         if (me.eliminated){
-          outOverlay.style.display='block';
-          outStats.textContent = `Wynik: ${myScore} pkt • Poprawne: ${correctTotal}/${answeredTotal}`;
-          btnKnow.disabled = true;
-          setClockActive(false);
+          showOutOverlay(me);
           resetResultFx();
+        } else {
+          hideOutOverlay();
         }
       }
+    }
+
+    if (iAmOut){
+      setStatus('Odpadasz z gry — dziękujemy za udział!');
+      updateProgressBar(totalAnswerMs, totalAnswerMs);
+      return;
     }
 
     renderQuestion(st);
@@ -199,7 +227,6 @@ const bus = connect({
       if (meAns) { showRole('Odpowiadasz', 'ok'); }
       else { hideRole(); }
       resetResultFx();
-      setClockActive(false);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
       avImg.classList.remove('ping');
       setKnowLabel('Znam odpowiedź!');
@@ -217,7 +244,6 @@ const bus = connect({
         showRole('Nie możesz w tej rundzie odpowiadać', 'bad');
       }
       resetResultFx();
-      setClockActive(false);
     }
     else if (phase === 'ANSWERING'){
       const meAns = st.answeringId === myId;
@@ -231,7 +257,6 @@ const bus = connect({
         if (navigator.vibrate) try{ navigator.vibrate([90,40,90]); }catch{}
         setKnowLabel('ODPOWIADASZ!');
         resetResultFx();
-        setClockActive(true);
       } else {
         document.body.classList.remove('me-answering');
         avImg.classList.remove('ping');
@@ -262,7 +287,6 @@ const bus = connect({
       hideRole();
       setKnowLabel('Znam odpowiedź!');
       resetResultFx();
-      setClockActive(false);
     }
     else {
       setStatus('Czekaj na kolejne pytanie…');
@@ -276,6 +300,7 @@ const bus = connect({
     }
   },
   onEvent: ev => {
+    if (iAmOut) return;
     // Masz prawo wybierać
     if (ev.type === 'SELECT_START' && ev.playerId === myId){
       document.body.classList.add('me-choosing');
@@ -459,6 +484,11 @@ function openChoosePopup(){
 
 function renderQuestion(st){
   if (!questionWrap || !questionTextEl) return;
+  if (iAmOut){
+    questionTextEl.textContent = '—';
+    questionWrap.style.display = 'none';
+    return;
+  }
   const active = st?.hostDashboard?.activeQuestion;
   if (active && active.revealed){
     questionTextEl.textContent = active.question || '—';
@@ -479,7 +509,7 @@ function submitProposal(toId){
     </div>
   `;
 }
-function closeChoosePopup(){ chooseBackdrop.classList.remove('show'); }
+function closeChoosePopup(){ if (chooseBackdrop) chooseBackdrop.classList.remove('show'); }
 function disableChooseGrid(){
   Array.from(chooseGrid.children).forEach(x => x.style.pointerEvents = 'none');
 }
@@ -496,23 +526,56 @@ function setKnowLabel(t){
 }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-/* ====== AVATAR FX (timer + wynik) ====== */
-function updateClockProgress(pct){
-  if (!avatarFx) return;
-  const deg = Math.max(0, Math.min(360, (Number.isFinite(pct) ? pct : 0) * 360));
-  avatarFx.style.setProperty('--elapsed-deg', deg + 'deg');
-}
-
-function setClockActive(active){
-  if (!avatarFx) return;
-  if (active){
-    stopResultFxTimer();
-    avatarFx.classList.add('show-clock');
-  } else {
-    avatarFx.classList.remove('show-clock');
+function showOutOverlay(me){
+  iAmOut = true;
+  if (outOverlay) outOverlay.style.display = 'block';
+  if (outStats){
+    let statsHtml = `Wynik: <b>${myScore}</b> pkt`;
+    if (answeredTotal > 0){
+      statsHtml += `<br>Odpowiedzi: <b>${correctTotal}</b> z ${answeredTotal}`;
+    } else {
+      statsHtml += `<br>Odpowiedzi: —`;
+    }
+    outStats.innerHTML = statsHtml;
   }
+  if (outPlace){
+    const place = Number(me?.finalRank);
+    if (Number.isFinite(place) && place > 0){
+      outPlace.innerHTML = `Zająłeś <b>${formatPlace(place)}</b>.`;
+    } else {
+      outPlace.textContent = 'Miejsce zostanie ogłoszone przez prowadzącego.';
+    }
+  }
+  lockKnow(true);
+  setKnowLabel('Poza grą');
+  if (btnKnow) btnKnow.style.display = 'none';
+  if (playerBarEl) playerBarEl.style.display = 'none';
+  if (questionWrap) questionWrap.style.display = 'none';
+  if (pb) pb.style.width = '0%';
+  pendingBuzz = false;
+  document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
+  document.body.classList.add('me-out');
+  hideRole();
+  closeChoosePopup();
 }
 
+function hideOutOverlay(){
+  if (outOverlay) outOverlay.style.display = 'none';
+  if (outStats) outStats.innerHTML = '';
+  if (outPlace) outPlace.textContent = '';
+  if (btnKnow) btnKnow.style.removeProperty('display');
+  if (playerBarEl) playerBarEl.style.removeProperty('display');
+  setKnowLabel('Znam odpowiedź!');
+  document.body.classList.remove('me-out');
+  iAmOut = false;
+}
+
+function formatPlace(place){
+  const n = Math.max(1, Math.round(place));
+  return `${n}. miejsce`;
+}
+
+/* ====== AVATAR FX (wynik odpowiedzi) ====== */
 function stopResultFxTimer(){
   if (resultHideTimer){
     clearTimeout(resultHideTimer);
@@ -531,7 +594,6 @@ function resetResultFx(){
 function showResultFx(kind){
   if (!avatarFx) return;
   resetResultFx();
-  avatarFx.classList.remove('show-clock');
   avatarFx.classList.add('show-result');
   avatarFx.classList.add(kind === 'ok' ? 'result-ok' : 'result-bad');
   if (avatarFxResult){

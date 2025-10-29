@@ -70,7 +70,7 @@ public class GameService {
 
     private AnnotationNext pendingAnnotation = AnnotationNext.NONE;
 
-    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService) {
+    public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, QuestionUsageService questionUsageService, OperatorConfigService configService) {
         this.bus = bus;
         this.timer = timer;
         this.questionBank = questionBank;
@@ -175,7 +175,12 @@ public class GameService {
 
     /* ================= reset / nowa gra ================= */
     public synchronized void reset(){
-        players.forEach(p -> { p.setLives(3); p.setScore(0); p.setEliminated(false); });
+        players.forEach(p -> {
+            p.setLives(3);
+            p.setScore(0);
+            p.setEliminated(false);
+            p.setFinalRank(null);
+        });
         answeringId = null; startBuzzOpen = false;
         stopTimer();
         phase = GamePhase.IDLE; currentChooserId = null; proposedTargetId = null;
@@ -507,9 +512,18 @@ public class GameService {
         registerQuestionFinished(true);
 
         // Punktacja/życia
+        boolean wasEliminated = p.isEliminated();
         int lives = Math.max(0, p.getLives() - 1);
         p.setLives(lives);
-        if (lives <= 0) p.setEliminated(true);
+        if (lives <= 0){
+            p.setEliminated(true);
+            if (!wasEliminated && p.getFinalRank() == null){
+                int aliveJoined = (int) players.stream()
+                        .filter(pl -> pl.isJoined() && !pl.isEliminated())
+                        .count();
+                p.setFinalRank(aliveJoined + 1);
+            }
+        }
 
         answeringId = null;
         proposedTargetId = null;
@@ -535,14 +549,15 @@ public class GameService {
             Path file = dir.resolve("results-" + ts + ".csv");
 
             try (BufferedWriter w = Files.newBufferedWriter(file, StandardCharsets.UTF_8)){
-                w.write("id,name,gender,lives,score,eliminated\n");
+                w.write("id,name,gender,lives,score,eliminated,finalRank\n");
                 for (Player p : players){
                     w.write(p.getId() + "," +
                             csvCell(p.getName()) + "," +
                             p.getGender() + "," +
                             p.getLives() + "," +
                             p.getScore() + "," +
-                            p.isEliminated() + "\n");
+                            p.isEliminated() + "," +
+                            (p.getFinalRank() != null ? p.getFinalRank() : "") + "\n");
                 }
             }
 
