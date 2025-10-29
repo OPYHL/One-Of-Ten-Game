@@ -186,7 +186,7 @@ body.waiting-mode #gridWrap{ display:none; }
 
 /* ===================== SCENA (center) ===================== */
 #stage{
-  position:fixed; inset:130px 0 250px; display:grid; place-items:center; z-index:30; pointer-events:none;
+  position:fixed; inset:130px 0 10px; display:grid; place-items:center; z-index:30; pointer-events:none;
   opacity:0; transform:translateY(8px); transition:opacity .25s ease, transform .25s ease;
 }
 #stage.show{ opacity:1; transform:none }
@@ -365,14 +365,14 @@ body.waiting-mode #gridWrap{ display:none; }
 /* ================ UTYLITY / MEDIA ================ */
 @media (max-width:1200px){
   :root{ --grid-gap-x: 14px; --grid-gap-y: 14px }
-  #stage{ inset:110px 0 230px }
+  #stage{ inset:110px 0 10px }
   #stage .stage-name{ font-size:36px }
   #centerBox .title{ font-size:26px }
 }
 @media (max-width:760px){
   #hud{ inset:8px }
   .banner{ min-width:auto; width:96vw }
-  #stage{ inset:96px 0 200px }
+  #stage{ inset:96px 0 10px }
   #stage .stage-card{ grid-template-columns:auto 1fr; gap:22px; padding:22px 24px }
   #stage .stage-avatar{ width:120px; height:120px }
   #stage .stage-avatar img{ width:92px; height:92px }
