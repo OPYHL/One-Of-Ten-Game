@@ -1176,8 +1176,7 @@ function updateWelcome(st, joinedCount, totalSlots){
   const resolvedTotalSlots = Array.isArray(st.players) && st.players.length ? st.players.length : 10;
   const waitingForPlayers = joinedCount === 0;
   const everyoneReady = joinedCount >= resolvedTotalSlots && resolvedTotalSlots > 0;
-  const askedCount = dash.metrics?.askedCount || 0;
-  const showOverlay = st.phase === 'IDLE' && (waitingForPlayers || askedCount === 0);
+  const showOverlay = st.phase === 'IDLE';
 
   if (welcomeHeading){
     const heading = dash.welcomeHeading || 'Witaj w „1 z 10”';
