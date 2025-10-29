@@ -279,7 +279,9 @@ body.waiting-mode #gridWrap{ display:none; }
 /* ==================== SIATKA GRACZY ==================== */
 #gridWrap{
   position:fixed;
-  inset:auto 0 18px;
+  left:0;
+  right:0;
+  bottom:calc(18px + var(--grid-offset, 0px));
   padding:14px 24px;
   z-index:20;
   display:flex;
@@ -288,8 +290,7 @@ body.waiting-mode #gridWrap{ display:none; }
   max-height:calc(100vh - 18px);
   overflow:hidden;
   background:linear-gradient(180deg, rgba(10,18,31,0) 0%, rgba(10,18,31,.55) 26%, rgba(10,18,31,.82) 86%);
-  transform:translateY(calc(-1 * var(--grid-lift, 0px)));
-  transition:transform .35s ease;
+  transition:bottom .35s ease;
 }
 
 #gridClamp{

@@ -453,9 +453,7 @@ function renderGrid(players, st){
     : 0;
 
   gridWrap.style.height = wrapHeight ? wrapHeight + 'px' : '';
-  gridWrap.style.bottom = '';
-  gridWrap.style.paddingBottom = '';
-  gridWrap.style.setProperty('--grid-lift', `${lift}px`);
+  gridWrap.style.setProperty('--grid-offset', `${lift}px`);
   gridWrap.style.setProperty('--grid-bottom-pad', `${paddingBottom}px`);
   if (gridClamp){
     gridClamp.style.maxHeight = wrapHeight ? wrapHeight + 'px' : '';
