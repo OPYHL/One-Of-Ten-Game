@@ -21,6 +21,7 @@ const stageCd        = document.getElementById('stageCountdown');
 const stageScore     = document.getElementById('stageScore');
 const stageLives     = document.getElementById('stageLives');
 const stageTimer     = document.getElementById('stageTimer');
+const stageTimerFill = document.getElementById('stageTimerFill');
 const stageAvatar    = document.getElementById('stageAvatar');
 const stageFallback  = document.getElementById('stageAvatarFallback');
 
@@ -809,7 +810,13 @@ function handleTimer(t){
     // Kolor paska: H 130 (zielony) → 0 (czerwony) + „żyjący” gradient
     const hue = Math.max(0, Math.min(130, 130 - 130*pct));
     const hue2 = Math.max(0, hue-24);
-    pb.style.background = `linear-gradient(90deg, hsl(${hue} 85% 52%), hsl(${hue2} 90% 50%))`;
+    const barGradient = `linear-gradient(90deg, hsl(${hue} 85% 52%), hsl(${hue2} 90% 50%))`;
+    pb.style.background = barGradient;
+    if (stageTimerFill){
+      stageTimerFill.style.width = (pct*100).toFixed(1)+'%';
+      stageTimerFill.style.background = barGradient;
+      stageTimerFill.style.boxShadow = `0 0 18px hsla(${hue}, 85%, 52%, .45)`;
+    }
 
     const sec = Math.max(0, Math.ceil(ms/1000));
     stageCd.textContent = String(sec);
@@ -818,6 +825,11 @@ function handleTimer(t){
   } else {
     timebarWrap.classList.remove('show');
     pb.style.width = '0%';
+    if (stageTimerFill){
+      stageTimerFill.style.width = '0%';
+      stageTimerFill.style.background = '';
+      stageTimerFill.style.boxShadow = '';
+    }
     stageCd.classList.add('hidden');
     stageTimer?.classList.add('hidden');
   }

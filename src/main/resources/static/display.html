@@ -75,11 +75,16 @@
                 </div>
             </div>
 
-            <div class="stage-stats">
-                <div id="stageLives" class="stage-lives"></div>
-                <div id="stageTimer" class="stage-timer hidden">
-                    <span class="stage-timer-label">Czas</span>
-                    <div id="stageCountdown" class="stage-countdown">10</div>
+            <div class="stage-info">
+                <div id="stageLives" class="stage-lives" aria-label="Pozostałe życia"></div>
+                <div id="stageTimer" class="stage-timer hidden" aria-live="polite">
+                    <div class="stage-timer-head">
+                        <span class="stage-timer-label">Czas</span>
+                        <div id="stageCountdown" class="stage-countdown">10</div>
+                    </div>
+                    <div class="stage-timer-bar">
+                        <div id="stageTimerFill" class="stage-timer-fill"></div>
+                    </div>
                 </div>
             </div>
         </div>
