@@ -680,8 +680,9 @@ function showStage(p, phase){
   if (stageLives){
     const livesRaw = typeof p.lives === 'number' ? p.lives : 3;
     const lives = Math.max(0, Math.min(3, livesRaw));
-    let html = '';
+    let html = '<div class="stage-hearts">';
     for (let i=0;i<3;i++){ html += heartsSvg(i >= lives, 'stage'); }
+    html += '</div>';
     stageLives.innerHTML = html;
   }
 
