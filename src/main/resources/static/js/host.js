@@ -195,6 +195,19 @@ function measureCollapseNeeded(){
 
 function updateTopbarLayout(){
   if (!topbarEl || !topActionsEl) return;
+
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || topbarEl.clientWidth;
+  if (viewportWidth > TOPBAR_COLLAPSE_WIDTH){
+    if (topbarEl.classList.contains('topbar-collapsed')){
+      topbarEl.classList.remove('topbar-collapsed');
+      topbarEl.classList.remove('hud-open');
+      if (btnHudToggle){
+        btnHudToggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+    ensureTopActionsHome();
+    return;
+  }
   const shouldCollapse = measureCollapseNeeded();
   if (shouldCollapse){
     topbarEl.classList.add('topbar-collapsed');
