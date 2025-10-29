@@ -52,6 +52,10 @@
                 <span class="clock-value" id="hostClock">00:00</span>
             </div>
         </div>
+        <button class="btn glass icon-only" id="btnMusic" aria-label="Odtwórz muzykę">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M18 8a2 2 0 0 1 1.57-1.96l16-3A2 2 0 0 1 38 5v22.4a6.6 6.6 0 1 1-4-6.04V13.7l-12 2.25V29.4a6.6 6.6 0 1 1-4-6.04Z"/></svg>
+            <span class="sr-only">Odtwórz muzykę</span>
+        </button>
         <button class="btn glass" id="btnReset">Reset gry</button>
         <button class="btn glass" id="btnNew">Nowa gra</button>
     </div>
@@ -258,5 +262,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script type="module" src="/js/host.js"></script>
+<audio id="hostMusic" src="/audio/example.mp3" preload="auto"></audio>
 </body>
 </html>
