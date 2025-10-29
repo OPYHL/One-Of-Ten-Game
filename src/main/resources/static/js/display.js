@@ -455,12 +455,14 @@ function renderGrid(players, st){
     }
   }
 
-  const desiredLift = L.rows > 0 ? Math.max(0, bottomMargin - baseBottom) : 0;
+  const desiredLift = L.rows > 1 ? 0 : Math.max(0, bottomMargin - baseBottom);
   const maxLift = Math.max(0, availableWrap - scaledH);
-  const enforcedLift = L.rows > 0 ? Math.min(maxLift, Math.max(0, Math.round(minHeadroom * 0.45))) : 0;
+  const enforcedLift = L.rows > 1
+    ? 0
+    : Math.min(maxLift, Math.max(0, Math.round(minHeadroom * 0.45)));
   const lift = Math.max(enforcedLift, Math.min(desiredLift, maxLift));
   const paddingBottom = L.rows > 1
-    ? Math.max(18, Math.round((baseBottom + lift) * 0.65))
+    ? Math.max(8, Math.round((baseBottom + lift) * 0.35))
     : Math.max(0, Math.round((baseBottom + lift) * 0.4));
   const desiredWrap = scaledH + lift + paddingBottom;
   const wrapHeight = L.rows > 0
