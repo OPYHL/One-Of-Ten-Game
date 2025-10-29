@@ -310,7 +310,7 @@ function render(){
     if (st.hostDashboard?.activeQuestion?.preparing){
       showBanner('Prowadzący przygotowuje pytanie…');
     } else {
-      showBanner('Gospodarz czyta pytanie…');
+      showBanner('Prowadzący czyta pytanie…');
     }
   } else if (st.phase === 'BUZZING') {
     showBuzzingCallout();
@@ -405,7 +405,7 @@ function renderQuestionBoard(st){
     questionBoard.classList.add('revealed');
   } else {
     if (phase === 'READING' && !isPreparing){
-      qText.textContent = 'Gospodarz czyta pytanie…';
+      qText.textContent = 'Prowadzący czyta pytanie…';
     } else if (isPreparing){
       qText.textContent = 'Prowadzący przygotowuje pytanie…';
     } else {
@@ -741,7 +741,7 @@ function handleEvent(ev){
   else if (ev.type === 'CUE') {
     if (ev.value === 'INTRO')  { hideCenter(); showBanner('Intro…');  safePlayWithAck(sounds.INTRO, '/app/introDone'); }
     if (ev.value === 'BOOM')   { showCenter('Za chwilę nowe pytanie…','Prowadzący przygotowuje wybór'); safePlayWithAck(sounds.BOOM,  '/app/boomDone'); }
-    if (ev.value === 'START_Q'){ hideCenter(); showBanner('Gospodarz czyta pytanie…'); }
+    if (ev.value === 'START_Q'){ hideCenter(); showBanner('Prowadzący czyta pytanie…'); }
   }
 
   else if (ev.type === 'RESET') {
@@ -783,7 +783,7 @@ function handleEvent(ev){
       if (state?.hostDashboard?.activeQuestion?.preparing){
         showBanner('Prowadzący przygotowuje pytanie…');
       } else {
-        showBanner('Gospodarz czyta pytanie…');
+        showBanner('Prowadzący czyta pytanie…');
       }
     } else if (ev.value === 'BUZZING') {
       showBuzzingCallout();
