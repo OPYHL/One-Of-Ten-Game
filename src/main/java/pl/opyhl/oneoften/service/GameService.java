@@ -283,7 +283,6 @@ public class GameService {
                 phase = GamePhase.SELECTING;
                 pushState();
                 bus.publish(new Event("SELECT_START", currentChooserId, null, null));
-                bus.publish(new Event("CUE", null, "BOOM", null));
                 break;
             }
             case TO_READING: {
@@ -364,6 +363,7 @@ public class GameService {
             pushState();
             bus.publish(new Event("JUDGE", id, "CORRECT", null));
             bus.publish(new Event("PHASE", null, "ANNOTATION", null));
+            bus.publish(new Event("CUE", null, "BOOM", null));
         } else {
             applyWrongFor(id);
         }
@@ -538,6 +538,7 @@ public class GameService {
         pushState();
         bus.publish(new Event("JUDGE", id, "WRONG", null));
         bus.publish(new Event("PHASE", null, "ANNOTATION", null));
+        bus.publish(new Event("CUE", null, "BOOM", null));
     }
 
     /** Zapis wyników do CSV + event dla frontu (RESULTS_SAVED). */
