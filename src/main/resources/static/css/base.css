@@ -75,9 +75,9 @@ button[disabled]{ background:#1a2336; cursor:not-allowed }
 body.playerPage{
   min-height:100vh;
   display:flex;
-  align-items:center;
+  align-items:flex-end;
   justify-content:center;
-  padding:40px 24px;
+  padding:40px 24px 10px;
 }
 .playerPanel{
   width:min(720px,96vw);
@@ -241,7 +241,7 @@ body.playerPage{
 .playerQuestionText{ margin-top:12px; font-size:18px; line-height:1.6; }
 
 @media (max-width:680px){
-  body.playerPage{ padding:28px 16px; align-items:flex-start }
+  body.playerPage{ padding:28px 16px 10px; align-items:flex-end }
   .playerPanel{ width:min(580px,96vw) }
   .playerBox{ padding:24px }
   .playerGrid{ grid-template-columns:92px 1fr; gap:16px }
