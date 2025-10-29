@@ -8,27 +8,112 @@
 </head>
 <body class="playerPage">
 <div class="playerPanel">
-    <div class="playerBox" id="step1">
-        <div class="row"><input id="slot" class="input" type="number" min="1" max="10" placeholder="Numer stanowiska (1–10)"></div>
-        <div class="row"><input id="name" class="input" type="text" placeholder="Imię i nazwisko"></div>
-        <button id="next1" style="width:100%">Dalej</button>
-        <div class="mini center">Najpierw wpisz stanowisko i imię, potem wybierzesz avatar.</div>
-    </div>
-
-    <div class="playerBox" id="step2" style="display:none">
-        <div class="row">
-            <select id="gender" class="input">
-                <option value="MALE">Mężczyzna</option>
-                <option value="FEMALE">Kobieta</option>
-            </select>
+    <div class="playerBox playerStep" id="stepSeat">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepSeat" aria-label="Wróć" disabled></button>
+            <div>
+                <div class="stepSubtitle">Krok 1 z 4</div>
+                <div class="stepTitle">Wybierz stanowisko</div>
+            </div>
         </div>
-        <button id="next2" style="width:100%">Zapisz i czekaj</button>
-        <div class="mini center">Zapisujemy Twoje dane i czekamy na prowadzącego.</div>
+        <input id="slot" type="hidden" />
+        <div class="seatGrid" id="seatGrid" role="radiogroup" aria-label="Wybór stanowiska">
+            <button class="seatButton" type="button" role="radio" data-seat="1">1</button>
+            <button class="seatButton" type="button" role="radio" data-seat="2">2</button>
+            <button class="seatButton" type="button" role="radio" data-seat="3">3</button>
+            <button class="seatButton" type="button" role="radio" data-seat="4">4</button>
+            <button class="seatButton" type="button" role="radio" data-seat="5">5</button>
+            <button class="seatButton" type="button" role="radio" data-seat="6">6</button>
+            <button class="seatButton" type="button" role="radio" data-seat="7">7</button>
+            <button class="seatButton" type="button" role="radio" data-seat="8">8</button>
+            <button class="seatButton" type="button" role="radio" data-seat="9">9</button>
+            <button class="seatButton" type="button" role="radio" data-seat="10">10</button>
+        </div>
+        <button id="next1" class="stepAction" disabled>Dalej</button>
+        <div class="mini center" id="seatHint">Wybierz wolne stanowisko, z którego będziesz grać.</div>
     </div>
 
-    <div class="playerBox" id="step3" style="display:none">
+    <div class="playerBox playerStep" id="stepName" style="display:none">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepSeat" aria-label="Wróć"></button>
+            <div>
+                <div class="stepSubtitle">Krok 2 z 4</div>
+                <div class="stepTitle">Podaj imię i nazwisko</div>
+            </div>
+        </div>
+        <div class="stepBody">
+            <input id="name" class="input" type="text" placeholder="Wpisz imię i nazwisko" autocomplete="name" />
+        </div>
+        <button id="next2" class="stepAction" disabled>Dalej</button>
+        <div class="mini center" id="nameHint">To dane, które zobaczy prowadzący.</div>
+    </div>
+
+    <div class="playerBox playerStep" id="stepGender" style="display:none">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepName" aria-label="Wróć"></button>
+            <div>
+                <div class="stepSubtitle">Krok 3 z 4</div>
+                <div class="stepTitle">Wybierz płeć</div>
+            </div>
+        </div>
+        <input id="gender" type="hidden" value="" />
+        <div class="choiceGrid" id="genderGrid">
+            <button class="choiceCard" type="button" data-gender="FEMALE">
+                <div class="choiceIcon female"></div>
+                <div class="choiceLabel">Kobieta</div>
+            </button>
+            <button class="choiceCard" type="button" data-gender="MALE">
+                <div class="choiceIcon male"></div>
+                <div class="choiceLabel">Mężczyzna</div>
+            </button>
+        </div>
+        <button id="next3" class="stepAction" disabled>Dalej</button>
+        <div class="mini center" id="genderHint">Ułatwi to dopasowanie awataru.</div>
+    </div>
+
+    <div class="playerBox playerStep" id="stepAvatar" style="display:none">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepGender" aria-label="Wróć"></button>
+            <div>
+                <div class="stepSubtitle">Krok 4 z 4</div>
+                <div class="stepTitle">Wybierz avatar</div>
+            </div>
+        </div>
+        <div class="avatarPreviewWrap">
+            <div class="avatarPreview avatar-theme-classic" id="avatarPreview">
+                <img id="avatarPreviewImg" src="/img/male.png" alt="Podgląd avataru" />
+            </div>
+            <div class="summaryList">
+                <div><span>Stanowisko</span><b id="summarySeat">—</b></div>
+                <div><span>Imię i nazwisko</span><b id="summaryName">—</b></div>
+                <div><span>Płeć</span><b id="summaryGender">—</b></div>
+            </div>
+        </div>
+        <div class="choiceGrid avatarGrid" id="avatarGrid">
+            <button class="choiceCard" type="button" data-avatar="classic">
+                <div class="choiceIcon avatar classic"></div>
+                <div class="choiceLabel">Klasyczny</div>
+            </button>
+            <button class="choiceCard" type="button" data-avatar="sunrise">
+                <div class="choiceIcon avatar sunrise"></div>
+                <div class="choiceLabel">Poranek</div>
+            </button>
+            <button class="choiceCard" type="button" data-avatar="forest">
+                <div class="choiceIcon avatar forest"></div>
+                <div class="choiceLabel">Leśny</div>
+            </button>
+            <button class="choiceCard" type="button" data-avatar="midnight">
+                <div class="choiceIcon avatar midnight"></div>
+                <div class="choiceLabel">Nocny</div>
+            </button>
+        </div>
+        <button id="join" class="stepAction primary" disabled>Dołącz do gry</button>
+        <div class="mini center" id="avatarHint">Wybierz wygląd, a następnie dołącz do gry.</div>
+    </div>
+
+    <div class="playerBox" id="stepGame" style="display:none">
         <div class="playerGrid">
-            <div class="playerAvatar">
+            <div class="playerAvatar avatar-theme-classic" id="playerAvatar">
                 <div id="avatarFx" class="avatarFx">
                     <div id="avatarFxResult" class="avatarFxResult">
                         <div id="avatarFxResultIcon" class="avatarFxResultIcon"></div>
