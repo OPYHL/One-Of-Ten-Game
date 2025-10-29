@@ -35,6 +35,37 @@ let totalAnswerMs = 10000;
 let sliderConfig = null;
 let suppressSlider = false;
 
+const normName = p => (p?.name || '').trim();
+const looksLikePlaceholder = p => {
+  const nm = normName(p);
+  if (!nm) return true;
+  return nm.toLowerCase() === (`gracz ${p?.id}`).toLowerCase();
+};
+function coerceJoinedFlag(val){
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'number'){
+    if (!Number.isFinite(val)) return null;
+    return val > 0;
+  }
+  if (typeof val === 'string'){
+    const norm = val.trim().toLowerCase();
+    if (!norm) return null;
+    if (['false','0','no','n','f','off'].includes(norm)) return false;
+    if (['true','1','yes','y','t','on','joined','connected','ready'].includes(norm)) return true;
+  }
+  return null;
+}
+function isJoined(p){
+  if (!p) return false;
+  const explicit = coerceJoinedFlag(p.joined);
+  if (explicit != null) return explicit;
+  return !looksLikePlaceholder(p);
+}
+function joinedPlayers(list){
+  if (!Array.isArray(list)) return [];
+  return list.filter(isJoined);
+}
+
 const bus = connect({
   onState: s => { st = s; render(); },
   onTimer: t => { timer = t; render(); },
@@ -186,7 +217,16 @@ function render(){
   who.textContent = p ? (p.id+'. '+(p.name||'')) : '—';
 
   grid.innerHTML = '';
-  st.players.forEach(pl => {
+  const players = joinedPlayers(st.players);
+  if (!players.length){
+    const empty = document.createElement('div');
+    empty.className = 'card';
+    empty.style.gridColumn = '1 / -1';
+    empty.innerHTML = '<div class="mini">Brak aktywnych graczy.</div>';
+    grid.appendChild(empty);
+    return;
+  }
+  players.forEach(pl => {
     const card = document.createElement('div'); card.className='card' + (pl.id===st.answeringId?' answering':'');
     card.innerHTML = `
       <div class="row">
