@@ -16,6 +16,7 @@ const btnBoom      = document.getElementById('btnBoom');
 const btnSave      = document.getElementById('btnSave');
 const btnReset     = document.getElementById('btnReset');
 const btnNewGame   = document.getElementById('btnNewGame');
+const btnResetQuestions = document.getElementById('btnResetQuestions');
 
 const answerSlider = document.getElementById('answerSlider');
 const answerValue  = document.getElementById('answerValue');
@@ -137,6 +138,21 @@ btnBoom.onclick      = () => send('/app/playCue',{cue:'BOOM'});
 btnSave.onclick      = () => send('/app/saveResults');
 btnReset.onclick     = () => send('/app/reset');
 btnNewGame.onclick   = () => { if (confirm('NOWA GRA – wyczyści wszystko. Kontynuować?')) send('/app/newGame'); };
+if (btnResetQuestions){
+  btnResetQuestions.onclick = async () => {
+    if (!confirm('Zresetować listę wykorzystanych pytań?')) return;
+    try{
+      const res = await fetch('/api/questions/usage/reset', { method: 'POST' });
+      if (!res.ok){
+        throw new Error(`HTTP ${res.status}`);
+      }
+      alert('Wykorzystane pytania zostały zresetowane.');
+    } catch (error){
+      console.error('Nie udało się zresetować pytań', error);
+      alert('Nie udało się zresetować pytań. Sprawdź konsolę.');
+    }
+  };
+}
 
 btnApprove.onclick   = () => send('/app/approveTarget', {accept:true});
 btnReject.onclick    = () => send('/app/approveTarget', {accept:false});

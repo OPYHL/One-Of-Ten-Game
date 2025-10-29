@@ -272,7 +272,7 @@ const QUESTION_MODE = { RANDOM: 'RANDOM', LIST: 'LIST' };
 const USAGE_FILTER = { UNUSED: 'UNUSED', USED: 'USED', ALL: 'ALL' };
 let questionMode = QUESTION_MODE.LIST;
 let questionUsageFilter = USAGE_FILTER.UNUSED;
-const usedQuestions = loadUsedQuestions();
+const usedQuestions = new Map();
 
 const PHASE_LABELS = {
   IDLE: 'Czekamy',
@@ -291,6 +291,223 @@ const bus = connect({
 
 loadCatalog();
 startClock();
+fetchQuestionUsageSnapshot();
+
+function usageKey(difficultyId, categoryId){
+  return `${difficultyId || ''}::${categoryId || ''}`;
+}
+
+function applyUsageSnapshot(payload){
+  usedQuestions.clear();
+  const source = payload?.used || payload || {};
+  if (source && typeof source === 'object'){
+    Object.entries(source).forEach(([difficulty, categories]) => {
+      if (!categories || typeof categories !== 'object') return;
+      Object.entries(categories).forEach(([category, list]) => {
+        if (!Array.isArray(list)) return;
+        const normalized = list
+          .map(val => (val != null ? String(val).trim() : null))
+          .filter(val => !!val);
+        if (normalized.length){
+          usedQuestions.set(usageKey(difficulty, category), new Set(normalized));
+        }
+      });
+    });
+  }
+  refreshQuestionLists();
+}
+
+async function fetchQuestionUsageSnapshot(){
+  try {
+    const res = await fetch('/api/questions/usage');
+    if (!res.ok){
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    applyUsageSnapshot(data);
+  } catch (error){
+    console.warn('Nie udało się pobrać stanu wykorzystanych pytań', error);
+  }
+}
+
+function parseUsageToken(value){
+  if (typeof value !== 'string'){
+    return { difficulty: null, category: null, questionId: null };
+  }
+  const parts = value.split('::');
+  return {
+    difficulty: parts[0] || null,
+    category: parts[1] || null,
+    questionId: parts[2] || null,
+  };
+}
+
+function markQuestionUsed(difficultyId, categoryId, questionId){
+  if (!difficultyId || !categoryId || !questionId) return;
+  const key = usageKey(difficultyId, categoryId);
+  let set = usedQuestions.get(key);
+  if (!set){
+    set = new Set();
+    usedQuestions.set(key, set);
+  }
+  const normalizedId = String(questionId);
+  if (set.has(normalizedId)) return;
+  set.add(normalizedId);
+  refreshQuestionLists();
+}
+
+function isQuestionUsed(difficultyId, categoryId, questionId){
+  if (!difficultyId || !categoryId || !questionId) return false;
+  const key = usageKey(difficultyId, categoryId);
+  const set = usedQuestions.get(key);
+  if (!set) return false;
+  return set.has(String(questionId));
+}
+
+function clearQuestionUsage(){
+  if (usedQuestions.size === 0) return;
+  usedQuestions.clear();
+  refreshQuestionLists();
+}
+
+function refreshQuestionLists(){
+  if (questionMode === QUESTION_MODE.LIST){
+    buildQuestionList();
+  }
+  updateRandomNotice();
+}
+
+function buildQuestionPool(){
+  const diff = activeDifficulty;
+  if (!diff || !Array.isArray(diff?.categories)) return [];
+  const pool = [];
+  diff.categories.forEach(cat => {
+    const questions = Array.isArray(cat?.questions) ? cat.questions : [];
+    questions.forEach(q => {
+      const used = isQuestionUsed(diff.id, cat.id, q.id);
+      if (questionUsageFilter === USAGE_FILTER.UNUSED && used) return;
+      if (questionUsageFilter === USAGE_FILTER.USED && !used) return;
+      pool.push({ difficulty: diff, category: cat, question: q, used });
+    });
+  });
+  if (questionUsageFilter === USAGE_FILTER.ALL){
+    pool.sort((a, b) => {
+      if (a.used === b.used){
+        const ao = a.question?.order ?? 0;
+        const bo = b.question?.order ?? 0;
+        return ao - bo;
+      }
+      return a.used ? 1 : -1;
+    });
+  }
+  return pool;
+}
+
+function updateRandomNotice(){
+  if (!randomNotice || !btnRandomQuestion){
+    return;
+  }
+  const diff = activeDifficulty;
+  const pool = buildQuestionPool();
+  const count = pool.length;
+  btnRandomQuestion.disabled = count === 0 || !diff;
+  if (!diff){
+    randomNotice.textContent = 'Wybierz poziom trudności, aby losować pytania.';
+    return;
+  }
+  if (count === 0){
+    if (questionUsageFilter === USAGE_FILTER.UNUSED){
+      randomNotice.textContent = 'Brak niewykorzystanych pytań w tym poziomie.';
+    } else if (questionUsageFilter === USAGE_FILTER.USED){
+      randomNotice.textContent = 'Brak wykorzystanych pytań w tym poziomie.';
+    } else {
+      randomNotice.textContent = 'Brak pytań spełniających kryteria.';
+    }
+    return;
+  }
+  randomNotice.textContent = `Dostępnych pytań: ${count}.`;
+}
+
+function setQuestionMode(mode){
+  const upper = typeof mode === 'string' ? mode.toUpperCase() : '';
+  const next = upper === QUESTION_MODE.RANDOM ? QUESTION_MODE.RANDOM : QUESTION_MODE.LIST;
+  if (next === questionMode){
+    updateModeButtons();
+    return;
+  }
+  questionMode = next;
+  updateModeButtons();
+  if (questionMode === QUESTION_MODE.LIST){
+    buildCategoryList();
+    buildQuestionList();
+  }
+  updateRandomNotice();
+}
+
+function updateModeButtons(){
+  if (modeToggleEl){
+    const buttons = modeToggleEl.querySelectorAll('button');
+    buttons.forEach(btn => {
+      const btnMode = (btn.dataset?.mode || '').toUpperCase();
+      const active = btnMode === questionMode;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+  if (listPanel){
+    listPanel.classList.toggle('hidden', questionMode !== QUESTION_MODE.LIST);
+  }
+  if (randomPanel){
+    randomPanel.classList.toggle('hidden', questionMode !== QUESTION_MODE.RANDOM);
+  }
+}
+
+function setUsageFilter(filter){
+  const upper = typeof filter === 'string' ? filter.toUpperCase() : '';
+  const resolved = USAGE_FILTER[upper] || USAGE_FILTER.UNUSED;
+  if (resolved === questionUsageFilter){
+    updateUsageButtons();
+    return;
+  }
+  questionUsageFilter = resolved;
+  updateUsageButtons();
+  refreshQuestionLists();
+}
+
+function updateUsageButtons(){
+  if (!usageFilterEl) return;
+  const buttons = usageFilterEl.querySelectorAll('button');
+  buttons.forEach(btn => {
+    const val = (btn.dataset?.filter || '').toUpperCase();
+    const active = val === questionUsageFilter;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+}
+
+function randomQuestion(){
+  const pool = buildQuestionPool();
+  if (!pool.length){
+    updateRandomNotice();
+    return;
+  }
+  const idx = Math.floor(Math.random() * pool.length);
+  const choice = pool[idx];
+  if (!choice) return;
+  const question = choice.question;
+  const context = { difficulty: choice.difficulty, category: choice.category };
+  if (question?.display){
+    showToast('Wylosowano pytanie ' + question.display + '.');
+  } else {
+    showToast('Wylosowano pytanie.');
+  }
+  confirmQuestion(question, context);
+}
+
+function recordActiveQuestionUsage(active){
+  if (!active) return;
+  markQuestionUsed(active.difficulty, active.category, active.id);
+}
 
 function usageKey(difficultyId, categoryId){
   return `${difficultyId || ''}::${categoryId || ''}`;
@@ -1543,6 +1760,17 @@ function handleEvent(ev){
       autoAdvanceIntroPending = true;
     }
     refreshStageCard();
+  }
+  if (ev.type === 'QUESTION_USAGE_MARKED'){
+    const usage = parseUsageToken(ev.value);
+    if (usage.questionId){
+      markQuestionUsed(usage.difficulty, usage.category, usage.questionId);
+    }
+  }
+  if (ev.type === 'QUESTION_USAGE_RESET'){
+    clearQuestionUsage();
+    fetchQuestionUsageSnapshot();
+    showToast('Lista pytań została zresetowana.');
   }
   if (ev.type === 'TARGET_PROPOSED'){
     const fromId = ev.playerId;
