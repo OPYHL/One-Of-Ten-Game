@@ -342,12 +342,20 @@ function renderQuestionBoard(st){
     qAnswer.textContent = 'Odpowiedź pojawi się po werdykcie.';
     qAnswer.classList.add('hidden');
     questionBoard.classList.remove('revealed');
+    qDiff.classList.remove('hidden');
+    qCat.classList.remove('hidden');
+    qId.classList.remove('hidden');
     return;
   }
-  qDiff.textContent = active.difficulty || '—';
-  qCat.textContent  = active.category || '—';
-  const orderNum = typeof active.order === 'number' ? active.order : null;
-  qId.textContent   = orderNum ? `Pytanie ${orderNum.toString().padStart(2,'0')}` : 'Pytanie —';
+  const phase = st.phase || '';
+  const isReadingPhase = phase === 'SELECTING' || phase === 'READING';
+  const showMeta = Boolean(active.revealed) && !isReadingPhase;
+  qDiff.textContent = showMeta ? (active.difficulty || '—') : '—';
+  qCat.textContent  = showMeta ? (active.category || '—')   : '—';
+  qDiff.classList.toggle('hidden', !showMeta);
+  qCat.classList.toggle('hidden', !showMeta);
+  qId.textContent = '';
+  qId.classList.add('hidden');
   if (active.revealed){
     qText.textContent = active.question || '—';
     questionBoard.classList.add('revealed');
