@@ -234,15 +234,18 @@ const escapeHtml = s => (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').r
 const normName   = p => (p?.name||'').trim();
 const looksLikePlaceholder = p => { const nm = normName(p); return !nm || nm.toLowerCase()===`gracz ${p.id}`; };
 const isJoined   = p => (typeof p.joined === 'boolean') ? p.joined : !looksLikePlaceholder(p);
+const AVAILABLE_AVATARS = new Set(['female.png', 'male.png']);
+
 function avatarFor(p, mood){
-  const base = (p.gender === 'FEMALE') ? 'female' : 'male';
-  const map = {
-    idle:    `/img/${base}.png`,
-    knowing: `/img/${base}-knowing.png`,
-    success: `/img/${base}-success.png`,
-    wrong:   `/img/${base}-wrong.png`
-  };
-  return map[mood] || map.idle;
+  const base = (p?.gender === 'FEMALE') ? 'female' : 'male';
+  const safeMood = ['idle', 'knowing', 'success', 'wrong'].includes(mood) ? mood : 'idle';
+  const variant = safeMood === 'idle' ? `${base}.png` : `${base}-${safeMood}.png`;
+
+  // Obecny zestaw grafik zawiera tylko bazowe avatary. Jeśli wariant
+  // tematyczny (np. -success) nie jest dostępny, wracamy do bazowego.
+  const file = AVAILABLE_AVATARS.has(variant) ? variant : `${base}.png`;
+
+  return `/img/${file}`;
 }
 
 /* ===== Layout siatki ===== */
