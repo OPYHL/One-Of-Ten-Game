@@ -1968,7 +1968,7 @@ function handleEvent(ev){
     const cue = (ev.value || '').toUpperCase();
     if (cue === 'INTRO'){
       playSound('INTRO');
-    } else if (cue === 'BOOM' || cue === 'START_Q'){
+    } else if (cue === 'BOOM'){
       playSound('BOOM');
     }
   }

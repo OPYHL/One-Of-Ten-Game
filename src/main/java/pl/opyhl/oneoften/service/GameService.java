@@ -396,8 +396,6 @@ public class GameService {
             proposedTargetId = null;
             enterReadingSetup();          // nowe pytanie -> czyść bany
             bus.publish(new Event("TARGET_ACCEPTED", answeringId, String.valueOf(chooser), null));
-            bus.publish(new Event("CUE", null, "BOOM", null));
-            bus.publish(new Event("LOCK_NEXT", null, "ON", null));
         } else {
             proposedTargetId = null;
             bus.publish(new Event("TARGET_REJECTED", null, String.valueOf(currentChooserId), null));
@@ -538,7 +536,6 @@ public class GameService {
         pushState();
         bus.publish(new Event("JUDGE", id, "WRONG", null));
         bus.publish(new Event("PHASE", null, "ANNOTATION", null));
-        bus.publish(new Event("CUE", null, "BOOM", null));
     }
 
     /** Zapis wyników do CSV + event dla frontu (RESULTS_SAVED). */
