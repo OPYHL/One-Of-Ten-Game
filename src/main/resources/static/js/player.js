@@ -40,6 +40,7 @@ let totalAnswerMs = 10000;
 let latestTimerRemainingMs = 0;
 let resultHideTimer = null;
 let clockActive = false;
+let iAmOut = false;
 
 function updateClockProgress(pct){
   const clamped = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : 0;
