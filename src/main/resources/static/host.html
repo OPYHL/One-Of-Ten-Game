@@ -162,6 +162,34 @@
             </div>
         </article>
 
+        <article class="card status-card" id="statusCard">
+            <header class="status-head">
+                <div class="status-headline">
+                    <h3>Przebieg gry</h3>
+                    <a class="status-link" href="/host-status.html" target="_blank" rel="noopener">Osobna strona</a>
+                </div>
+                <span class="status-phase" id="statusPhase">—</span>
+            </header>
+            <div class="status-body">
+                <div class="status-row" id="statusBuzzRow">
+                    <div class="status-label">Zgłosił się</div>
+                    <div class="status-value" id="statusBuzz" aria-live="polite">Brak zgłoszeń.</div>
+                </div>
+                <div class="status-row" id="statusAnswerRow">
+                    <div class="status-label">Odpowiada</div>
+                    <div class="status-value" id="statusAnswering" aria-live="polite">Nikt nie odpowiada.</div>
+                </div>
+                <div class="status-row" id="statusNextRow">
+                    <div class="status-label">Następny krok</div>
+                    <div class="status-value" id="statusNext" aria-live="polite">Oczekiwanie na rozpoczęcie gry.</div>
+                </div>
+            </div>
+            <div class="status-log">
+                <h4>Historia zdarzeń</h4>
+                <ol id="statusLog" class="status-log-list" aria-live="polite" aria-label="Historia zdarzeń"></ol>
+            </div>
+        </article>
+
         <article id="answeringCard" class="card answering-card">
             <header class="answer-head">
                 <div class="answer-title">

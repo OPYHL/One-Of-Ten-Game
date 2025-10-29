@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>1 z 10 — Podgląd przebiegu gry</title>
+    <link rel="stylesheet" href="/css/host-status.css" />
+</head>
+<body>
+<header class="page-header">
+    <div class="brand">
+        <div class="brand-logo">1/10</div>
+        <div class="brand-copy">
+            <div class="brand-title">Podgląd przebiegu gry</div>
+            <div class="brand-sub">Adres: /host-status.html</div>
+        </div>
+    </div>
+    <div class="header-meta">
+        <span class="meta-label">Bieżąca faza:</span>
+        <span class="status-phase" id="statusPhase">—</span>
+    </div>
+</header>
+
+<main class="layout">
+    <section class="card status-card">
+        <header class="status-head">
+            <h1>Przebieg gry</h1>
+            <p class="status-hint">Panel aktualizuje się automatycznie na podstawie danych z gry.</p>
+        </header>
+        <div class="status-body">
+            <div class="status-row" id="statusBuzzRow">
+                <div class="status-label">Zgłosił się</div>
+                <div class="status-value" id="statusBuzz">Brak zgłoszeń.</div>
+            </div>
+            <div class="status-row" id="statusAnswerRow">
+                <div class="status-label">Odpowiada</div>
+                <div class="status-value" id="statusAnswering">Nikt nie odpowiada.</div>
+            </div>
+            <div class="status-row" id="statusNextRow">
+                <div class="status-label">Następny krok</div>
+                <div class="status-value" id="statusNext">Oczekiwanie na rozpoczęcie gry.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card log-card">
+        <header class="log-head">
+            <h2>Historia zdarzeń</h2>
+            <div class="log-meta" id="logMeta">Ostatnie wpisy pojawią się poniżej.</div>
+        </header>
+        <ol class="status-log-list" id="statusLog" aria-live="polite" aria-label="Historia zdarzeń"></ol>
+    </section>
+</main>
+
+<footer class="page-footer">
+    <p>Ten widok można otworzyć na dodatkowym ekranie, korzystając z adresu <code>/host-status.html</code>.</p>
+    <p>Aby wrócić do pełnego panelu prowadzącego, przejdź na <a href="/host.html">/host.html</a>.</p>
+</footer>
+
+<script type="module" src="/js/host-status.js"></script>
+</body>
+</html>
