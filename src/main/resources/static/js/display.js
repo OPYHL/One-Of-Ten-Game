@@ -12,15 +12,17 @@ const gridClamp = document.getElementById('gridClamp');
 const grid     = document.getElementById('grid');
 const banner   = document.getElementById('banner');
 
-const stage       = document.getElementById('stage');
-const stageName   = document.getElementById('stageName');
-const stageAv     = document.getElementById('stageAv');
-const stageSeat   = document.getElementById('stageSeat');
-const stageJudge  = document.getElementById('stageJudge');
-const stageCd     = document.getElementById('stageCountdown');
-const stageScore  = document.getElementById('stageScore');
-const stageLives  = document.getElementById('stageLives');
-const stageTimer  = document.getElementById('stageTimer');
+const stage          = document.getElementById('stage');
+const stageName      = document.getElementById('stageName');
+const stageAv        = document.getElementById('stageAv');
+const stageSeat      = document.getElementById('stageSeat');
+const stageJudge     = document.getElementById('stageJudge');
+const stageCd        = document.getElementById('stageCountdown');
+const stageScore     = document.getElementById('stageScore');
+const stageLives     = document.getElementById('stageLives');
+const stageTimer     = document.getElementById('stageTimer');
+const stageAvatar    = document.getElementById('stageAvatar');
+const stageFallback  = document.getElementById('stageAvatarFallback');
 
 const questionBoard = document.getElementById('questionBoard');
 const qDiff = document.getElementById('qDiff');
@@ -583,11 +585,40 @@ function cardFor(p, st, w){
 }
 
 /* ============== Scena (środek) ============== */
+function updateStageAvatarFallback(text){
+  if (!stageFallback) return;
+  const trimmed = (text || '').trim();
+  if (!trimmed){
+    stageFallback.textContent = '—';
+    return;
+  }
+  const first = [...trimmed][0] || '—';
+  try {
+    stageFallback.textContent = first.toLocaleUpperCase('pl-PL');
+  } catch {
+    stageFallback.textContent = first.toUpperCase();
+  }
+}
+
+function refreshStageAvatarState(){
+  if (!stageAv || !stageAvatar) return;
+  const ok = stageAv.complete && stageAv.naturalWidth > 1 && stageAv.naturalHeight > 1;
+  stageAvatar.classList.toggle('empty', !ok);
+}
+
+if (stageAv){
+  stageAv.addEventListener('load', refreshStageAvatarState);
+  stageAv.addEventListener('error', refreshStageAvatarState);
+}
+
 function showStage(p, phase){
   const name = normName(p);
-  stageName.textContent = name || `Gracz ${p.id}`;
+  const displayName = name || `Gracz ${p.id}`;
+  stageName.textContent = displayName;
   stageSeat.textContent = `Stanowisko ${p.id}`;
+  updateStageAvatarFallback(displayName);
   stageAv.src = avatarFor(p, phase==='ANSWERING' ? 'knowing' : 'idle');
+  refreshStageAvatarState();
 
   if (stageScore){
     const score = typeof p.score === 'number' ? p.score : 0;
@@ -611,6 +642,7 @@ function showStage(p, phase){
 function hideStage(){
   stage.classList.remove('show');
   stageJudge.className = 'stage-judge';
+  stageJudge.textContent = '';
   stageTimer?.classList.add('hidden');
   stageCd.classList.add('hidden');
 }
