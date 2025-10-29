@@ -653,7 +653,7 @@ function handleEvent(ev){
   else if (ev.type === 'CUE') {
     if (ev.value === 'INTRO')  { hideCenter(); showBanner('Intro…');  safePlayWithAck(sounds.INTRO, '/app/introDone'); }
     if (ev.value === 'BOOM')   { showCenter('Za chwilę nowe pytanie…','Prowadzący przygotowuje wybór'); safePlayWithAck(sounds.BOOM,  '/app/boomDone'); }
-    if (ev.value === 'START_Q'){ hideCenter(); showBanner('Prowadzący czyta pytanie…'); play('BOOM'); }
+    if (ev.value === 'START_Q'){ hideCenter(); showBanner('Prowadzący czyta pytanie…'); }
   }
 
   else if (ev.type === 'RESET') {
