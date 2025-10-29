@@ -43,6 +43,7 @@ function updateProgressBar(totalMs, remainingMs){
   const remaining = Math.max(0, Math.min(Number.isFinite(remainingMs) ? remainingMs : total, total));
   const pct = total > 0 ? Math.max(0, Math.min(1, (total - remaining) / total)) : 0;
   pb.style.width = (pct * 100).toFixed(1) + '%';
+  updateClockProgress(pct);
 }
 
 async function ensureInitialData(){
@@ -231,6 +232,7 @@ const bus = connect({
         document.body.classList.remove('me-answering');
         avImg.classList.remove('ping');
         setKnowLabel('Znam odpowiedź!');
+        setClockActive(false);
       }
       document.body.classList.remove('me-won','me-pending','me-choosing','me-picked');
       pendingBuzz = false;
@@ -238,6 +240,7 @@ const bus = connect({
     else if (phase === 'SELECTING'){
       setStatus('Zwycięzca wybiera przeciwnika…');
       lockKnow(true);
+      setClockActive(false);
       // rola i highlighty ustawią się w onEvent
     }
     else if (phase === 'ANNOTATION'){
@@ -245,6 +248,7 @@ const bus = connect({
       lockKnow(true);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked');
       avImg.classList.remove('ping');
+      setClockActive(false);
     }
     else if (phase === 'INTRO'){
       setStatus('Intro…');
@@ -263,6 +267,7 @@ const bus = connect({
       avImg.classList.remove('ping');
       hideRole();
       setKnowLabel('Znam odpowiedź!');
+      setClockActive(false);
     }
   },
   onEvent: ev => {

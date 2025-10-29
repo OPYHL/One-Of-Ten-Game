@@ -73,6 +73,13 @@ const stageButtons = {};
 
 const toastEl = document.getElementById('toast');
 
+const sounds = {
+  INTRO: document.getElementById('sndIntro'),
+  GOOD:  document.getElementById('sndGood'),
+  WRONG: document.getElementById('sndWrong'),
+  BOOM:  document.getElementById('sndBoom'),
+};
+
 const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeHeading  = document.getElementById('welcomeHeading');
 const welcomeTitle    = document.getElementById('welcomeTitle');
@@ -297,6 +304,20 @@ const bus = connect({
   onEvent: ev => handleEvent(ev),
   onTimer: t => handleTimer(t),
 });
+
+function playSound(key){
+  const audio = sounds[key];
+  if (!audio) return;
+  try {
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise && typeof playPromise.catch === 'function'){
+      playPromise.catch(()=>{});
+    }
+  } catch {
+    /* ignore playback errors */
+  }
+}
 
 loadCatalog();
 startClock();
@@ -1719,6 +1740,15 @@ function handleEvent(ev){
     ansJudge.textContent = ev.value==='CORRECT' ? '✓' : '✗';
     ansJudge.className   = 'judge show ' + (ev.value==='CORRECT'?'good':'bad');
     setTimeout(()=> ansJudge.className='judge', 1000);
+    playSound(ev.value === 'CORRECT' ? 'GOOD' : 'WRONG');
+  }
+  if (ev.type === 'CUE'){
+    const cue = (ev.value || '').toUpperCase();
+    if (cue === 'INTRO'){
+      playSound('INTRO');
+    } else if (cue === 'BOOM' || cue === 'START_Q'){
+      playSound('BOOM');
+    }
   }
   if (ev.type === 'QUESTION_SELECTED'){
     readingStartPending = false;
