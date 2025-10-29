@@ -351,6 +351,7 @@ function renderQuestionBoard(st){
   }
   const phase = st.phase || '';
   const isReadingPhase = phase === 'SELECTING' || phase === 'READING';
+  const isPreparing = !!active.preparing;
   const showMeta = Boolean(active.revealed) && !isReadingPhase;
   qDiff.textContent = showMeta ? (active.difficulty || '—') : '—';
   qCat.textContent  = showMeta ? (active.category || '—')   : '—';
@@ -362,7 +363,13 @@ function renderQuestionBoard(st){
     qText.textContent = active.question || '—';
     questionBoard.classList.add('revealed');
   } else {
-    qText.textContent = 'Czekamy na pytanie prowadzącego…';
+    if (phase === 'READING' && !isPreparing){
+      qText.textContent = 'Prowadzący czyta pytanie…';
+    } else if (isPreparing){
+      qText.textContent = 'Prowadzący przygotowuje pytanie…';
+    } else {
+      qText.textContent = 'Czekamy na pytanie prowadzącego…';
+    }
     questionBoard.classList.remove('revealed');
   }
   if (shouldShowAnswer(st.phase)){
