@@ -11,11 +11,13 @@ const btnBad      = document.getElementById('btnBad');
 const btnNext     = document.getElementById('btnNext');
 const btnReset    = document.getElementById('btnReset');
 const btnNew      = document.getElementById('btnNew');
+const btnMusic    = document.getElementById('btnMusic');
 const btnSelectQuestion = document.getElementById('btnSelectQuestion');
 const btnHudToggle = document.getElementById('btnHudToggle');
 const topbarEl       = document.getElementById('topbar');
 const hudMenu        = document.getElementById('hudMenu');
 const hudExtras      = document.getElementById('hudExtras');
+const hostMusicEl    = document.getElementById('hostMusic');
 const topActionsEl   = document.querySelector('.top-actions');
 const topActionsHome = topActionsEl ? topActionsEl.parentElement : null;
 const TOPBAR_COLLAPSE_WIDTH = 560;
@@ -155,6 +157,17 @@ if (btnHudToggle && topbarEl){
   } else if (hudMedia.addListener){
     hudMedia.addListener(handleMedia);
   }
+}
+
+if (btnMusic && hostMusicEl){
+  btnMusic.addEventListener('click', async () => {
+    hostMusicEl.currentTime = 0;
+    try {
+      await hostMusicEl.play();
+    } catch (error){
+      console.warn('Nie udało się odtworzyć pliku audio.', error);
+    }
+  });
 }
 
 function ensureTopActionsHome(){
