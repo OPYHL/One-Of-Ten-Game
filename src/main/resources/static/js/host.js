@@ -168,17 +168,19 @@ function measureCollapseNeeded(){
   const gap = parseFloat(gapRaw) || 0;
 
   const brandEl = topbarEl.querySelector('.brand');
+  const hudEl = topbarEl.querySelector('.hud');
+
   const brandRect = brandEl ? brandEl.getBoundingClientRect() : { width: 0, top: 0 };
+  const hudRect = hudEl ? hudEl.getBoundingClientRect() : { width: 0, top: 0 };
   const actionsRect = topActionsEl.getBoundingClientRect();
   const availableWidth = topbarEl.clientWidth;
 
-  const topbarRect = topbarEl.getBoundingClientRect();
-  const wrapDetected = brandRect.width > 0
-    ? (actionsRect.top - brandRect.top) > 8
-    : (actionsRect.top - topbarRect.top) > 8;
+  const rects = [brandRect, hudRect, actionsRect].filter(rect => rect.width > 0);
+  const tops = rects.map(rect => rect.top);
+  const wrapDetected = tops.length > 1 ? (Math.max(...tops) - Math.min(...tops)) > 8 : false;
 
-  const baseGap = (brandRect.width > 0 && actionsRect.width > 0) ? gap : 0;
-  const essentialWidth = brandRect.width + actionsRect.width + baseGap;
+  const baseGap = rects.length > 1 ? gap * (rects.length - 1) : 0;
+  const essentialWidth = rects.reduce((total, rect) => total + rect.width, 0) + baseGap;
   const topRowOverflow = essentialWidth > (availableWidth + 2);
 
   const shouldCollapse = topRowOverflow || wrapDetected;
