@@ -213,6 +213,7 @@ body.waiting-mode #gridWrap{ display:none; }
   display:grid; grid-template-columns:auto minmax(0,1fr);
   align-items:center; gap:36px;
   pointer-events:auto; position:relative;
+  overflow:hidden;
 }
 #stage .stage-avatar{
   position:relative;
@@ -250,46 +251,63 @@ body.waiting-mode #gridWrap{ display:none; }
   box-shadow:0 16px 44px rgba(3,8,22,.45);
   white-space:nowrap;
 }
-#stage .stage-body{ min-width:0; display:flex; flex-direction:column; gap:28px; align-items:flex-start; }
+#stage .stage-body{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+  align-items:flex-start;
+  padding-right:220px;
+}
 #stage .stage-header{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-between;
   gap:18px;
   width:100%;
 }
-#stage .stage-meta{ display:flex; align-items:center; gap:18px; }
+#stage .stage-meta{
+  position:absolute;
+  top:50%;
+  right:36px;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:24px;
+}
 #stage .stage-name{
   flex:1 1 auto; min-width:0;
   font-size:44px; font-weight:900; letter-spacing:.5px; color:#f4f8ff;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 #stage .stage-score{
-  flex:0 0 auto;
-  display:inline-flex;
+  min-width:200px;
+  display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:8px;
-  padding:14px 20px;
-  border-radius:16px;
-  border:1px solid rgba(74,110,202,.45);
-  background:rgba(59,109,246,.14);
+  gap:10px;
+  padding:20px 28px;
+  border-radius:18px;
+  border:1px solid rgba(74,110,202,.55);
+  background:rgba(59,109,246,.18);
   color:#d7e5ff;
   font-weight:800;
-  font-size:18px;
+  font-size:22px;
   letter-spacing:.04em;
-  box-shadow:0 16px 44px rgba(5,12,30,.35);
+  box-shadow:0 22px 64px rgba(5,12,30,.4);
   font-variant-numeric:tabular-nums;
   text-align:center;
 }
 #stage .stage-score::before{
   content:"Wynik";
-  font-size:12px;
-  letter-spacing:.18em;
+  font-size:13px;
+  letter-spacing:.22em;
   font-weight:700;
   text-transform:uppercase;
-  color:rgba(156,178,217,.78);
+  color:rgba(181,199,236,.82);
   display:block;
 }
 #stage .stage-info{
@@ -391,17 +409,43 @@ body.waiting-mode #gridWrap{ display:none; }
   transition:width .18s ease;
 }
 #stage .stage-judge{
-  min-width:100px;
-  display:flex; align-items:center; justify-content:center;
+  min-width:120px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   padding:0 12px;
   text-align:center;
-  font-weight:900; font-size:58px; opacity:0; transform:scale(.9);
+  font-weight:900;
+  font-size:58px;
+  opacity:0;
+  transform:scale(.9);
   transition:opacity .22s ease, transform .22s ease;
 }
 #stage .stage-judge:empty{ display:none; }
 #stage .stage-judge.show{ opacity:1; transform:none }
 #stage .stage-judge.good{ color:#1fdf9e }
 #stage .stage-judge.bad{ color:#ff5b6b }
+
+@media (max-width: 960px){
+  #stage .stage-body{ padding-right:0; }
+  #stage .stage-header{ align-items:center; }
+  #stage .stage-meta{
+    position:static;
+    transform:none;
+    flex-direction:row;
+    align-items:center;
+    justify-content:flex-end;
+    gap:18px;
+    width:100%;
+    margin-top:12px;
+  }
+  #stage .stage-score{
+    min-width:0;
+    padding:16px 22px;
+    font-size:18px;
+  }
+  #stage .stage-score::before{ font-size:12px; letter-spacing:.18em; }
+}
 
 /* ===================== CENTER-CARD (info & buzzing) ===================== */
 #centerBox{
