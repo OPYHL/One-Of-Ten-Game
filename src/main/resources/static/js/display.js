@@ -443,13 +443,16 @@ function renderGrid(players, st){
 
   const scaledH = Math.round(L.height * L.scale);
   const baseBottom = baseFloor;
-  const lift = L.rows > 0 ? Math.max(0, bottomMargin - baseBottom) : 0;
+  const availableWrap = Math.max(0, ch - baseBottom);
+  const desiredLift = L.rows > 0 ? Math.max(0, bottomMargin - baseBottom) : 0;
+  const maxLift = Math.max(0, availableWrap - scaledH);
+  const lift = Math.min(desiredLift, maxLift);
   const paddingBottom = L.rows > 1
     ? Math.max(18, Math.round((baseBottom + lift) * 0.65))
     : Math.max(0, Math.round((baseBottom + lift) * 0.4));
-  const availableWrap = Math.max(0, ch - baseBottom);
+  const desiredWrap = scaledH + lift + paddingBottom;
   const wrapHeight = L.rows > 0
-    ? Math.max(scaledH, Math.min(availableWrap, scaledH + paddingBottom))
+    ? Math.min(availableWrap, Math.max(scaledH + lift, desiredWrap))
     : 0;
 
   gridWrap.style.height = wrapHeight ? wrapHeight + 'px' : '';
