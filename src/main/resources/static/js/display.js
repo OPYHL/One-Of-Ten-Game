@@ -317,7 +317,7 @@ function render(){
   } else if (st.phase === 'ANNOTATION') {
     showCenter('Prowadzący omawia adnotację…','Za chwilę kolejny krok.');
   } else if (st.phase === 'ANSWERING') {
-    hideCenter(); banner.classList.remove('show');
+    hideCenter(); banner?.classList.remove('show');
   } else {
     hideCenter();
     hideBanner();
@@ -700,8 +700,12 @@ function hideStage(){
 }
 
 /* ===== Banery / Cooldown ===== */
-function showBanner(t){ banner.textContent = t; banner.classList.add('show'); }
-function hideBanner(){ banner.classList.remove('show'); }
+function showBanner(t){
+  if (!banner) return;
+  banner.textContent = t;
+  banner.classList.add('show');
+}
+function hideBanner(){ banner?.classList.remove('show'); }
 /* ============== Events ============== */
 function handleEvent(ev){
   if (!ev) return;

@@ -125,32 +125,15 @@ img{ max-width:100%; display:block }
 body.waiting-mode #questionBoard,
 body.waiting-mode #stage,
 body.waiting-mode #centerBox,
-body.waiting-mode #timebarWrap,
-body.waiting-mode #banner{
+body.waiting-mode #timebarWrap{
   display:none !important;
 }
 body.waiting-mode #gridWrap{ display:none; }
 
-/* --------- baner (komunikaty nad siatką) ---------- */
-.banner{
-  position:fixed;
-  top:24px;
-  left:50%;
-  transform:translate(-50%, -16px);
-  min-width:min(980px,76vw);
-  padding:12px 16px; border-radius:14px;
-  background:linear-gradient(180deg,#101a31 0%, #0f172b 100%);
-  border:1px solid #213358; color:#dbe7ff;
-  box-shadow:0 18px 60px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.02);
-  opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
-  z-index:32;
-}
-.banner.show{ opacity:1; transform:translate(-50%,0) }
-
 
 /* ===================== TABLICA PYTANIA ===================== */
 #questionBoard{
-  position:fixed; top:88px; left:50%; transform:translateX(-50%);
+  position:fixed; top:56px; left:50%; transform:translateX(-50%);
   width:min(1100px,88vw); z-index:28;
 }
 #questionBoard .question-card{
@@ -426,7 +409,6 @@ body.waiting-mode #gridWrap{ display:none; }
 }
 @media (max-width:760px){
   #hud{ inset:8px }
-  .banner{ min-width:auto; width:96vw }
   #stage{ inset:96px 0 10px }
   #stage .stage-card{
     grid-template-columns:1fr;
