@@ -359,11 +359,8 @@ function renderQuestionBoard(st){
   if (active.revealed){
     qText.textContent = active.question || '—';
     questionBoard.classList.add('revealed');
-  } else if (active.preparing){
-    qText.textContent = 'Prowadzący przygotowuje pytanie…';
-    questionBoard.classList.remove('revealed');
   } else {
-    qText.textContent = 'Prowadzący czyta pytanie…';
+    qText.textContent = 'Czekamy na pytanie prowadzącego…';
     questionBoard.classList.remove('revealed');
   }
   if (shouldShowAnswer(st.phase)){

@@ -196,7 +196,8 @@ body.waiting-mode #gridWrap{ display:none; }
   border:1px solid #213358; border-radius:20px;
   box-shadow:0 30px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
   padding:28px 32px;
-  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:32px;
+  display:flex; align-items:center; gap:32px;
+  flex-wrap:wrap;
   pointer-events:auto; position:relative;
 }
 #stage .stage-avatar{
@@ -213,17 +214,31 @@ body.waiting-mode #gridWrap{ display:none; }
   color:#e1ecff; font-weight:800; font-size:14px; letter-spacing:.12em; text-transform:uppercase;
   box-shadow:0 14px 40px rgba(3,8,22,.45);
 }
-#stage .stage-body{ display:flex; flex-direction:column; gap:24px; }
-#stage .stage-header{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px; }
-#stage .stage-name{ font-size:44px; font-weight:900; letter-spacing:.5px; color:#f4f8ff; }
+#stage .stage-body{ flex:1 1 420px; min-width:0; display:flex; flex-direction:column; gap:24px; }
+#stage .stage-header{ display:flex; flex-wrap:nowrap; align-items:center; gap:18px; width:100%; }
+#stage .stage-name{
+  flex:1 1 auto; min-width:0;
+  font-size:44px; font-weight:900; letter-spacing:.5px; color:#f4f8ff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
 #stage .stage-score{
-  padding:8px 16px; border-radius:14px; border:1px solid rgba(74,110,202,.45);
-  background:rgba(59,109,246,.14); color:#9bb7ff;
-  font-weight:800; font-size:18px; letter-spacing:.08em; text-transform:uppercase;
-  box-shadow:0 14px 36px rgba(5,12,30,.35);
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  padding:12px 18px;
+  border-radius:16px; border:1px solid rgba(74,110,202,.45);
+  background:rgba(59,109,246,.14); color:#d7e5ff;
+  font-weight:800; font-size:18px; letter-spacing:.04em;
+  box-shadow:0 16px 44px rgba(5,12,30,.35);
+  margin-left:auto;
+  font-variant-numeric:tabular-nums;
+}
+#stage .stage-score::before{
+  content:"Wynik";
+  font-size:12px; letter-spacing:.18em; font-weight:700; text-transform:uppercase;
+  color:rgba(156,178,217,.78);
 }
 #stage .stage-stats{ display:flex; flex-wrap:wrap; gap:26px; align-items:center; }
-#stage .stage-lives{ display:flex; align-items:center; gap:14px; }
+#stage .stage-lives{ display:flex; flex-wrap:wrap; align-items:center; gap:14px; min-height:34px; }
 #stage .stage-lives .heart{ width:34px; height:34px; fill:#ff6b81; filter:drop-shadow(0 10px 26px rgba(255,107,129,.35)); }
 #stage .stage-lives .heart.dead{ opacity:.28; filter:none; }
 #stage .stage-timer{
@@ -241,12 +256,23 @@ body.waiting-mode #gridWrap{ display:none; }
   box-shadow:0 16px 44px rgba(6,12,28,.45);
 }
 #stage .stage-judge{
+  flex:0 0 auto;
+  min-width:0;
+  display:flex; align-items:center; justify-content:center;
+  padding:0;
+  text-align:center;
+  margin-left:auto;
   font-weight:900; font-size:58px; opacity:0; transform:scale(.9);
   transition:opacity .22s ease, transform .22s ease;
 }
+#stage .stage-judge:empty{ display:none; }
 #stage .stage-judge.show{ opacity:1; transform:none }
 #stage .stage-judge.good{ color:#1fdf9e }
 #stage .stage-judge.bad{ color:#ff5b6b }
+#stage .stage-judge.show{
+  min-width:140px;
+  padding:0 24px;
+}
 
 /* ===================== CENTER-CARD (info & buzzing) ===================== */
 #centerBox{
@@ -380,7 +406,13 @@ body.waiting-mode #gridWrap{ display:none; }
   #hud{ inset:8px }
   .banner{ min-width:auto; width:96vw }
   #stage{ inset:96px 0 10px }
-  #stage .stage-card{ grid-template-columns:auto 1fr; gap:22px; padding:22px 24px }
+  #stage .stage-card{ padding:24px; gap:22px; justify-content:center }
+  #stage .stage-body{ flex:1 1 100%; align-items:center; text-align:center }
+  #stage .stage-header{ flex-direction:column; gap:14px }
+  #stage .stage-name{ white-space:normal }
+  #stage .stage-score{ margin-left:0; width:100%; justify-content:center }
+  #stage .stage-stats{ justify-content:center }
+  #stage .stage-judge{ width:100%; margin-left:0 }
   #stage .stage-avatar{ width:120px; height:120px }
   #stage .stage-avatar img{ width:92px; height:92px }
   #stage .stage-name{ font-size:28px }
