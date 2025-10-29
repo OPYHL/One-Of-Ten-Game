@@ -282,17 +282,17 @@ body.waiting-mode #gridWrap{ display:none; }
   flex-wrap:wrap;
   gap:22px;
   align-items:stretch;
+  justify-content:center;
 }
 #stage .stage-lives{
-  flex:1 1 260px;
-  min-height:74px;
+  flex:0 1 320px;
+  min-height:0;
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
   gap:16px;
-  row-gap:12px;
-  padding:16px 22px;
+  padding:18px 24px;
   border-radius:18px;
   border:1px solid rgba(74,110,202,.32);
   background:rgba(16,26,46,.68);
@@ -306,9 +306,17 @@ body.waiting-mode #gridWrap{ display:none; }
   letter-spacing:.18em;
   text-transform:uppercase;
   color:rgba(156,178,217,.82);
-  margin-right:12px;
+  text-align:center;
+  display:block;
+  width:100%;
 }
-#stage .stage-lives .heart{ width:34px; height:34px; fill:#ff6b81; filter:drop-shadow(0 10px 26px rgba(255,107,129,.35)); }
+#stage .stage-hearts{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+}
+#stage .stage-lives .heart{ width:28px; height:28px; fill:#ff6b81; filter:drop-shadow(0 10px 26px rgba(255,107,129,.35)); }
 #stage .stage-lives .heart.dead{ opacity:.24; filter:none; }
 #stage .stage-timer{
   flex:0 1 320px;
