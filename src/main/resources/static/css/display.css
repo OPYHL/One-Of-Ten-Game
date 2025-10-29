@@ -280,7 +280,7 @@ body.waiting-mode #gridWrap{ display:none; }
 #gridWrap{
   position:fixed;
   inset:auto 0 0;
-  padding:6px 24px 10px;
+  padding:6px 24px 0;
   z-index:20;
   display:flex;
   justify-content:center;
@@ -305,10 +305,17 @@ body.waiting-mode #gridWrap{ display:none; }
 #grid{
   transform-origin:50% 100%;
   transform:scale(var(--scale,1));
-  display:grid; gap:24px; justify-items:center; align-items:end;
+  display:grid;
+  row-gap:var(--grid-gap-y, 24px);
+  justify-items:center;
+  align-items:end;
 }
-.row{ display:grid; gap:var(--grid-gap-y) var(--grid-gap-x); justify-content:center }
-.row.top{ margin-bottom:var(--grid-gap-y) }
+.row{
+  display:grid;
+  gap:var(--grid-gap-y, 24px) var(--grid-gap-x, 24px);
+  justify-content:center;
+}
+.row.top{ margin-bottom:0 }
 
 .card{
   width:var(--w); height:var(--h); position:relative;
