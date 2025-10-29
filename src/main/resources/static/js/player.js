@@ -223,23 +223,23 @@ const bus = connect({
     // Fazy – status i highlighty
     if (phase === 'READING'){
       const meAns = st.answeringId === myId;
-      setStatus(meAns ? 'Twoje pytanie — słuchaj prowadzącego…' : 'Prowadzący czyta pytanie…');
+      setKnowLabel(meAns ? 'Twoje pytanie — słuchaj prowadzącego…' : 'Prowadzący czyta pytanie…');
+      setStatus(meAns ? 'Za chwilę możliwość zgłoszenia.' : 'Czekaj na możliwość zgłoszenia.');
       lockKnow(true);
       if (meAns) { showRole('Odpowiadasz', 'ok'); }
       else { hideRole(); }
       resetResultFx();
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
       avImg.classList.remove('ping');
-      setKnowLabel('Znam odpowiedź!');
     }
     else if (phase === 'BUZZING'){
-      setStatus('Kliknij „Znam odpowiedź!”, jeśli znasz!');
       const banned = document.body.classList.contains('me-banned');
+      setStatus(banned ? 'Nie możesz zgłosić się ponownie.' : 'Możesz się zgłosić klikając powyżej.');
       lockKnow(banned);
       if (!banned){
         pendingBuzz = false;
         document.body.classList.remove('me-won','me-answering','me-choosing','me-picked');
-        setKnowLabel('Znam odpowiedź!');
+        setKnowLabel('Zgłoś się!');
       } else {
         setKnowLabel('Już odpowiadałeś');
         showRole('Nie możesz w tej rundzie odpowiadać', 'bad');
@@ -248,7 +248,8 @@ const bus = connect({
     }
     else if (phase === 'ANSWERING'){
       const meAns = st.answeringId === myId;
-      setStatus(meAns ? 'ODPOWIADASZ — masz 10 sekund!' : 'Ktoś inny odpowiada…');
+      setKnowLabel(meAns ? 'ODPOWIADASZ!' : 'Trwa odpowiedź…');
+      setStatus(meAns ? 'Masz 10 sekund na odpowiedź.' : 'Czekaj na kolejne pytanie.');
       lockKnow(true);
       if (meAns){
         answeredTotal++;
@@ -256,47 +257,47 @@ const bus = connect({
         document.body.classList.add('me-answering');
         avImg.classList.add('ping');
         if (navigator.vibrate) try{ navigator.vibrate([90,40,90]); }catch{}
-        setKnowLabel('ODPOWIADASZ!');
         resetResultFx();
       } else {
         document.body.classList.remove('me-answering');
         avImg.classList.remove('ping');
-        setKnowLabel('Znam odpowiedź!');
         setClockActive(false);
       }
       document.body.classList.remove('me-won','me-pending','me-choosing','me-picked');
       pendingBuzz = false;
     }
     else if (phase === 'SELECTING'){
-      setStatus('Zwycięzca wybiera przeciwnika…');
+      setKnowLabel('Zwycięzca wybiera przeciwnika…');
+      setStatus('Czekaj na wynik wyboru.');
       lockKnow(true);
       setClockActive(false);
       // rola i highlighty ustawią się w onEvent
     }
     else if (phase === 'ANNOTATION'){
-      setStatus('Prowadzący omawia adnotację…');
+      setKnowLabel('Prowadzący omawia pytanie…');
+      setStatus('Czekaj na dalsze instrukcje.');
       lockKnow(true);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked');
       avImg.classList.remove('ping');
       setClockActive(false);
     }
     else if (phase === 'INTRO'){
-      setStatus('Intro…');
+      setKnowLabel('Intro programu…');
+      setStatus('Za chwilę rozpocznie się rozgrywka.');
       lockKnow(true);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
       avImg.classList.remove('ping');
       hideRole();
-      setKnowLabel('Znam odpowiedź!');
       resetResultFx();
     }
     else {
-      setStatus('Czekaj na kolejne pytanie…');
+      setKnowLabel('Czekaj na kolejne pytanie…');
+      setStatus('Przycisk będzie aktywny, gdy będzie można się zgłosić.');
       lockKnow(true);
       pb.style.width='0%';
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
       avImg.classList.remove('ping');
       hideRole();
-      setKnowLabel('Znam odpowiedź!');
       setClockActive(false);
     }
   },
@@ -371,7 +372,7 @@ const bus = connect({
       } else {
         document.body.classList.remove('me-won');
         hideRole();
-        setKnowLabel('Znam odpowiedź!');
+        setKnowLabel('Zgłoś się!');
       }
     }
 
@@ -401,7 +402,7 @@ const bus = connect({
       if (ev.value === 'CORRECT'){ correctTotal++; showToast('✓ DOBRA ODPOWIEDŹ', 'ok'); showResultFx('ok'); }
       else { showToast('✗ ZŁA ODPOWIEDŹ', 'bad'); shakeToast(); showResultFx('bad'); }
       document.body.classList.remove('me-won','me-answering','me-choosing','me-picked');
-      setKnowLabel('Znam odpowiedź!');
+      setKnowLabel('Czekaj na kolejne pytanie…');
     }
   },
   onTimer: t => {
@@ -518,14 +519,19 @@ function disableChooseGrid(){
 }
 
 /* ====== HELPERS ====== */
-function setStatus(t){ statusEl.textContent = t; }
+function setStatus(t){
+  if (!statusEl) return;
+  statusEl.textContent = t || '';
+}
 function lockKnow(lock){
+  if (!btnKnow) return;
   btnKnow.disabled = !!lock;
   btnKnow.classList.toggle('locked', !!lock); // CSS dopisuje kłódkę itp.
 }
 function setKnowLabel(t){
-  const span = btnKnow.querySelector('span');
-  if (span) span.textContent = t; else btnKnow.textContent = t;
+  const label = document.getElementById('knowLabel');
+  if (label) label.textContent = t;
+  else if (btnKnow) btnKnow.textContent = t;
 }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
@@ -568,7 +574,7 @@ function hideOutOverlay(){
   if (outPlace) outPlace.textContent = '';
   if (btnKnow) btnKnow.style.removeProperty('display');
   if (playerBarEl) playerBarEl.style.removeProperty('display');
-  setKnowLabel('Znam odpowiedź!');
+  setKnowLabel('Czekaj na kolejne pytanie…');
   document.body.classList.remove('me-out');
   iAmOut = false;
 }

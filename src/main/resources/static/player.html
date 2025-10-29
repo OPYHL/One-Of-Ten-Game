@@ -48,16 +48,15 @@
             </div>
         </div>
 
-        <div class="center" style="margin:14px 0 6px">
-            <div id="status" class="mini">Czekaj na rozpoczęcie…</div>
-        </div>
-
         <div id="questionWrap" class="playerQuestion" style="display:none">
             <div class="mini">Pytanie od prowadzącego</div>
             <div id="questionText" class="playerQuestionText">—</div>
         </div>
 
-        <button id="know" style="width:100%" disabled>Znam odpowiedź!</button>
+        <button id="know" style="width:100%" disabled>
+            <span id="knowLabel">Czekaj na rozpoczęcie…</span>
+            <span id="status" class="mini">Przycisk będzie aktywny, gdy będzie można się zgłosić.</span>
+        </button>
         <div class="playerBar"><i id="pb"></i></div>
 
         <!-- overlay po eliminacji -->

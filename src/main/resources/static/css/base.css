@@ -261,15 +261,14 @@ body.playerPage{
 .modal .row{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:10px }
 .modalBackdrop.show{ display:flex }
 
-/* === LOCKED state for player "Znam odpowiedź!" === */
-#know{ position:relative }
+/* === Player action button (zgłoś się) === */
+#know{ position:relative; display:flex; flex-direction:column; gap:6px; align-items:center; text-align:center }
 #know.locked,
 #know.locked[disabled]{
   background:#142036;           /* ciemniejszy niż zwykły disabled */
   border-color:#2a3b5f;
   color:#9fb0d1;
   cursor:not-allowed;
-  padding-left:40px;            /* miejsce na ikonę */
   box-shadow:inset 0 0 0 1px rgba(74,163,255,.06);
   animation: lockPulse 1.6s ease-out infinite;
 }
@@ -291,6 +290,18 @@ body.playerPage{
 <path fill=\"black\" d=\"M12 1a5 5 0 0 1 5 5v3h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3v3h6V6a3 3 0 0 0-3-3Z\"/>\
 </svg>') no-repeat center / contain;
   opacity:.95;
+}
+
+#knowLabel{
+  font-size:22px;
+  font-weight:800;
+  letter-spacing:.2px;
+}
+
+#know .mini{
+  font-size:13px;
+  color:var(--muted);
+  font-weight:600;
 }
 
 /* Delikatny puls, żeby było czytelne, że „czekamy” (cooldown) */
