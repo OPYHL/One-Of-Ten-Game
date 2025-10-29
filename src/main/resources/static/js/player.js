@@ -8,7 +8,28 @@ const nameInput = document.getElementById('name');
 const genderSel = document.getElementById('gender');
 const btnNext1  = document.getElementById('next1');
 const btnNext2  = document.getElementById('next2');
+const btnNext3  = document.getElementById('next3');
+const btnJoin   = document.getElementById('join');
 const btnKnow   = document.getElementById('know');
+
+const seatButtons = Array.from(document.querySelectorAll('[data-seat]'));
+const genderCards = Array.from(document.querySelectorAll('[data-gender]'));
+const avatarCards = Array.from(document.querySelectorAll('[data-avatar]'));
+const backButtons = Array.from(document.querySelectorAll('[data-back-step]'));
+
+const seatHint = document.getElementById('seatHint');
+const nameHint = document.getElementById('nameHint');
+const genderHint = document.getElementById('genderHint');
+const avatarHint = document.getElementById('avatarHint');
+const summarySeat = document.getElementById('summarySeat');
+const summaryName = document.getElementById('summaryName');
+const summaryGender = document.getElementById('summaryGender');
+const avatarPreview = document.getElementById('avatarPreview');
+const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+const playerAvatarEl = document.getElementById('playerAvatar');
+
+const stepOrder = ['stepSeat','stepName','stepGender','stepAvatar','stepGame'];
+let currentStep = 'stepSeat';
 
 const livesEl   = document.getElementById('lives');
 const scoreEl   = document.getElementById('score');
@@ -33,7 +54,7 @@ const chooseBackdrop = document.getElementById('chooseBackdrop');
 const chooseGrid     = document.getElementById('chooseGrid');
 
 /* ====== LOCAL STATE ====== */
-let myId = null, myGender = 'MALE', phase = 'IDLE';
+let myId = null, myGender = genderSel?.value || '', phase = 'IDLE';
 let myLives = 3, myScore = 0, answeredTotal = 0, correctTotal = 0;
 let lastState = null;
 let totalAnswerMs = 10000;
@@ -41,6 +62,206 @@ let latestTimerRemainingMs = 0;
 let resultHideTimer = null;
 let clockActive = false;
 let iAmOut = false;
+
+let selectedSeat = slotInput?.value ? parseInt(slotInput.value, 10) || null : null;
+let selectedAvatarTheme = null;
+const avatarThemes = ['classic','sunrise','forest','midnight'];
+
+function showStep(stepId){
+  if (!stepId || !stepOrder.includes(stepId)) return;
+  stepOrder.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === stepId ? 'block' : 'none';
+  });
+  currentStep = stepId;
+}
+
+function seatTakenByOther(id){
+  if (!lastState || !Number.isInteger(id)) return false;
+  const pl = lastState.players?.find(p => p.id === id);
+  if (!pl) return false;
+  if (!isSeatJoined(pl)) return false;
+  if (myId && myId === id) return false;
+  const nm = (nameInput?.value || '').trim().toLowerCase();
+  const plName = (pl.name || '').trim().toLowerCase();
+  if (nm && plName && nm === plName) return false;
+  return true;
+}
+
+function updateSeatButtons(){
+  seatButtons.forEach(btn => {
+    const id = parseInt(btn.dataset.seat, 10);
+    if (!Number.isInteger(id)) return;
+    const taken = seatTakenByOther(id);
+    btn.classList.toggle('selected', id === selectedSeat);
+    btn.classList.toggle('taken', taken);
+    btn.setAttribute('aria-checked', id === selectedSeat ? 'true' : 'false');
+    btn.setAttribute('aria-label', `Stanowisko ${id}${taken ? ' — zajęte' : ''}`);
+  });
+}
+
+function updateSeatHint(){
+  if (!seatHint) return;
+  if (!selectedSeat){
+    seatHint.textContent = 'Wybierz wolne stanowisko, z którego będziesz grać.';
+    return;
+  }
+  seatHint.textContent = seatTakenByOther(selectedSeat)
+    ? 'Stanowisko jest już zajęte. Jeśli to Ty, przejdź dalej i potwierdź dane.'
+    : `Wybrane stanowisko ${selectedSeat}.`;
+}
+
+function updateNameHint(){
+  if (!nameHint) return;
+  const nm = (nameInput?.value || '').trim();
+  nameHint.textContent = nm
+    ? 'Świetnie, dane zostaną pokazane prowadzącemu.'
+    : 'To dane, które zobaczy prowadzący.';
+}
+
+function updateGenderHint(){
+  if (!genderHint) return;
+  const val = genderSel?.value || '';
+  if (!val){
+    genderHint.textContent = 'Wybierz, która wersja avatara pasuje do Ciebie.';
+    return;
+  }
+  genderHint.textContent = val === 'FEMALE'
+    ? 'Wybrałaś wersję damską avataru.'
+    : 'Wybrałeś wersję męską avataru.';
+}
+
+function updateAvatarHint(theme){
+  if (!avatarHint) return;
+  if (!theme){
+    avatarHint.textContent = 'Wybierz wygląd, a następnie dołącz do gry.';
+    return;
+  }
+  const card = avatarCards.find(c => c.dataset.avatar === theme);
+  const label = card?.querySelector('.choiceLabel')?.textContent?.trim();
+  avatarHint.textContent = label ? `Wybrano motyw „${label}”.` : 'Wybrano avatar.';
+}
+
+function updateSummary(){
+  if (summarySeat) summarySeat.textContent = selectedSeat ? selectedSeat.toString() : '—';
+  if (summaryName) summaryName.textContent = (nameInput?.value || '').trim() || '—';
+  if (summaryGender){
+    const val = genderSel?.value || '';
+    summaryGender.textContent = val ? (val === 'FEMALE' ? 'Kobieta' : 'Mężczyzna') : '—';
+  }
+}
+
+function updateAvatarPreview(){
+  if (!avatarPreviewImg) return;
+  const base = genderSel?.value === 'FEMALE' ? 'female' : 'male';
+  avatarPreviewImg.src = `/img/${base}.png`;
+}
+
+function updateStepButtons(){
+  const nm = (nameInput?.value || '').trim();
+  if (btnNext1) btnNext1.disabled = !selectedSeat;
+  if (btnNext2) btnNext2.disabled = !nm;
+  if (btnNext3) btnNext3.disabled = !genderSel?.value;
+  if (btnJoin) btnJoin.disabled = !selectedAvatarTheme || !nm || !selectedSeat;
+}
+
+function applyAvatarTheme(theme){
+  selectedAvatarTheme = theme || null;
+  avatarThemes.forEach(t => {
+    const cls = 'avatar-theme-' + t;
+    avatarPreview?.classList.remove(cls);
+    playerAvatarEl?.classList.remove(cls);
+  });
+  avatarCards.forEach(card => card.classList.toggle('selected', card.dataset.avatar === theme));
+  if (theme){
+    const cls = 'avatar-theme-' + theme;
+    avatarPreview?.classList.add(cls);
+    playerAvatarEl?.classList.add(cls);
+  }
+  updateAvatarHint(theme || null);
+  updateStepButtons();
+}
+
+function selectSeat(id){
+  if (!Number.isInteger(id) || id < 1 || id > 10) return;
+  selectedSeat = id;
+  if (slotInput) slotInput.value = id;
+  updateSeatButtons();
+  updateSeatHint();
+  updateSummary();
+  updateStepButtons();
+}
+
+function selectGender(val){
+  if (!val) return;
+  if (genderSel) genderSel.value = val;
+  myGender = val;
+  genderCards.forEach(card => card.classList.toggle('selected', card.dataset.gender === val));
+  updateGenderHint();
+  updateAvatarPreview();
+  updateSummary();
+  updateStepButtons();
+}
+
+function selectAvatar(theme){
+  if (!theme) return;
+  applyAvatarTheme(theme);
+  updateSummary();
+}
+
+seatButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = parseInt(btn.dataset.seat, 10);
+    if (!Number.isInteger(id)) return;
+    selectSeat(id);
+  });
+});
+
+genderCards.forEach(card => {
+  card.addEventListener('click', () => selectGender(card.dataset.gender));
+});
+
+avatarCards.forEach(card => {
+  card.addEventListener('click', () => selectAvatar(card.dataset.avatar));
+});
+
+backButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.backStep;
+    if (target && stepOrder.includes(target)) showStep(target);
+  });
+});
+
+if (nameInput){
+  nameInput.addEventListener('input', () => {
+    updateNameHint();
+    updateSeatButtons();
+    updateSeatHint();
+    updateSummary();
+    updateStepButtons();
+  });
+}
+
+if (slotInput){
+  slotInput.addEventListener('change', () => {
+    const id = parseInt(slotInput.value, 10);
+    if (Number.isInteger(id)) selectSeat(id);
+  });
+}
+
+selectGender(myGender);
+applyAvatarTheme(selectedAvatarTheme);
+updateAvatarPreview();
+if (Number.isInteger(selectedSeat)){
+  selectSeat(selectedSeat);
+} else {
+  updateSeatButtons();
+  updateSeatHint();
+}
+updateNameHint();
+updateSummary();
+updateStepButtons();
+showStep(currentStep);
 
 function updateClockProgress(pct){
   const clamped = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : 0;
@@ -93,7 +314,7 @@ let pendingBuzz = false;
 ensureRoleBadge();
 function ensureRoleBadge(){
   if (document.getElementById('roleBadge')) return;
-  const host = document.getElementById('step3') || document.body;
+  const host = document.getElementById('stepGame') || document.body;
   if (!host.style.position) host.style.position = 'relative';
   const el = document.createElement('div');
   el.id = 'roleBadge';
@@ -171,6 +392,11 @@ const bus = connect({
   onState: st => {
     lastState = st;
     phase = st.phase; phaseEl.textContent = 'Faza: ' + phase;
+
+    updateSeatButtons();
+    updateSeatHint();
+    updateSummary();
+    updateStepButtons();
 
     const settingsTotal = st?.settings?.answerTimerMs;
     setAnswerTimerMs(settingsTotal);
@@ -414,34 +640,79 @@ const bus = connect({
 });
 
 /* ====== FORM STEPS ====== */
-btnNext1.onclick = () => {
-  const id = parseInt(slotInput.value,10);
-  const nm = (nameInput.value||'').trim();
-  if (!id || id<1 || id>10) { alert('Podaj numer 1–10'); return; }
-  if (!nm) { alert('Podaj imię i nazwisko'); return; }
-  const existing = lastState?.players?.find(p => p.id === id && isSeatJoined(p));
-  if (existing){
-    const currentName = (existing.name||'').trim().toLowerCase();
-    if (!currentName || currentName !== nm.toLowerCase()){
-      alert('To stanowisko jest już zajęte. Wybierz inne.');
+if (btnNext1){
+  btnNext1.onclick = () => {
+    if (!Number.isInteger(selectedSeat)){
+      updateStepButtons();
       return;
     }
-  }
-  myId = id;
-  bus.send('/app/setName', {playerId:id, name:nm});
-  document.getElementById('step1').style.display='none';
-  document.getElementById('step2').style.display='block';
-  seatEl.textContent = 'Stanowisko ' + id;
-};
+    myId = selectedSeat;
+    seatEl.textContent = 'Stanowisko ' + selectedSeat;
+    showStep('stepName');
+    setTimeout(() => nameInput?.focus(), 50);
+  };
+}
 
-btnNext2.onclick = () => {
-  if (!myId) return;
-  myGender = genderSel.value;
-  bus.send('/app/setGender', {playerId:myId, gender:myGender});
-  avImg.src = myGender === 'FEMALE' ? '/img/female.png' : '/img/male.png';
-  document.getElementById('step2').style.display='none';
-  document.getElementById('step3').style.display='block';
-};
+if (btnNext2){
+  btnNext2.onclick = () => {
+    const nm = (nameInput?.value || '').trim();
+    if (!nm){
+      updateStepButtons();
+      updateNameHint();
+      return;
+    }
+    updateSummary();
+    showStep('stepGender');
+  };
+}
+
+if (btnNext3){
+  btnNext3.onclick = () => {
+    if (!genderSel?.value){
+      updateStepButtons();
+      return;
+    }
+    showStep('stepAvatar');
+  };
+}
+
+if (btnJoin){
+  btnJoin.onclick = () => {
+    if (!Number.isInteger(selectedSeat) || selectedSeat < 1 || selectedSeat > 10){
+      alert('Wybierz stanowisko 1–10.');
+      return;
+    }
+    const nm = (nameInput?.value || '').trim();
+    if (!nm){
+      alert('Podaj imię i nazwisko.');
+      return;
+    }
+    if (!myGender){
+      alert('Wybierz płeć.');
+      return;
+    }
+    if (!selectedAvatarTheme){
+      alert('Wybierz avatar.');
+      return;
+    }
+    const existing = lastState?.players?.find(p => p.id === selectedSeat && isSeatJoined(p));
+    if (existing){
+      const currentName = (existing.name||'').trim().toLowerCase();
+      if (!currentName || currentName !== nm.toLowerCase()){
+        alert('To stanowisko jest już zajęte. Wybierz inne lub poproś o zmianę u operatora.');
+        return;
+      }
+    }
+    myId = selectedSeat;
+    seatEl.textContent = 'Stanowisko ' + selectedSeat;
+    bus.send('/app/setName', {playerId:selectedSeat, name:nm});
+    bus.send('/app/setGender', {playerId:selectedSeat, gender:myGender});
+    avImg.src = myGender === 'FEMALE' ? '/img/female.png' : '/img/male.png';
+    showStep('stepGame');
+    updateSeatButtons();
+    updateSummary();
+  };
+}
 
 btnKnow.onclick = () => {
   if (!myId) return;
