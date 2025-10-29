@@ -388,7 +388,7 @@ function renderQuestionBoard(st){
     qText.textContent = 'Czekamy na pytanie prowadzącego…';
     hideAnswer();
     questionBoard.classList.remove('revealed');
-    showMeta();
+    hideMeta();
     return;
   }
 
