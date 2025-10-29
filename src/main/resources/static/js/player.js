@@ -183,7 +183,6 @@ const bus = connect({
           outOverlay.style.display='block';
           outStats.textContent = `Wynik: ${myScore} pkt • Poprawne: ${correctTotal}/${answeredTotal}`;
           btnKnow.disabled = true;
-          setClockActive(false);
           resetResultFx();
         }
       }
@@ -199,7 +198,6 @@ const bus = connect({
       if (meAns) { showRole('Odpowiadasz', 'ok'); }
       else { hideRole(); }
       resetResultFx();
-      setClockActive(false);
       document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked','me-banned');
       avImg.classList.remove('ping');
       setKnowLabel('Znam odpowiedź!');
@@ -217,7 +215,6 @@ const bus = connect({
         showRole('Nie możesz w tej rundzie odpowiadać', 'bad');
       }
       resetResultFx();
-      setClockActive(false);
     }
     else if (phase === 'ANSWERING'){
       const meAns = st.answeringId === myId;
@@ -231,7 +228,6 @@ const bus = connect({
         if (navigator.vibrate) try{ navigator.vibrate([90,40,90]); }catch{}
         setKnowLabel('ODPOWIADASZ!');
         resetResultFx();
-        setClockActive(true);
       } else {
         document.body.classList.remove('me-answering');
         avImg.classList.remove('ping');
@@ -262,7 +258,6 @@ const bus = connect({
       hideRole();
       setKnowLabel('Znam odpowiedź!');
       resetResultFx();
-      setClockActive(false);
     }
     else {
       setStatus('Czekaj na kolejne pytanie…');
@@ -496,23 +491,7 @@ function setKnowLabel(t){
 }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-/* ====== AVATAR FX (timer + wynik) ====== */
-function updateClockProgress(pct){
-  if (!avatarFx) return;
-  const deg = Math.max(0, Math.min(360, (Number.isFinite(pct) ? pct : 0) * 360));
-  avatarFx.style.setProperty('--elapsed-deg', deg + 'deg');
-}
-
-function setClockActive(active){
-  if (!avatarFx) return;
-  if (active){
-    stopResultFxTimer();
-    avatarFx.classList.add('show-clock');
-  } else {
-    avatarFx.classList.remove('show-clock');
-  }
-}
-
+/* ====== AVATAR FX (wynik odpowiedzi) ====== */
 function stopResultFxTimer(){
   if (resultHideTimer){
     clearTimeout(resultHideTimer);
@@ -531,7 +510,6 @@ function resetResultFx(){
 function showResultFx(kind){
   if (!avatarFx) return;
   resetResultFx();
-  avatarFx.classList.remove('show-clock');
   avatarFx.classList.add('show-result');
   avatarFx.classList.add(kind === 'ok' ? 'result-ok' : 'result-bad');
   if (avatarFxResult){
