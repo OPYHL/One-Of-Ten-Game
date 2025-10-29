@@ -73,13 +73,6 @@ const stageButtons = {};
 
 const toastEl = document.getElementById('toast');
 
-const sounds = {
-  INTRO: document.getElementById('sndIntro'),
-  GOOD:  document.getElementById('sndGood'),
-  WRONG: document.getElementById('sndWrong'),
-  BOOM:  document.getElementById('sndBoom'),
-};
-
 const welcomeOverlay  = document.getElementById('welcomeOverlay');
 const welcomeHeading  = document.getElementById('welcomeHeading');
 const welcomeTitle    = document.getElementById('welcomeTitle');
@@ -305,18 +298,8 @@ const bus = connect({
   onTimer: t => handleTimer(t),
 });
 
-function playSound(key){
-  const audio = sounds[key];
-  if (!audio) return;
-  try {
-    audio.currentTime = 0;
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.catch === 'function'){
-      playPromise.catch(()=>{});
-    }
-  } catch {
-    /* ignore playback errors */
-  }
+function playSound(){
+  /* Host panel does not emit audio cues. */
 }
 
 loadCatalog();
