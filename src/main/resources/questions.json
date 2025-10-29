@@ -3,37 +3,217 @@
     "GEOGRAFIA": [
       {
         "id": "E-G-1",
-        "question": "Jakie jest stolica Polski?",
-        "answer": "Warszawa"
+        "question": "Jak nazywa się najwyższy szczyt w Polsce?",
+        "answer": "Rysy"
       },
       {
         "id": "E-G-2",
-        "question": "Które morze oblewa północne wybrzeże Polski?",
-        "answer": "Morze Bałtyckie"
+        "question": "Jakie morze oblewa południowe wybrzeże Europy?",
+        "answer": "Morze Śródziemne"
+      },
+      {
+        "id": "E-G-3",
+        "question": "Jak nazywa się najdłuższa rzeka w Polsce?",
+        "answer": "Wisła"
+      },
+      {
+        "id": "E-G-4",
+        "question": "Na którym kontynencie znajduje się Sahara?",
+        "answer": "Afryka"
+      },
+      {
+        "id": "E-G-5",
+        "question": "Jakie jest stolica Hiszpanii?",
+        "answer": "Madryt"
       }
     ],
     "HISTORIA": [
       {
         "id": "E-H-1",
-        "question": "W którym roku odbyła się bitwa pod Grunwaldem?",
-        "answer": "1410"
+        "question": "Kto był pierwszym królem Polski?",
+        "answer": "Bolesław Chrobry"
       },
       {
         "id": "E-H-2",
-        "question": "Jak nazywał się pierwszy król Polski koronowany w 1025 roku?",
-        "answer": "Bolesław Chrobry"
+        "question": "W którym wieku żyła królowa Jadwiga Andegaweńska?",
+        "answer": "W XIV wieku"
+      },
+      {
+        "id": "E-H-3",
+        "question": "Jak nazywał się polski astronom, autor dzieła \"O obrotach sfer niebieskich\"?",
+        "answer": "Mikołaj Kopernik"
+      },
+      {
+        "id": "E-H-4",
+        "question": "Kto dowodził powstaniem warszawskim?",
+        "answer": "Tadeusz Bór-Komorowski"
+      },
+      {
+        "id": "E-H-5",
+        "question": "Jak nazywała się unia Polski z Litwą z 1569 roku?",
+        "answer": "Unia lubelska"
       }
     ],
     "MATEMATYKA": [
       {
         "id": "E-M-1",
-        "question": "Ile to jest 7 + 5?",
-        "answer": "12"
+        "question": "Ile to jest 8 + 7?",
+        "answer": "15"
       },
       {
         "id": "E-M-2",
-        "question": "Jaki jest wynik działania 9 · 3?",
-        "answer": "27"
+        "question": "Jaki jest wynik działania 5 · 6?",
+        "answer": "30"
+      },
+      {
+        "id": "E-M-3",
+        "question": "Ile to jest 12 − 4?",
+        "answer": "8"
+      },
+      {
+        "id": "E-M-4",
+        "question": "Jaki jest wynik dzielenia 24 przez 3?",
+        "answer": "8"
+      },
+      {
+        "id": "E-M-5",
+        "question": "Ile boków ma kwadrat?",
+        "answer": "Cztery"
+      }
+    ],
+    "PRZYRODA": [
+      {
+        "id": "E-P-1",
+        "question": "Jak nazywa się największa polska puszcza?",
+        "answer": "Puszcza Białowieska"
+      },
+      {
+        "id": "E-P-2",
+        "question": "Jakie drzewo zrzuca igły na zimę i rośnie w Polsce?",
+        "answer": "Modrzew"
+      },
+      {
+        "id": "E-P-3",
+        "question": "Jak nazywa się największy ssak lądowy żyjący w Polsce?",
+        "answer": "Żubr"
+      },
+      {
+        "id": "E-P-4",
+        "question": "Jakie zwierzę skacze i nosi młode w torbie?",
+        "answer": "Kangur"
+      },
+      {
+        "id": "E-P-5",
+        "question": "Jak nazywa się proces, w którym rośliny wytwarzają tlen?",
+        "answer": "Fotosynteza"
+      }
+    ],
+    "KULTURA": [
+      {
+        "id": "E-K-1",
+        "question": "Kto jest autorem wiersza \"Lokomotywa\"?",
+        "answer": "Julian Tuwim"
+      },
+      {
+        "id": "E-K-2",
+        "question": "Jak nazywa się tradycyjny polski taniec narodowy w trójdzielnym metrum?",
+        "answer": "Polonez"
+      },
+      {
+        "id": "E-K-3",
+        "question": "W jakim mieście znajduje się Zamek Królewski na Wawelu?",
+        "answer": "W Krakowie"
+      },
+      {
+        "id": "E-K-4",
+        "question": "Jak nazywa się słynny obraz Leonarda da Vinci przedstawiający tajemniczy uśmiech?",
+        "answer": "Mona Lisa"
+      },
+      {
+        "id": "E-K-5",
+        "question": "Jak nazywa się święto obchodzone w Polsce 6 stycznia?",
+        "answer": "Święto Trzech Króli"
+      }
+    ],
+    "SPORT": [
+      {
+        "id": "E-S-1",
+        "question": "Ile zawodników liczy drużyna piłkarska na boisku?",
+        "answer": "Jedenastu"
+      },
+      {
+        "id": "E-S-2",
+        "question": "Jak nazywa się najważniejsza impreza sportowa rozgrywana co cztery lata z udziałem wielu dyscyplin?",
+        "answer": "Igrzyska Olimpijskie"
+      },
+      {
+        "id": "E-S-3",
+        "question": "Jak nazywa się polski skoczek narciarski, który zdobył cztery Kryształowe Kule?",
+        "answer": "Adam Małysz"
+      },
+      {
+        "id": "E-S-4",
+        "question": "Jak nazywa się sport, w którym używa się rakiety i lotki?",
+        "answer": "Badminton"
+      },
+      {
+        "id": "E-S-5",
+        "question": "Jaką barwę ma żółta koszulka lidera Tour de France?",
+        "answer": "Żółtą"
+      }
+    ],
+    "JĘZYK POLSKI": [
+      {
+        "id": "E-JP-1",
+        "question": "Jak nazywa się część mowy odpowiadająca na pytania kto? co?",
+        "answer": "Rzeczownik"
+      },
+      {
+        "id": "E-JP-2",
+        "question": "Jak nazywa się znak interpunkcyjny kończący zdanie pytające?",
+        "answer": "Znak zapytania"
+      },
+      {
+        "id": "E-JP-3",
+        "question": "Jak nazywa się forma grzecznościowa używana na początku listu?",
+        "answer": "Szanowny"
+      },
+      {
+        "id": "E-JP-4",
+        "question": "Jaką literą w języku polskim oznacza się głoskę nosową zapisywaną dwuznakiem \"ą\"?",
+        "answer": "Litera ą"
+      },
+      {
+        "id": "E-JP-5",
+        "question": "Jak nazywa się część zdania określająca osobę wykonującą czynność?",
+        "answer": "Podmiot"
+      }
+    ],
+    "TECHNOLOGIA": [
+      {
+        "id": "E-T-1",
+        "question": "Jak nazywa się urządzenie służące do wykonywania połączeń telefonicznych przez internet?",
+        "answer": "Smartfon"
+      },
+      {
+        "id": "E-T-2",
+        "question": "Jak nazywa się system operacyjny tworzony przez Google dla urządzeń mobilnych?",
+        "answer": "Android"
+      },
+      {
+        "id": "E-T-3",
+        "question": "Jak nazywa się aplikacja służąca do przeglądania stron internetowych?",
+        "answer": "Przeglądarka"
+      },
+      {
+        "id": "E-T-4",
+        "question": "Jak nazywa się urządzenie wskazujące używane z komputerem stacjonarnym?",
+        "answer": "Mysz"
+      },
+      {
+        "id": "E-T-5",
+        "question": "Jak nazywa się miejsce w internecie, gdzie przechowujemy pliki w chmurze?",
+        "answer": "Dysk w chmurze"
       }
     ]
   },
@@ -41,37 +221,190 @@
     "WIEDZA OGÓLNA": [
       {
         "id": "M-GK-1",
-        "question": "Jak nazywa się najwyższy szczyt w Tatrach po polskiej stronie?",
-        "answer": "Rysy"
+        "question": "Jak nazywa się polski noblista w dziedzinie literatury z 1996 roku?",
+        "answer": "Wisława Szymborska"
       },
       {
         "id": "M-GK-2",
-        "question": "Jakie zwierzę widnieje w godle Polski?",
-        "answer": "Orzeł biały"
+        "question": "Który pierwiastek chemiczny oznacza się symbolem Fe?",
+        "answer": "Żelazo"
+      },
+      {
+        "id": "M-GK-3",
+        "question": "Jak nazywa się największy ocean na Ziemi?",
+        "answer": "Ocean Spokojny"
+      },
+      {
+        "id": "M-GK-4",
+        "question": "Jak nazywa się międzynarodowa organizacja dbająca o pokój na świecie, założona w 1945 roku?",
+        "answer": "Organizacja Narodów Zjednoczonych"
+      },
+      {
+        "id": "M-GK-5",
+        "question": "Kto wynalazł żarówkę o praktycznym zastosowaniu masowym?",
+        "answer": "Thomas Edison"
       }
     ],
     "MATEMATYKA": [
       {
         "id": "M-M-1",
-        "question": "Ile to jest pierwiastek kwadratowy z 144?",
-        "answer": "12"
+        "question": "Jaki jest wynik działania 3² + 4²?",
+        "answer": "25"
       },
       {
         "id": "M-M-2",
-        "question": "Ile stopni ma kąt prosty?",
-        "answer": "90"
+        "question": "Jaki jest pierwiastek kwadratowy z 225?",
+        "answer": "15"
+      },
+      {
+        "id": "M-M-3",
+        "question": "Ile wynosi 20% z 150?",
+        "answer": "30"
+      },
+      {
+        "id": "M-M-4",
+        "question": "Ile stopni mają kąty wewnętrzne trójkąta równobocznego razem?",
+        "answer": "180"
+      },
+      {
+        "id": "M-M-5",
+        "question": "Jak nazywa się pięciokąt foremny w języku matematycznym?",
+        "answer": "Pentagon"
       }
     ],
     "GEOGRAFIA": [
       {
         "id": "M-G-1",
-        "question": "Przez które miasto przepływa Wisła?",
-        "answer": "Kraków"
+        "question": "Jak nazywa się stolica Kanady?",
+        "answer": "Ottawa"
       },
       {
         "id": "M-G-2",
-        "question": "Na którym kontynencie leży Egipt?",
-        "answer": "Afryka"
+        "question": "W jakim państwie leży miasto Marrakesz?",
+        "answer": "W Maroku"
+      },
+      {
+        "id": "M-G-3",
+        "question": "Jakie państwo ma największą liczbę ludności na świecie?",
+        "answer": "Indie"
+      },
+      {
+        "id": "M-G-4",
+        "question": "Jak nazywa się największe jezioro w Polsce?",
+        "answer": "Jezioro Śniardwy"
+      },
+      {
+        "id": "M-G-5",
+        "question": "Jakie miasto jest stolicą Australii?",
+        "answer": "Canberra"
+      }
+    ],
+    "HISTORIA": [
+      {
+        "id": "M-H-1",
+        "question": "W którym roku wybuchła II wojna światowa?",
+        "answer": "1939"
+      },
+      {
+        "id": "M-H-2",
+        "question": "Jak nazywa się polski hetman, zwycięzca bitwy pod Wiedniem?",
+        "answer": "Jan III Sobieski"
+      },
+      {
+        "id": "M-H-3",
+        "question": "Jak nazywał się przywódca Solidarności, późniejszy prezydent Polski?",
+        "answer": "Lech Wałęsa"
+      },
+      {
+        "id": "M-H-4",
+        "question": "W którym roku uchwalono Konstytucję Stanów Zjednoczonych?",
+        "answer": "1787"
+      },
+      {
+        "id": "M-H-5",
+        "question": "Jak nazywała się dynastia panująca w Polsce w XVI wieku po Jagiellonach?",
+        "answer": "Wazowie"
+      }
+    ],
+    "PRZYRODA": [
+      {
+        "id": "M-P-1",
+        "question": "Jak nazywa się proces przekształcania gąsienicy w motyla?",
+        "answer": "Metamorfoza"
+      },
+      {
+        "id": "M-P-2",
+        "question": "Jakie zwierzę jest największym żyjącym ssakiem morskim?",
+        "answer": "Płetwal błękitny"
+      },
+      {
+        "id": "M-P-3",
+        "question": "Jak nazywa się nauka o ptakach?",
+        "answer": "Ornitologia"
+      },
+      {
+        "id": "M-P-4",
+        "question": "Jak nazywa się największa planeta Układu Słonecznego?",
+        "answer": "Jowisz"
+      },
+      {
+        "id": "M-P-5",
+        "question": "Jak nazywa się zjawisko naprzemiennego występowania przypływów i odpływów?",
+        "answer": "Pływy"
+      }
+    ],
+    "KULTURA": [
+      {
+        "id": "M-K-1",
+        "question": "Kto skomponował operę \"Straszny dwór\"?",
+        "answer": "Stanisław Moniuszko"
+      },
+      {
+        "id": "M-K-2",
+        "question": "Jak nazywa się muzeum sztuki współczesnej znajdujące się w Bilbao?",
+        "answer": "Muzeum Guggenheima"
+      },
+      {
+        "id": "M-K-3",
+        "question": "Kto jest autorem powieści \"Lalka\"?",
+        "answer": "Bolesław Prus"
+      },
+      {
+        "id": "M-K-4",
+        "question": "Jak nazywa się słynny festiwal filmowy odbywający się w Cannes?",
+        "answer": "Międzynarodowy Festiwal Filmowy w Cannes"
+      },
+      {
+        "id": "M-K-5",
+        "question": "Jak nazywa się styl architektoniczny katedry Notre-Dame w Paryżu?",
+        "answer": "Gotyk"
+      }
+    ],
+    "TECHNOLOGIA": [
+      {
+        "id": "M-T-1",
+        "question": "Jak nazywa się język programowania stworzony przez Guido van Rossuma?",
+        "answer": "Python"
+      },
+      {
+        "id": "M-T-2",
+        "question": "Jak nazywa się sieć komputerowa łącząca urządzenia w domu lub biurze?",
+        "answer": "Sieć lokalna"
+      },
+      {
+        "id": "M-T-3",
+        "question": "Jak nazywa się urządzenie służące do przechowywania danych w komputerze w postaci półprzewodnikowej?",
+        "answer": "Dysk SSD"
+      },
+      {
+        "id": "M-T-4",
+        "question": "Jak nazywa się protokół umożliwiający przesyłanie stron internetowych?",
+        "answer": "HTTP"
+      },
+      {
+        "id": "M-T-5",
+        "question": "Jak nazywa się algorytm szyfrowania używany do zabezpieczania połączeń internetowych TLS?",
+        "answer": "RSA"
       }
     ]
   },
@@ -79,37 +412,136 @@
     "HISTORIA": [
       {
         "id": "H-H-1",
-        "question": "Jak nazywał się autor „Trenów”?",
-        "answer": "Jan Kochanowski"
+        "question": "Jak nazywał się polski polityk, który podpisał akt 5 listopada 1916 roku jako przedstawiciel Tymczasowej Rady Stanu?",
+        "answer": "Józef Piłsudski"
       },
       {
         "id": "H-H-2",
-        "question": "W którym roku uchwalono Konstytucję 3 maja?",
-        "answer": "1791"
+        "question": "Jak nazywała się konfederacja szlachty sprzeciwiająca się reformom Stanisława Augusta Poniatowskiego w 1768 roku?",
+        "answer": "Konfederacja barska"
+      },
+      {
+        "id": "H-H-3",
+        "question": "Jak nazywał się twórca Konstytucji 3 maja odpowiedzialny za redakcję części artykułów?",
+        "answer": "Hugo Kołłątaj"
+      },
+      {
+        "id": "H-H-4",
+        "question": "Jak nazywała się polska jednostka wojskowa walcząca u boku Napoleona, znana z pieśni o Dąbrowskim?",
+        "answer": "Legiony Polskie"
+      },
+      {
+        "id": "H-H-5",
+        "question": "Jak nazywała się tajna organizacja niepodległościowa utworzona w 1908 roku przez Józefa Piłsudskiego?",
+        "answer": "Związek Walki Czynnej"
       }
     ],
     "GEOGRAFIA": [
       {
         "id": "H-G-1",
-        "question": "Jak nazywa się najdłuższa rzeka w Azji?",
-        "answer": "Jangcy"
+        "question": "Jak nazywa się najgłębsze jezioro świata położone na Syberii?",
+        "answer": "Jezioro Bajkał"
       },
       {
         "id": "H-G-2",
-        "question": "Który kraj ma największą liczbę wysp na świecie?",
-        "answer": "Szwecja"
+        "question": "Jak nazywa się góra stanowiąca najwyższy szczyt Alp?",
+        "answer": "Mont Blanc"
+      },
+      {
+        "id": "H-G-3",
+        "question": "Jak nazywa się pasmo górskie ciągnące się przez Norwegię i Szwecję?",
+        "answer": "Góry Skandynawskie"
+      },
+      {
+        "id": "H-G-4",
+        "question": "Jak nazywa się pustynia rozciągająca się na terenach Chin i Mongolii?",
+        "answer": "Pustynia Gobi"
+      },
+      {
+        "id": "H-G-5",
+        "question": "Jak nazywa się rzeka przepływająca przez Budapeszt?",
+        "answer": "Dunaj"
       }
     ],
     "WIEDZA OGÓLNA": [
       {
         "id": "H-GK-1",
-        "question": "Jak nazywa się noblistka, która dwukrotnie otrzymała Nagrodę Nobla w dziedzinie fizyki i chemii?",
-        "answer": "Maria Skłodowska-Curie"
+        "question": "Jak nazywa się proces w fizyce opisujący łączenie się jąder atomowych w jedno?",
+        "answer": "Synteza jądrowa"
       },
       {
         "id": "H-GK-2",
-        "question": "Jak nazywa się najdłuższa kość w ciele człowieka?",
-        "answer": "Kość udowa"
+        "question": "Jak nazywa się najstarsza polska uczelnia wyższa?",
+        "answer": "Uniwersytet Jagielloński"
+      },
+      {
+        "id": "H-GK-3",
+        "question": "Jak nazywa się filozof grecki, który nauczał w Liceum w Atenach?",
+        "answer": "Arystoteles"
+      },
+      {
+        "id": "H-GK-4",
+        "question": "Jak nazywa się jednostka częstotliwości w układzie SI?",
+        "answer": "Herc"
+      },
+      {
+        "id": "H-GK-5",
+        "question": "Jak nazywa się autor \"Pana Tadeusza\"?",
+        "answer": "Adam Mickiewicz"
+      }
+    ],
+    "MATEMATYKA": [
+      {
+        "id": "H-M-1",
+        "question": "Jaki jest wynik wyrażenia 2³ · 5²?",
+        "answer": "200"
+      },
+      {
+        "id": "H-M-2",
+        "question": "Jakie jest rozwinięcie dziesiętne liczby pi do dwóch miejsc po przecinku?",
+        "answer": "3,14"
+      },
+      {
+        "id": "H-M-3",
+        "question": "Jakie jest rozwiązanie równania x² = 64, przyjmując tylko dodatnią wartość x?",
+        "answer": "8"
+      },
+      {
+        "id": "H-M-4",
+        "question": "Ile przekątnych ma ośmiokąt foremny?",
+        "answer": "20"
+      },
+      {
+        "id": "H-M-5",
+        "question": "Jaki jest wzór na pole koła o promieniu r?",
+        "answer": "P = πr²"
+      }
+    ],
+    "TECHNOLOGIA": [
+      {
+        "id": "H-T-1",
+        "question": "Jak nazywa się protokół szyfrujący ruch w sieciach bezprzewodowych w standardzie WPA3?",
+        "answer": "SAE"
+      },
+      {
+        "id": "H-T-2",
+        "question": "Jak nazywa się nauka zajmująca się tworzeniem systemów uczących się na podstawie danych?",
+        "answer": "Uczenie maszynowe"
+      },
+      {
+        "id": "H-T-3",
+        "question": "Jak nazywa się architektura komputerów kwantowych wykorzystująca kubity nadprzewodzące?",
+        "answer": "Architektura nadprzewodząca"
+      },
+      {
+        "id": "H-T-4",
+        "question": "Jak nazywa się funkcja mieszająca używana w kryptografii, zapewniająca integralność danych?",
+        "answer": "Funkcja skrótu"
+      },
+      {
+        "id": "H-T-5",
+        "question": "Jak nazywa się protokół synchronizacji czasu w sieciach komputerowych?",
+        "answer": "NTP"
       }
     ]
   }
