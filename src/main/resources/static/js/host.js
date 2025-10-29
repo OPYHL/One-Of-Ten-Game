@@ -93,6 +93,8 @@ const listPanel       = document.getElementById('listPanel');
 const btnRandomQuestion = document.getElementById('btnRandomQuestion');
 const randomNotice    = document.getElementById('randomNotice');
 
+const CATEGORY_ALL_ID = '__ALL__';
+
 const metricRuntime = document.getElementById('metricRuntime');
 const metricCount   = document.getElementById('metricCount');
 const metricAverage = document.getElementById('metricAverage');
@@ -509,225 +511,6 @@ function recordActiveQuestionUsage(active){
   markQuestionUsed(active.difficulty, active.category, active.id);
 }
 
-function usageKey(difficultyId, categoryId){
-  return `${difficultyId || ''}::${categoryId || ''}`;
-}
-
-function loadUsedQuestions(){
-  const store = new Map();
-  try {
-    if (typeof window === 'undefined' || !window.localStorage){
-      return store;
-    }
-    const raw = window.localStorage.getItem('oneoften.usedQuestions');
-    if (!raw) return store;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return store;
-    Object.entries(parsed).forEach(([key, list]) => {
-      if (!Array.isArray(list)) return;
-      const normalized = list
-        .map(val => (val != null ? String(val) : null))
-        .filter(Boolean);
-      if (normalized.length){
-        store.set(key, new Set(normalized));
-      }
-    });
-  } catch (error){
-    console.warn('Nie udało się odczytać stanu pytań', error);
-  }
-  return store;
-}
-
-function persistUsedQuestions(){
-  try {
-    if (typeof window === 'undefined' || !window.localStorage){
-      return;
-    }
-    const payload = {};
-    usedQuestions.forEach((set, key) => {
-      if (set && set.size){
-        payload[key] = Array.from(set);
-      }
-    });
-    if (Object.keys(payload).length){
-      window.localStorage.setItem('oneoften.usedQuestions', JSON.stringify(payload));
-    } else {
-      window.localStorage.removeItem('oneoften.usedQuestions');
-    }
-  } catch (error){
-    console.warn('Nie udało się zapisać stanu pytań', error);
-  }
-}
-
-function markQuestionUsed(difficultyId, categoryId, questionId){
-  if (!difficultyId || !categoryId || !questionId) return;
-  const key = usageKey(difficultyId, categoryId);
-  let set = usedQuestions.get(key);
-  if (!set){
-    set = new Set();
-    usedQuestions.set(key, set);
-  }
-  const normalizedId = String(questionId);
-  if (set.has(normalizedId)) return;
-  set.add(normalizedId);
-  persistUsedQuestions();
-  refreshQuestionLists();
-}
-
-function isQuestionUsed(difficultyId, categoryId, questionId){
-  if (!difficultyId || !categoryId || !questionId) return false;
-  const key = usageKey(difficultyId, categoryId);
-  const set = usedQuestions.get(key);
-  if (!set) return false;
-  return set.has(String(questionId));
-}
-
-function clearQuestionUsage(){
-  if (usedQuestions.size === 0) return;
-  usedQuestions.clear();
-  persistUsedQuestions();
-  refreshQuestionLists();
-}
-
-function refreshQuestionLists(){
-  if (questionMode === QUESTION_MODE.LIST){
-    buildQuestionList();
-  }
-  updateRandomNotice();
-}
-
-function buildQuestionPool(){
-  const diff = activeDifficulty;
-  if (!diff || !Array.isArray(diff?.categories)) return [];
-  const pool = [];
-  diff.categories.forEach(cat => {
-    const questions = Array.isArray(cat?.questions) ? cat.questions : [];
-    questions.forEach(q => {
-      const used = isQuestionUsed(diff.id, cat.id, q.id);
-      if (questionUsageFilter === USAGE_FILTER.UNUSED && used) return;
-      if (questionUsageFilter === USAGE_FILTER.USED && !used) return;
-      pool.push({ difficulty: diff, category: cat, question: q, used });
-    });
-  });
-  if (questionUsageFilter === USAGE_FILTER.ALL){
-    pool.sort((a, b) => {
-      if (a.used === b.used){
-        const ao = a.question?.order ?? 0;
-        const bo = b.question?.order ?? 0;
-        return ao - bo;
-      }
-      return a.used ? 1 : -1;
-    });
-  }
-  return pool;
-}
-
-function updateRandomNotice(){
-  if (!randomNotice || !btnRandomQuestion){
-    return;
-  }
-  const diff = activeDifficulty;
-  const pool = buildQuestionPool();
-  const count = pool.length;
-  btnRandomQuestion.disabled = count === 0 || !diff;
-  if (!diff){
-    randomNotice.textContent = 'Wybierz poziom trudności, aby losować pytania.';
-    return;
-  }
-  if (count === 0){
-    if (questionUsageFilter === USAGE_FILTER.UNUSED){
-      randomNotice.textContent = 'Brak niewykorzystanych pytań w tym poziomie.';
-    } else if (questionUsageFilter === USAGE_FILTER.USED){
-      randomNotice.textContent = 'Brak wykorzystanych pytań w tym poziomie.';
-    } else {
-      randomNotice.textContent = 'Brak pytań spełniających kryteria.';
-    }
-    return;
-  }
-  randomNotice.textContent = `Dostępnych pytań: ${count}.`;
-}
-
-function setQuestionMode(mode){
-  const upper = typeof mode === 'string' ? mode.toUpperCase() : '';
-  const next = upper === QUESTION_MODE.RANDOM ? QUESTION_MODE.RANDOM : QUESTION_MODE.LIST;
-  if (next === questionMode){
-    updateModeButtons();
-    return;
-  }
-  questionMode = next;
-  updateModeButtons();
-  if (questionMode === QUESTION_MODE.LIST){
-    buildCategoryList();
-    buildQuestionList();
-  }
-  updateRandomNotice();
-}
-
-function updateModeButtons(){
-  if (modeToggleEl){
-    const buttons = modeToggleEl.querySelectorAll('button');
-    buttons.forEach(btn => {
-      const btnMode = (btn.dataset?.mode || '').toUpperCase();
-      const active = btnMode === questionMode;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
-  }
-  if (listPanel){
-    listPanel.classList.toggle('hidden', questionMode !== QUESTION_MODE.LIST);
-  }
-  if (randomPanel){
-    randomPanel.classList.toggle('hidden', questionMode !== QUESTION_MODE.RANDOM);
-  }
-}
-
-function setUsageFilter(filter){
-  const upper = typeof filter === 'string' ? filter.toUpperCase() : '';
-  const resolved = USAGE_FILTER[upper] || USAGE_FILTER.UNUSED;
-  if (resolved === questionUsageFilter){
-    updateUsageButtons();
-    return;
-  }
-  questionUsageFilter = resolved;
-  updateUsageButtons();
-  refreshQuestionLists();
-}
-
-function updateUsageButtons(){
-  if (!usageFilterEl) return;
-  const buttons = usageFilterEl.querySelectorAll('button');
-  buttons.forEach(btn => {
-    const val = (btn.dataset?.filter || '').toUpperCase();
-    const active = val === questionUsageFilter;
-    btn.classList.toggle('active', active);
-    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-  });
-}
-
-function randomQuestion(){
-  const pool = buildQuestionPool();
-  if (!pool.length){
-    updateRandomNotice();
-    return;
-  }
-  const idx = Math.floor(Math.random() * pool.length);
-  const choice = pool[idx];
-  if (!choice) return;
-  const question = choice.question;
-  const context = { difficulty: choice.difficulty, category: choice.category };
-  if (question?.display){
-    showToast('Wylosowano pytanie ' + question.display + '.');
-  } else {
-    showToast('Wylosowano pytanie.');
-  }
-  confirmQuestion(question, context);
-}
-
-function recordActiveQuestionUsage(active){
-  if (!active) return;
-  markQuestionUsed(active.difficulty, active.category, active.id);
-}
-
 async function loadCatalog(){
   try {
     const res = await fetch('/api/questions');
@@ -784,8 +567,8 @@ function buildCategoryList(opts = {}){
   categoryList.innerHTML = '';
   if (questionList){ questionList.innerHTML = ''; }
   const diff = activeDifficulty;
-  const cats = Array.isArray(diff?.categories) ? diff.categories : [];
-  if (cats.length === 0){
+  const baseCategories = Array.isArray(diff?.categories) ? diff.categories : [];
+  if (baseCategories.length === 0){
     if (categoryHeader){ categoryHeader.textContent = 'Brak kategorii'; }
     activeCategory = null;
     if (questionList){
@@ -798,9 +581,25 @@ function buildCategoryList(opts = {}){
     return;
   }
   if (categoryHeader){ categoryHeader.textContent = 'Kategorie'; }
+
+  const allQuestions = [];
+  baseCategories.forEach(cat => {
+    const list = Array.isArray(cat?.questions) ? cat.questions : [];
+    list.forEach(q => {
+      allQuestions.push({ ...q, __category: cat });
+    });
+  });
+
+  const categories = [{
+    id: CATEGORY_ALL_ID,
+    label: 'Wszystkie',
+    questions: allQuestions,
+    isAll: true,
+  }, ...baseCategories];
+
   const preferredId = opts.preferredCategoryId || activeCategory?.id || null;
   let initial = null;
-  cats.forEach((cat, idx) => {
+  categories.forEach((cat, idx) => {
     const pill = document.createElement('div');
     pill.className = 'category-pill';
     pill.dataset.categoryId = cat.id;
@@ -815,8 +614,8 @@ function buildCategoryList(opts = {}){
       }
     }
   });
-  if (!initial && cats.length > 0){
-    initial = cats[0];
+  if (!initial && categories.length > 0){
+    initial = categories[0];
   }
   if (initial){
     selectCategory(initial, { skipQuestionBuild: true });
@@ -852,24 +651,43 @@ function buildQuestionList(){
   }
   const diffId = activeDifficulty?.id;
   const catId  = activeCategory?.id;
+  const catIsAll = catId === CATEGORY_ALL_ID;
   const questions = Array.isArray(activeCategory?.questions) ? activeCategory.questions : [];
-  const decorated = questions.map(q => ({
-    ...q,
-    used: isQuestionUsed(diffId, catId, q.id),
-  }));
+  const decorated = questions.map(q => {
+    const originCategory = catIsAll ? (q.__category || null) : activeCategory;
+    const originId = originCategory?.id;
+    const used = isQuestionUsed(diffId, originId, q.id);
+    return {
+      ...q,
+      __category: originCategory || q.__category || null,
+      used,
+    };
+  });
   let filtered = decorated;
   if (questionUsageFilter === USAGE_FILTER.UNUSED){
     filtered = decorated.filter(q => !q.used);
   } else if (questionUsageFilter === USAGE_FILTER.USED){
     filtered = decorated.filter(q => q.used);
   } else {
+    const collator = typeof Intl !== 'undefined' ? new Intl.Collator('pl', { sensitivity: 'base' }) : null;
     filtered = decorated.slice().sort((a, b) => {
-      if (a.used === b.used){
-        const ao = a.order ?? 0;
-        const bo = b.order ?? 0;
-        return ao - bo;
+      if (a.used !== b.used){
+        return a.used ? 1 : -1;
       }
-      return a.used ? 1 : -1;
+      const aCat = a.__category ? (a.__category.label || a.__category.id || '') : '';
+      const bCat = b.__category ? (b.__category.label || b.__category.id || '') : '';
+      let categoryOrder = 0;
+      if (collator){
+        categoryOrder = collator.compare(aCat, bCat);
+      } else {
+        categoryOrder = aCat.localeCompare(bCat);
+      }
+      if (categoryOrder !== 0){
+        return categoryOrder;
+      }
+      const ao = a.order ?? 0;
+      const bo = b.order ?? 0;
+      return ao - bo;
     });
   }
   if (!filtered.length){
@@ -891,8 +709,17 @@ function buildQuestionList(){
     const title = escapeHtml(q.display || q.id);
     const preview = escapeHtml(truncate(q.display || '', 120));
     const flag = q.used ? '<span class="question-flag">Wykorzystane</span>' : '';
-    item.innerHTML = `<strong>${title}</strong><span>${preview}</span>${flag}`;
-    item.addEventListener('click', ()=>confirmQuestion(q, { difficulty: activeDifficulty, category: activeCategory }));
+    const meta = (catIsAll && q.__category)
+      ? `<span class="question-meta">${escapeHtml(q.__category.label || q.__category.id || '')}</span>`
+      : '';
+    item.innerHTML = `${meta}<strong>${title}</strong><span>${preview}</span>${flag}`;
+    const targetCategory = catIsAll ? q.__category : activeCategory;
+    if (targetCategory){
+      item.addEventListener('click', ()=>confirmQuestion(q, { difficulty: activeDifficulty, category: targetCategory }));
+    } else {
+      item.classList.add('disabled');
+      item.setAttribute('aria-disabled', 'true');
+    }
     questionList.appendChild(item);
   });
 }
