@@ -386,6 +386,16 @@ a{color:inherit}
 .question-answer{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:18px;background:var(--panel-soft);border:1px solid rgba(47,84,235,.12);font-weight:700;font-size:1.02rem;color:var(--text-strong)}
 .answer-tag{text-transform:uppercase;font-size:.78rem;letter-spacing:.28rem;color:var(--muted)}
 .answer-text{flex:1}
+.question-annotation{display:grid;gap:8px;padding:16px 18px;border-radius:18px;background:rgba(47,84,235,.08);border:1px dashed rgba(47,84,235,.3);color:var(--muted-strong);transition:background .2s ease,border-color .2s ease,box-shadow .28s ease,transform .28s ease;scroll-margin-top:24px}
+.question-annotation:not(.hidden){animation:fadeIn .18s ease}
+.question-annotation.hidden{display:none}
+.question-annotation.is-empty{background:rgba(47,84,235,.04);border-color:rgba(47,84,235,.16);color:var(--muted)}
+.question-annotation.is-empty .annotation-text{color:var(--muted);font-style:italic}
+.question-annotation.attention{box-shadow:0 12px 28px -18px rgba(47,84,235,.45),0 0 0 4px rgba(47,84,235,.18);transform:translateY(-1px)}
+.annotation-label{text-transform:uppercase;font-size:.75rem;letter-spacing:.28rem;font-weight:700;color:var(--accent-strong)}
+.annotation-text{font-size:.95rem;line-height:1.5;color:var(--muted-strong)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 
 .answering-card{
   display:grid;

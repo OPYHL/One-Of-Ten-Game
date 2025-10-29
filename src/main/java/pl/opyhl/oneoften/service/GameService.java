@@ -60,6 +60,15 @@ public class GameService {
     /** BAN w bieżącym pytaniu dla trybu „otwartego” (BUZZING). */
     private final Set<Integer> bannedThisQuestion = new HashSet<>();
 
+    private enum AnnotationNext {
+        NONE,
+        TO_SELECTING_CORRECT,
+        TO_SELECTING_WRONG,
+        TO_READING
+    }
+
+    private AnnotationNext pendingAnnotation = AnnotationNext.NONE;
+
     public GameService(EventBus bus, RoundTimer timer, QuestionBank questionBank, OperatorConfigService configService) {
         this.bus = bus;
         this.timer = timer;
@@ -122,8 +131,19 @@ public class GameService {
         Optional<QuestionDetail> opt = questionBank.find(difficulty, category, questionId);
         if (opt.isEmpty()) return;
         QuestionDetail detail = opt.get();
-        activeQuestion = new ActiveQuestion(detail.getId(), detail.getDifficulty(), detail.getCategory(), detail.getQuestion(), detail.getAnswer(), detail.getOrder(), false, true);
+        activeQuestion = new ActiveQuestion(
+                detail.getId(),
+                detail.getDifficulty(),
+                detail.getCategory(),
+                detail.getQuestion(),
+                detail.getAnswer(),
+                detail.getAnnotation(),
+                detail.getOrder(),
+                false,
+                true
+        );
         questionStartTimestamp = 0L;
+        pendingAnnotation = AnnotationNext.NONE;
         pushState();
         bus.publish(new Event("QUESTION_SELECTED", null, detail.getId(), null));
     }
@@ -157,6 +177,7 @@ public class GameService {
         bannedThisQuestion.clear();
         activeQuestion = null;
         questionStartTimestamp = 0L;
+        pendingAnnotation = AnnotationNext.NONE;
         metrics.setAskedCount(0);
         metrics.setTotalQuestionTimeMs(0);
         metrics.setLastQuestionTimeMs(0);
@@ -173,6 +194,7 @@ public class GameService {
         bannedThisQuestion.clear();
         activeQuestion = null;
         questionStartTimestamp = 0L;
+        pendingAnnotation = AnnotationNext.NONE;
         metrics.setAskedCount(0);
         metrics.setTotalQuestionTimeMs(0);
         metrics.setLastQuestionTimeMs(0);
@@ -196,6 +218,7 @@ public class GameService {
         proposedTargetId = null;
         activeQuestion = null;
         questionStartTimestamp = 0L;
+        pendingAnnotation = AnnotationNext.NONE;
         metrics.setStartedAt(System.currentTimeMillis());
         metrics.setAskedCount(0);
         metrics.setTotalQuestionTimeMs(0);
@@ -206,7 +229,7 @@ public class GameService {
     }
 
     public synchronized void hostNextQuestion(){
-        if (phase == GamePhase.INTRO) return;
+        if (phase == GamePhase.INTRO || phase == GamePhase.ANNOTATION) return;
         enterReadingSetup();
         bus.publish(new Event("PHASE", null, "READING", null));
     }
@@ -229,6 +252,45 @@ public class GameService {
             pushState();
             bus.publish(new Event("PHASE", null, "BUZZING", null));
             bus.publish(new Event("BUZZ_OPEN", null, null, null));
+        }
+    }
+
+    public synchronized void hostAnnotationDone(){
+        if (phase != GamePhase.ANNOTATION) return;
+
+        AnnotationNext next = pendingAnnotation;
+        pendingAnnotation = AnnotationNext.NONE;
+        activeQuestion = null;
+
+        switch (next) {
+            case TO_SELECTING_CORRECT:
+            case TO_SELECTING_WRONG: {
+                if (currentChooserId == null){
+                    enterReadingSetup();
+                    bus.publish(new Event("PHASE", null, "READING", null));
+                    break;
+                }
+                phase = GamePhase.SELECTING;
+                pushState();
+                bus.publish(new Event("SELECT_START", currentChooserId, null, null));
+                bus.publish(new Event("CUE", null, "BOOM", null));
+                break;
+            }
+            case TO_READING: {
+                currentChooserId = null;
+                proposedTargetId = null;
+                enterReadingSetup();
+                bus.publish(new Event("PHASE", null, "READING", null));
+                break;
+            }
+            default: {
+                phase = GamePhase.READING;
+                currentChooserId = null;
+                proposedTargetId = null;
+                pushState();
+                bus.publish(new Event("PHASE", null, "READING", null));
+                break;
+            }
         }
     }
 
@@ -286,12 +348,12 @@ public class GameService {
             p.setScore(p.getScore()+1);
             currentChooserId = id;
             proposedTargetId = null;
-            registerQuestionFinished();
-            phase = GamePhase.SELECTING;
+            registerQuestionFinished(true);
+            pendingAnnotation = AnnotationNext.TO_SELECTING_CORRECT;
+            phase = GamePhase.ANNOTATION;
             pushState();
             bus.publish(new Event("JUDGE", id, "CORRECT", null));
-            bus.publish(new Event("SELECT_START", id, null, null));
-            bus.publish(new Event("CUE", null, "BOOM", null));
+            bus.publish(new Event("PHASE", null, "ANNOTATION", null));
         } else {
             applyWrongFor(id);
         }
@@ -339,6 +401,10 @@ public class GameService {
 
     /* =================== timery =================== */
     private void registerQuestionFinished(){
+        registerQuestionFinished(false);
+    }
+
+    private void registerQuestionFinished(boolean keepActiveQuestion){
         if (questionStartTimestamp > 0){
             long duration = Math.max(0, System.currentTimeMillis() - questionStartTimestamp);
             metrics.setAskedCount(metrics.getAskedCount() + 1);
@@ -346,7 +412,9 @@ public class GameService {
             metrics.setLastQuestionTimeMs(duration);
             questionStartTimestamp = 0L;
         }
-        activeQuestion = null;
+        if (!keepActiveQuestion){
+            activeQuestion = null;
+        }
     }
 
     private void revealCurrentQuestion(){
@@ -408,6 +476,7 @@ public class GameService {
         bannedThisQuestion.clear();
         phase = GamePhase.READING;
         questionStartTimestamp = 0L;
+        pendingAnnotation = AnnotationNext.NONE;
         if (activeQuestion != null){
             activeQuestion.setRevealed(false);
             activeQuestion.setPreparing(true);
@@ -430,30 +499,26 @@ public class GameService {
     private void applyWrongFor(int id){
         Player p = get(id).orElse(null); if (p == null) return;
 
-        registerQuestionFinished();
+        registerQuestionFinished(true);
 
         // Punktacja/życia
         int lives = Math.max(0, p.getLives() - 1);
         p.setLives(lives);
         if (lives <= 0) p.setEliminated(true);
 
-        bus.publish(new Event("JUDGE", id, "WRONG", null));
-        pushState();
+        answeringId = null;
+        proposedTargetId = null;
 
         if (currentChooserId != null){
-            // Tryb: wybrany przez zwycięzcę – wracamy do wybierania
-            answeringId = null;
-            phase = GamePhase.SELECTING;
-            pushState();
-            bus.publish(new Event("SELECT_START", currentChooserId, null, null));
-            bus.publish(new Event("CUE", null, "BOOM", null));
+            pendingAnnotation = AnnotationNext.TO_SELECTING_WRONG;
         } else {
-            // Tryb: otwarte zgłaszanie – natychmiast przygotuj kolejne pytanie
-            answeringId = null;
-            proposedTargetId = null;
-            enterReadingSetup();
-            bus.publish(new Event("PHASE", null, "READING", null));
+            pendingAnnotation = AnnotationNext.TO_READING;
         }
+
+        phase = GamePhase.ANNOTATION;
+        pushState();
+        bus.publish(new Event("JUDGE", id, "WRONG", null));
+        bus.publish(new Event("PHASE", null, "ANNOTATION", null));
     }
 
     /** Zapis wyników do CSV + event dla frontu (RESULTS_SAVED). */
@@ -495,7 +560,7 @@ public class GameService {
 
     public synchronized GameState getState(){
         players.sort(Comparator.comparingInt(Player::getId));
-        return new GameState(players, answeringId, startBuzzOpen, phase, timerActive, timerRemainingMs, buildHostDashboard(), settings);
+        return new GameState(players, answeringId, startBuzzOpen, phase, timerActive, timerRemainingMs, currentChooserId, buildHostDashboard(), settings);
     }
 
     private HostDashboard buildHostDashboard(){
@@ -507,6 +572,7 @@ public class GameService {
                     activeQuestion.getCategory(),
                     activeQuestion.getQuestion(),
                     activeQuestion.getAnswer(),
+                    activeQuestion.getAnnotation(),
                     activeQuestion.getOrder(),
                     activeQuestion.isRevealed(),
                     activeQuestion.isPreparing()

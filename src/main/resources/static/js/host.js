@@ -5,6 +5,7 @@ const btnIntroDone= document.getElementById('btnIntroDone');
 const btnQuestion = document.getElementById('btnQuestion');
 const btnRead     = document.getElementById('btnRead');
 const btnReadDone = document.getElementById('btnReadDone');
+const btnAnnotationDone = document.getElementById('btnAnnotationDone');
 const btnGood     = document.getElementById('btnGood');
 const btnBad      = document.getElementById('btnBad');
 const btnNext     = document.getElementById('btnNext');
@@ -41,6 +42,8 @@ const badgeCategory   = document.getElementById('badgeCategory');
 const questionLabel   = document.getElementById('questionLabel');
 const questionText    = document.getElementById('questionText');
 const questionAnswer  = document.getElementById('questionAnswer');
+const questionAnnotationWrap = document.getElementById('questionAnnotationWrap');
+const questionAnnotation = document.getElementById('questionAnnotation');
 
 const stagePhaseEl = document.getElementById('stagePhase');
 const stageTitleEl = document.getElementById('stageTitle');
@@ -53,7 +56,7 @@ const answerJudgeWrap = document.querySelector('.answer-judge');
 const stageCardEl = document.querySelector('.stage-card');
 
 const stageButtons = {};
-[btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnGood, btnBad, btnNext].forEach(btn => {
+[btnStart, btnIntroDone, btnQuestion, btnRead, btnReadDone, btnAnnotationDone, btnGood, btnBad, btnNext].forEach(btn => {
   if (!btn) return;
   const baseClasses = (btn.className || '')
     .split(/\s+/)
@@ -267,6 +270,9 @@ let readingStartPending = false;
 let readingFinishPending = false;
 let targetProposal = null;
 let clockTimer = null;
+let prevPhase = null;
+let annotationAttentionKey = null;
+let annotationAttentionTimer = null;
 
 const QUESTION_MODE = { RANDOM: 'RANDOM', LIST: 'LIST' };
 const USAGE_FILTER = { UNUSED: 'UNUSED', USED: 'USED', ALL: 'ALL' };
@@ -280,6 +286,7 @@ const PHASE_LABELS = {
   READING: 'Czytanie',
   BUZZING: 'Zgłoszenia',
   ANSWERING: 'Odpowiedź',
+  ANNOTATION: 'Adnotacja',
   SELECTING: 'Wybór',
 };
 
@@ -795,6 +802,7 @@ btnStart.addEventListener('click',     startOrNext);
 if (btnIntroDone) btnIntroDone.addEventListener('click', proceedToReadingPhase);
 btnRead.addEventListener('click',      beginReading);
 btnReadDone.addEventListener('click',  completeReading);
+if (btnAnnotationDone) btnAnnotationDone.addEventListener('click', acknowledgeAnnotation);
 btnGood.addEventListener('click',      ()=> judge(true));
 btnBad.addEventListener('click',       ()=> judge(false));
 btnNext.addEventListener('click',      ()=> send('/app/host/next'));
@@ -809,6 +817,7 @@ document.addEventListener('keydown', (e)=>{
   const key = e.key.toLowerCase();
   if (key === 's') startOrNext();
   if (key === 'r') btnReadDone.click();
+  if (key === 'a' && btnAnnotationDone) acknowledgeAnnotation();
   if (key === 'g') judge(true);
   if (key === 'b') judge(false);
 });
@@ -864,7 +873,8 @@ function stageCounts(st = state){
   const totalSlots = players.length || 10;
   const activeQuestion = st?.hostDashboard?.activeQuestion || null;
   const answeringPlayer = players.find(p => p.id === st?.answeringId) || null;
-  return { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer };
+  const currentChooser = typeof st?.currentChooserId === 'number' ? st.currentChooserId : null;
+  return { players, joined, joinedCount, totalSlots, activeQuestion, answeringPlayer, currentChooser };
 }
 
 function refreshStageCard(){
@@ -872,7 +882,7 @@ function refreshStageCard(){
   const snap = stageCounts(state);
   const uiPhase = resolveUiPhase(state, snap.activeQuestion, snap.answeringPlayer);
   if (phaseEl){ phaseEl.textContent = phaseLabel(uiPhase); }
-  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer, uiPhase);
+  updateStage(state, snap.joinedCount, snap.totalSlots, snap.activeQuestion, snap.answeringPlayer, snap.currentChooser, uiPhase);
 }
 
 function render(){
@@ -916,9 +926,10 @@ function render(){
   recordActiveQuestionUsage(activeQuestion);
   updateWelcome(st, joinedCount, totalSlots || 10);
   updateMetrics(st.hostDashboard?.metrics);
-  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, uiPhase);
+  updateStage(st, joinedCount, totalSlots || 10, activeQuestion, answeringPlayer, counts.currentChooser, uiPhase);
   tryAutoAdvanceIntro(st, activeQuestion);
   updateTimerDisplay();
+  maybeHighlightAnnotation(st.phase, activeQuestion);
 
   /* current answering */
   const p = answeringPlayer;
@@ -931,6 +942,8 @@ function render(){
     ansName.textContent = '—';
     ansSeat.textContent = 'Stanowisko —';
   }
+
+  prevPhase = st.phase;
 }
 
 function updateQuestion(active){
@@ -943,12 +956,75 @@ function updateQuestion(active){
     questionLabel.textContent   = `#${active.order?.toString().padStart(2,'0') || '--'} • ${active.id || ''}`;
     questionText.textContent    = active.question || '—';
     questionAnswer.textContent  = active.answer || '—';
+    const annotation = (active.annotation || '').trim();
+    if (questionAnnotation){
+      questionAnnotation.textContent = annotation || 'Brak adnotacji do tego pytania.';
+    }
+    if (questionAnnotationWrap){
+      questionAnnotationWrap.classList.remove('hidden');
+      questionAnnotationWrap.classList.toggle('is-empty', !annotation);
+      questionAnnotationWrap.classList.remove('attention');
+    }
   } else {
     badgeDifficulty.textContent = '—';
     badgeCategory.textContent   = '—';
     questionLabel.textContent   = 'Brak wybranego pytania';
     questionText.textContent    = 'Wybierz pytanie, aby rozpocząć.';
     questionAnswer.textContent  = '—';
+    if (questionAnnotation){
+      questionAnnotation.textContent = 'Wybierz pytanie, aby zobaczyć adnotację.';
+    }
+    if (questionAnnotationWrap){
+      questionAnnotationWrap.classList.add('hidden');
+      clearAnnotationAttention();
+    }
+  }
+}
+
+function maybeHighlightAnnotation(phase, activeQuestion){
+  if (!questionAnnotationWrap){
+    return;
+  }
+  if (phase !== 'ANNOTATION'){
+    annotationAttentionKey = null;
+    clearAnnotationAttention();
+    return;
+  }
+  const annotation = (activeQuestion?.annotation || '').trim();
+  if (!annotation){
+    annotationAttentionKey = null;
+    clearAnnotationAttention();
+    return;
+  }
+  const key = `${activeQuestion?.id || ''}::${annotation}`;
+  if (annotationAttentionKey === key && prevPhase === 'ANNOTATION'){
+    return;
+  }
+  annotationAttentionKey = key;
+  questionAnnotationWrap.classList.add('attention');
+  if (annotationAttentionTimer){
+    clearTimeout(annotationAttentionTimer);
+  }
+  annotationAttentionTimer = setTimeout(() => {
+    questionAnnotationWrap?.classList.remove('attention');
+    annotationAttentionTimer = null;
+  }, 1400);
+  if (prevPhase !== 'ANNOTATION' && typeof questionAnnotationWrap.scrollIntoView === 'function'){
+    try {
+      questionAnnotationWrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } catch (error) {
+      questionAnnotationWrap.scrollIntoView();
+    }
+  }
+}
+
+function clearAnnotationAttention(){
+  if (annotationAttentionTimer){
+    clearTimeout(annotationAttentionTimer);
+    annotationAttentionTimer = null;
+  }
+  if (questionAnnotationWrap){
+    questionAnnotationWrap.classList.remove('attention');
   }
 }
 
@@ -1037,7 +1113,7 @@ function updateMetrics(metrics){
   if (!runtimeTimer){ runtimeTimer = setInterval(refreshRuntime, 1000); }
 }
 
-function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiPhase){
+function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, currentChooserId, uiPhase){
   if (!stagePhaseEl || !stageTitleEl || !stageSubEl || !stageActionEl){
     return;
   }
@@ -1050,8 +1126,11 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
     title: 'Sterowanie',
     message: 'Działania pojawią się w odpowiednim momencie.',
     buttons: [],
-    steps: buildStageSteps(st, activeQuestion, answering, phase, actualPhase),
+    steps: buildStageSteps(st, activeQuestion, answering, currentChooserId, phase, actualPhase),
   };
+  const chooserPlayer = typeof currentChooserId === 'number'
+    ? st.players?.find(p => p.id === currentChooserId) || null
+    : null;
 
   const allowQuestionPick = phase === 'INTRO' || phase === 'READING';
   if (btnSelectQuestion){ btnSelectQuestion.disabled = !allowQuestionPick; }
@@ -1137,17 +1216,45 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
       }
       break;
     }
+    case 'ANNOTATION': {
+      stage.badge = 'Adnotacja';
+      const annotation = (activeQuestion?.annotation || '').trim();
+      const hasNote = !!annotation;
+      if (answering){
+        const nm = (answering.name || '').trim();
+        const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+        stage.badge = `Gracz ${answering.id}`;
+        stage.title = hasNote ? 'Przeczytaj adnotację' : 'Potwierdź zakończenie pytania';
+        stage.message = hasNote
+          ? `${label} ma rację. Przeczytaj adnotację i kliknij „Przeczytałem adnotację”, aby przejść do wyboru przeciwnika.`
+          : `${label} zakończył pytanie. Potwierdź, aby poprosić go o wskazanie kolejnej osoby.`;
+      } else if (chooserPlayer){
+        const chooserLabel = formatPlayerLabel(chooserPlayer);
+        stage.title = hasNote ? 'Przeczytaj adnotację' : 'Potwierdź zakończenie pytania';
+        stage.message = hasNote
+          ? `${chooserLabel} wskaże kolejnego gracza po potwierdzeniu. Przeczytaj adnotację na głos.`
+          : `${chooserLabel} wskaże kolejnego gracza, gdy potwierdzisz zakończenie.`;
+      } else {
+        stage.title = hasNote ? 'Przeczytaj adnotację' : 'Potwierdź zakończenie pytania';
+        stage.message = hasNote
+          ? 'Przeczytaj adnotację i kliknij „Przeczytałem adnotację”, aby przygotować następne pytanie.'
+          : 'Kliknij „Przeczytałem adnotację”, aby przygotować następne pytanie.';
+      }
+      stage.buttons.push({ id: 'btnAnnotationDone', label: 'Przeczytałem adnotację', variant: 'primary' });
+      break;
+    }
     case 'SELECTING': {
       stage.badge = 'Wybór';
       if (targetProposal){
-        const chooser = st.players?.find(p=>p.id===targetProposal.fromId);
+        const selector = st.players?.find(p=>p.id===targetProposal.fromId);
         const target = st.players?.find(p=>p.id===targetProposal.toId);
         stage.title = 'Potwierdź wybór gracza';
-        stage.message = `${formatPlayerLabel(chooser)} wskazał ${formatPlayerLabel(target)}. Potwierdź wybór, aby przejść dalej.`;
+        stage.message = `${formatPlayerLabel(selector)} wskazał ${formatPlayerLabel(target)}. Potwierdź wybór, aby przejść dalej.`;
         stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary', disabled: true });
       } else {
         stage.title = 'Czekamy na wybór gracza';
-        stage.message = 'Zwycięzca wskazuje kolejnego odpowiadającego — poczekaj na potwierdzenie operatora.';
+        const chooserLabel = chooserPlayer ? formatPlayerLabel(chooserPlayer) : 'Zwycięzca';
+        stage.message = `${chooserLabel} wskazuje kolejnego odpowiadającego — poczekaj na potwierdzenie operatora.`;
         stage.buttons.push({ id: 'btnNext', label: 'Kolejne pytanie', variant: 'primary', disabled: true });
       }
       break;
@@ -1185,13 +1292,14 @@ function updateStage(st, joinedCount, totalSlots, activeQuestion, answering, uiP
   applyStage(stage);
 }
 
-function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
+function buildStageSteps(st, activeQuestion, answering, currentChooserId, phase, actualPhase){
   const steps = [
     { number: 1, title: 'Wybierz pytanie', desc: 'Otwórz katalog pytań i wskaż numer.', status: 'pending' },
     { number: 2, title: 'Kliknij „Czytam”, gdy jesteś gotowy', desc: 'Rozpocznij czytanie pytania na głos.', status: 'pending' },
     { number: 3, title: 'Kliknij „Przeczytałem” po lekturze', desc: 'Odsłoń pytanie na ekranie.', status: 'pending' },
     { number: 4, title: 'Oczekiwanie na zgłoszenie gracza', desc: 'Gracze wciskają przyciski, aby się zgłosić.', status: 'pending' },
-    { number: 5, title: 'Oceń odpowiedź gracza', desc: 'Wybierz „Dobra” lub „Zła”.', status: 'pending' }
+    { number: 5, title: 'Oceń odpowiedź gracza', desc: 'Wybierz „Dobra” lub „Zła”.', status: 'pending' },
+    { number: 6, title: 'Przeczytaj adnotację', desc: 'Zapoznaj się z adnotacją przed kolejnym krokiem.', status: 'pending' }
   ];
 
   const hasQuestion = !!activeQuestion;
@@ -1247,12 +1355,32 @@ function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
       steps[3].status = 'done';
       steps[4].status = 'active';
       break;
+    case 'ANNOTATION': {
+      steps[3].status = 'done';
+      steps[4].status = 'done';
+      steps[5].status = 'active';
+      const chooser = typeof currentChooserId === 'number'
+        ? st.players?.find(p => p.id === currentChooserId)
+        : null;
+      if (answering){
+        const nm = (answering.name || '').trim();
+        const label = nm ? `${answering.id}. ${nm}` : `Gracz ${answering.id}`;
+        steps[5].desc = `${label} zakończył pytanie. Przeczytaj adnotację i potwierdź, aby przejść dalej.`;
+      } else if (chooser){
+        steps[5].desc = `${formatPlayerLabel(chooser)} ponownie wskaże zawodnika po potwierdzeniu.`;
+      } else {
+        steps[5].desc = 'Przeczytaj adnotację i potwierdź, aby przygotować następne pytanie.';
+      }
+      break;
+    }
     case 'SELECTING':
       steps[3].status = 'done';
       steps[4].status = 'done';
       steps[4].desc = targetProposal
         ? 'Zwycięzca wskazał gracza — potwierdź wybór.'
         : 'Ocena zakończona. Czekamy na wybór kolejnego gracza.';
+      steps[5].status = 'done';
+      steps[5].desc = 'Adnotacja została już przedstawiona.';
       break;
     default:
       break;
@@ -1272,6 +1400,12 @@ function buildStageSteps(st, activeQuestion, answering, phase, actualPhase){
     }
   } else if (phase === 'ANSWERING'){
     steps[4].status = 'active';
+  }
+
+  if (phase !== 'ANNOTATION' && steps[5].status !== 'done'){
+    if (phase === 'SELECTING' || (phase === 'READING' && !activeQuestion)){
+      steps[5].status = 'done';
+    }
   }
 
   return steps;
@@ -1523,6 +1657,15 @@ function completeReading(){
   refreshStageCard();
 }
 
+function acknowledgeAnnotation(){
+  if (!state){ return; }
+  if (state.phase !== 'ANNOTATION'){
+    showToast('Potwierdzenie będzie dostępne po ocenie odpowiedzi.');
+    return;
+  }
+  send('/app/host/annotationDone');
+}
+
 /* ====== events & timer ====== */
 function handleEvent(ev){
   if (!ev) return;
@@ -1599,6 +1742,8 @@ function updateTimerDisplay(){
     ansTime.textContent = remaining > 0 ? 'Czekamy na odpowiedź gracza.' : 'Czas minął — oceń odpowiedź.';
   } else if (state?.phase === 'READING' && state?.hostDashboard?.activeQuestion?.preparing){
     ansTime.textContent = 'Przygotuj pytanie i kliknij „Czytam”.';
+  } else if (state?.phase === 'ANNOTATION'){
+    ansTime.textContent = 'Zapoznaj się z adnotacją przed kolejnym krokiem.';
   } else {
     ansTime.textContent = `Czas odpowiedzi ustawiony na ${formatSecondsShort(total)} s`;
   }
