@@ -381,9 +381,9 @@ function renderQuestionBoard(st){
   }
 
   if (!active){
-    qDiff.textContent = '—';
-    qCat.textContent = '—';
-    qId.textContent = 'Pytanie —';
+    qDiff.textContent = '';
+    qCat.textContent = '';
+    qId.textContent = '';
     qText.textContent = 'Czekamy na pytanie prowadzącego…';
     hideAnswer();
     questionBoard.classList.remove('revealed');
@@ -403,7 +403,13 @@ function renderQuestionBoard(st){
     qText.textContent = active.question || '—';
     questionBoard.classList.add('revealed');
   } else {
-    qText.textContent = 'Czekamy na pytanie prowadzącego…';
+    if (phase === 'READING' && !isPreparing){
+      qText.textContent = 'Prowadzący czyta pytanie…';
+    } else if (isPreparing){
+      qText.textContent = 'Prowadzący przygotowuje pytanie…';
+    } else {
+      qText.textContent = 'Czekamy na pytanie prowadzącego…';
+    }
     questionBoard.classList.remove('revealed');
   }
   if (shouldShowAnswer(st.phase)){
