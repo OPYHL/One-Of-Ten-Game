@@ -288,8 +288,6 @@ body.waiting-mode #gridWrap{ display:none; }
   max-height:calc(100vh - 18px);
   overflow:hidden;
   background:linear-gradient(180deg, rgba(10,18,31,0) 0%, rgba(10,18,31,.55) 26%, rgba(10,18,31,.82) 86%);
-  transform:translateY(calc(-1 * var(--grid-lift, 0px)));
-  transition:transform .35s ease;
 }
 
 #gridClamp{
@@ -300,7 +298,9 @@ body.waiting-mode #gridWrap{ display:none; }
   justify-content:flex-end;
   align-items:center;
   gap:18px;
+  padding-top:var(--grid-lift, 0px);
   padding-bottom:var(--grid-bottom-pad, 0px);
+  transition:padding-top .35s ease, padding-bottom .35s ease;
 }
 #grid{
   transform-origin:50% 100%;
