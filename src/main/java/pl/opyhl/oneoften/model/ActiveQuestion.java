@@ -6,18 +6,20 @@ public class ActiveQuestion {
     private String category;
     private String question;
     private String answer;
+    private String annotation;
     private int order;
     private boolean revealed;
     private boolean preparing;
 
     public ActiveQuestion() {}
 
-    public ActiveQuestion(String id, String difficulty, String category, String question, String answer, int order, boolean revealed, boolean preparing) {
+    public ActiveQuestion(String id, String difficulty, String category, String question, String answer, String annotation, int order, boolean revealed, boolean preparing) {
         this.id = id;
         this.difficulty = difficulty;
         this.category = category;
         this.question = question;
         this.answer = answer;
+        this.annotation = annotation;
         this.order = order;
         this.revealed = revealed;
         this.preparing = preparing;
@@ -33,6 +35,8 @@ public class ActiveQuestion {
     public void setQuestion(String question){ this.question = question; }
     public String getAnswer(){ return answer; }
     public void setAnswer(String answer){ this.answer = answer; }
+    public String getAnnotation(){ return annotation; }
+    public void setAnnotation(String annotation){ this.annotation = annotation; }
     public int getOrder(){ return order; }
     public void setOrder(int order){ this.order = order; }
     public boolean isRevealed(){ return revealed; }

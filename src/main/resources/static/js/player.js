@@ -232,6 +232,12 @@ const bus = connect({
       lockKnow(true);
       // rola i highlighty ustawią się w onEvent
     }
+    else if (phase === 'ANNOTATION'){
+      setStatus('Prowadzący omawia adnotację…');
+      lockKnow(true);
+      document.body.classList.remove('me-won','me-pending','me-answering','me-choosing','me-picked');
+      avImg.classList.remove('ping');
+    }
     else if (phase === 'INTRO'){
       setStatus('Intro…');
       lockKnow(true);
