@@ -1,7 +1,7 @@
 answer:
   minSeconds: 3
   maxSeconds: 15
-  defaultSeconds: 5
+  defaultSeconds: 10
   stepSeconds: 1
 cooldown:
   minSeconds: 1
