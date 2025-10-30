@@ -40,6 +40,7 @@ public class OperatorWsController {
     // Meta
     @MessageMapping("/setName")   public void setName(SetNameDto dto){ game.setName(dto.getPlayerId(), dto.getName(), dto.isForce()); }
     @MessageMapping("/setGender") public void setGender(SetGenderDto dto){ game.setGender(dto.getPlayerId(), dto.getGender()); }
+    @MessageMapping("/setAvatar") public void setAvatar(SetAvatarDto dto){ game.setAvatar(dto.getPlayerId(), dto.getAvatar()); }
     @MessageMapping("/playCue")   public void playCue(PlayCueDto dto){ game.playCue(dto.getCue()); }
 
     // Zapis
