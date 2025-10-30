@@ -129,6 +129,10 @@ public class GameService {
         get(id).ifPresent(p -> p.setGender("FEMALE".equalsIgnoreCase(gender) ? Gender.FEMALE : Gender.MALE));
         pushState();
     }
+    public synchronized void setAvatar(int id, String avatar){
+        get(id).ifPresent(p -> p.setAvatar(avatar));
+        pushState();
+    }
     public synchronized void selectQuestion(String difficulty, String category, String questionId){
         Optional<QuestionDetail> opt = questionBank.find(difficulty, category, questionId);
         if (opt.isEmpty()) return;
