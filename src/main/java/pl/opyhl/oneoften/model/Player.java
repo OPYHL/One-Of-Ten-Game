@@ -11,6 +11,7 @@ public class Player {
     private boolean eliminated = false;
     private Integer finalRank = null;
     private boolean joined = false;
+    private String avatar = null;
 
     public Player() {}
     public Player(int id, String name){ this.id=id; this.name=name; }
@@ -33,4 +34,7 @@ public class Player {
 
     public boolean isJoined(){ return joined; }
     public void setJoined(boolean joined){ this.joined = joined; }
+
+    public String getAvatar(){ return avatar; }
+    public void setAvatar(String avatar){ this.avatar = (avatar == null || avatar.isBlank()) ? null : avatar.trim(); }
 }
