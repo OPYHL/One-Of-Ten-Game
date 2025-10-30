@@ -8,27 +8,154 @@
 </head>
 <body class="playerPage">
 <div class="playerPanel">
-    <div class="playerBox" id="step1">
-        <div class="row"><input id="slot" class="input" type="number" min="1" max="10" placeholder="Numer stanowiska (1–10)"></div>
-        <div class="row"><input id="name" class="input" type="text" placeholder="Imię i nazwisko"></div>
-        <button id="next1" style="width:100%">Dalej</button>
-        <div class="mini center">Najpierw wpisz stanowisko i imię, potem wybierzesz avatar.</div>
-    </div>
-
-    <div class="playerBox" id="step2" style="display:none">
-        <div class="row">
-            <select id="gender" class="input">
-                <option value="MALE">Mężczyzna</option>
-                <option value="FEMALE">Kobieta</option>
-            </select>
+    <div class="playerBox playerStep" id="stepSeat">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepSeat" aria-label="Wróć" disabled></button>
+            <div>
+                <div class="stepSubtitle">Krok 1 z 4</div>
+                <div class="stepTitle">Wybierz stanowisko</div>
+            </div>
         </div>
-        <button id="next2" style="width:100%">Zapisz i czekaj</button>
-        <div class="mini center">Zapisujemy Twoje dane i czekamy na prowadzącego.</div>
+        <input id="slot" type="hidden" />
+        <div class="seatCarousel" aria-label="Wybór stanowiska">
+            <button class="carouselNav prev" id="seatPrev" type="button" aria-label="Poprzednie stanowisko"></button>
+            <div class="seatViewport" id="seatViewport">
+                <div class="seatTrack" id="seatTrack" role="radiogroup" aria-label="Wybór stanowiska">
+                    <button class="seatCard" type="button" role="radio" data-seat="1">
+                        <span class="seatNumber">1</span>
+                        <span class="seatLabel">Stanowisko 1</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="2">
+                        <span class="seatNumber">2</span>
+                        <span class="seatLabel">Stanowisko 2</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="3">
+                        <span class="seatNumber">3</span>
+                        <span class="seatLabel">Stanowisko 3</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="4">
+                        <span class="seatNumber">4</span>
+                        <span class="seatLabel">Stanowisko 4</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="5">
+                        <span class="seatNumber">5</span>
+                        <span class="seatLabel">Stanowisko 5</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="6">
+                        <span class="seatNumber">6</span>
+                        <span class="seatLabel">Stanowisko 6</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="7">
+                        <span class="seatNumber">7</span>
+                        <span class="seatLabel">Stanowisko 7</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="8">
+                        <span class="seatNumber">8</span>
+                        <span class="seatLabel">Stanowisko 8</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="9">
+                        <span class="seatNumber">9</span>
+                        <span class="seatLabel">Stanowisko 9</span>
+                    </button>
+                    <button class="seatCard" type="button" role="radio" data-seat="10">
+                        <span class="seatNumber">10</span>
+                        <span class="seatLabel">Stanowisko 10</span>
+                    </button>
+                </div>
+            </div>
+            <button class="carouselNav next" id="seatNext" type="button" aria-label="Następne stanowisko"></button>
+        </div>
+        <button id="next1" class="stepAction" disabled>Dalej</button>
+        <div class="mini center" id="seatHint">Wybierz wolne stanowisko, z którego będziesz grać.</div>
     </div>
 
-    <div class="playerBox" id="step3" style="display:none">
+    <div class="playerBox playerStep" id="stepName" style="display:none">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepSeat" aria-label="Wróć"></button>
+            <div>
+                <div class="stepSubtitle">Krok 2 z 4</div>
+                <div class="stepTitle">Podaj imię i nazwisko</div>
+            </div>
+        </div>
+        <div class="stepBody">
+            <div class="formField">
+                <label class="fieldLabel" for="name">Imię i nazwisko</label>
+                <div class="fieldInput">
+                    <input id="name" class="input" type="text" placeholder="Wpisz imię i nazwisko" autocomplete="name" />
+                </div>
+            </div>
+        </div>
+        <button id="next2" class="stepAction" disabled>Dalej</button>
+        <div class="mini center" id="nameHint">To dane, które zobaczy prowadzący.</div>
+    </div>
+
+    <div class="playerBox playerStep" id="stepGender" style="display:none">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepName" aria-label="Wróć"></button>
+            <div>
+                <div class="stepSubtitle">Krok 3 z 4</div>
+                <div class="stepTitle">Wybierz płeć</div>
+            </div>
+        </div>
+        <input id="gender" type="hidden" value="" />
+        <div class="choiceGrid" id="genderGrid">
+            <button class="choiceCard" type="button" data-gender="FEMALE">
+                <div class="choiceIcon female"></div>
+                <div class="choiceLabel">Kobieta</div>
+            </button>
+            <button class="choiceCard" type="button" data-gender="MALE">
+                <div class="choiceIcon male"></div>
+                <div class="choiceLabel">Mężczyzna</div>
+            </button>
+        </div>
+        <button id="next3" class="stepAction" disabled>Dalej</button>
+        <div class="mini center" id="genderHint">Ułatwi to dopasowanie awataru.</div>
+    </div>
+
+    <div class="playerBox playerStep" id="stepAvatar" style="display:none">
+        <div class="stepHeader">
+            <button class="stepBack" data-back-step="stepGender" aria-label="Wróć"></button>
+            <div>
+                <div class="stepSubtitle">Krok 4 z 4</div>
+                <div class="stepTitle">Wybierz avatar</div>
+            </div>
+        </div>
+        <div class="avatarPreviewWrap">
+            <div class="avatarPreview" id="avatarPreview">
+                <img id="avatarPreviewImg" src="/img/male.png" alt="Podgląd avataru" />
+            </div>
+            <div class="summaryList">
+                <div><span>Stanowisko</span><b id="summarySeat">—</b></div>
+                <div><span>Imię i nazwisko</span><b id="summaryName">—</b></div>
+                <div><span>Płeć</span><b id="summaryGender">—</b></div>
+                <div><span>Avatar</span><b id="summaryAvatar">—</b></div>
+            </div>
+        </div>
+        <div class="choiceGrid avatarGrid" id="avatarGrid">
+            <button class="choiceCard avatarCard" type="button" data-avatar="explorer" data-avatar-img="/img/avatar-explorer.svg" data-avatar-label="Odkrywca">
+                <img class="avatarThumb" src="/img/avatar-explorer.svg" alt="Podgląd awatara Odkrywca" loading="lazy" />
+                <div class="choiceLabel">Odkrywca</div>
+            </button>
+            <button class="choiceCard avatarCard" type="button" data-avatar="visionary" data-avatar-img="/img/avatar-visionary.svg" data-avatar-label="Wizjoner">
+                <img class="avatarThumb" src="/img/avatar-visionary.svg" alt="Podgląd awatara Wizjoner" loading="lazy" />
+                <div class="choiceLabel">Wizjoner</div>
+            </button>
+            <button class="choiceCard avatarCard" type="button" data-avatar="strategist" data-avatar-img="/img/avatar-strategist.svg" data-avatar-label="Strateg">
+                <img class="avatarThumb" src="/img/avatar-strategist.svg" alt="Podgląd awatara Strateg" loading="lazy" />
+                <div class="choiceLabel">Strateg</div>
+            </button>
+            <button class="choiceCard avatarCard" type="button" data-avatar="virtuoso" data-avatar-img="/img/avatar-virtuoso.svg" data-avatar-label="Virtuoz">
+                <img class="avatarThumb" src="/img/avatar-virtuoso.svg" alt="Podgląd awatara Virtuoz" loading="lazy" />
+                <div class="choiceLabel">Virtuoz</div>
+            </button>
+        </div>
+        <button id="join" class="stepAction primary" disabled>Dołącz do gry</button>
+        <div class="mini center" id="avatarHint">Wybierz wygląd, a następnie dołącz do gry.</div>
+    </div>
+
+    <div class="playerBox" id="stepGame" style="display:none">
         <div class="playerGrid">
-            <div class="playerAvatar">
+            <div class="playerAvatar" id="playerAvatar">
                 <div id="avatarFx" class="avatarFx">
                     <div id="avatarFxResult" class="avatarFxResult">
                         <div id="avatarFxResultIcon" class="avatarFxResultIcon"></div>
