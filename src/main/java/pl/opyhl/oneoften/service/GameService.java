@@ -177,6 +177,94 @@ public class GameService {
         bus.publish(new Event("PHASE", null, "READING", null));
     }
 
+    public synchronized void setLives(int id, int lives){
+        Player p = get(id).orElse(null); if (p == null) return;
+        int normalized = Math.max(0, lives);
+        boolean wasEliminated = p.isEliminated();
+        p.setLives(normalized);
+        if (normalized <= 0){
+            p.setEliminated(true);
+            clearAssignmentsFor(id);
+            if (!wasEliminated && p.getFinalRank() == null){
+                p.setFinalRank(aliveJoinedCount() + 1);
+            }
+        } else {
+            if (p.isEliminated()){
+                p.setEliminated(false);
+            }
+            if (p.getFinalRank() != null){
+                p.setFinalRank(null);
+            }
+        }
+        pushState();
+    }
+
+    public synchronized void setScore(int id, int score){
+        Player p = get(id).orElse(null); if (p == null) return;
+        int normalized = Math.max(0, score);
+        p.setScore(normalized);
+        pushState();
+    }
+
+    public synchronized void setEliminated(int id, boolean eliminated){
+        Player p = get(id).orElse(null); if (p == null) return;
+        if (eliminated){
+            p.setEliminated(true);
+            if (p.getLives() <= 0){
+                p.setLives(0);
+            }
+            clearAssignmentsFor(id);
+            if (p.getFinalRank() == null){
+                p.setFinalRank(aliveJoinedCount() + 1);
+            }
+        } else {
+            boolean wasEliminated = p.isEliminated();
+            p.setEliminated(false);
+            if (p.getLives() <= 0){
+                p.setLives(1);
+            }
+            if (wasEliminated){
+                p.setFinalRank(null);
+            }
+        }
+        pushState();
+    }
+
+    public synchronized void restorePlayer(int id){
+        Player p = get(id).orElse(null); if (p == null) return;
+        setEliminated(id, false);
+        if (p.getLives() <= 0){
+            p.setLives(1);
+            pushState();
+        }
+    }
+
+    public synchronized void setChooser(Integer id, boolean notify){
+        if (id == null){
+            currentChooserId = null;
+            proposedTargetId = null;
+            pushState();
+            return;
+        }
+        Player p = get(id).orElse(null); if (p == null || p.isEliminated()) return;
+        currentChooserId = id;
+        proposedTargetId = null;
+        stopTimer();
+        phase = GamePhase.SELECTING;
+        pushState();
+        if (notify){
+            bus.publish(new Event("SELECT_START", id, null, null));
+        }
+    }
+
+    public synchronized void publishManualEvent(String type, Integer playerId, String value, Long reactionMs){
+        if (type == null) return;
+        String normalized = type.trim();
+        if (normalized.isEmpty()) return;
+        Long payloadReaction = (reactionMs != null && reactionMs >= 0) ? reactionMs : null;
+        bus.publish(new Event(normalized, playerId, value != null && !value.isBlank() ? value : null, payloadReaction));
+    }
+
     /* ================= reset / nowa gra ================= */
     public synchronized void reset(){
         players.forEach(p -> {
@@ -617,6 +705,24 @@ public class GameService {
 
     private Optional<Player> get(int id){ return players.stream().filter(p -> p.getId()==id).findFirst(); }
     private void pushState(){ bus.state(getState()); }
+
+    private void clearAssignmentsFor(int playerId){
+        if (Objects.equals(answeringId, playerId)){
+            answeringId = null;
+        }
+        if (Objects.equals(currentChooserId, playerId)){
+            currentChooserId = null;
+        }
+        if (Objects.equals(proposedTargetId, playerId)){
+            proposedTargetId = null;
+        }
+    }
+
+    private int aliveJoinedCount(){
+        return (int) players.stream()
+                .filter(pl -> pl.isJoined() && !pl.isEliminated())
+                .count();
+    }
 
     private String usageToken(String difficulty, String category, String questionId) {
         return String.join("::",

@@ -13,6 +13,11 @@ public class OperatorWsController {
     // Operator/Host
     @MessageMapping("/setAnswering") public void setAnswering(SetAnsweringDto dto){ game.setAnswering(dto.getPlayerId()); }
     @MessageMapping("/judge")        public void judge(JudgeDto dto){ game.judge(dto.getPlayerId(), dto.isCorrect()); }
+    @MessageMapping("/setLives")     public void setLives(PlayerValueDto dto){ game.setLives(dto.getPlayerId(), dto.getValue()); }
+    @MessageMapping("/setScore")     public void setScore(PlayerValueDto dto){ game.setScore(dto.getPlayerId(), dto.getValue()); }
+    @MessageMapping("/setEliminated") public void setEliminated(PlayerFlagDto dto){ game.setEliminated(dto.getPlayerId(), dto.isFlag()); }
+    @MessageMapping("/restorePlayer") public void restorePlayer(PlayerIdDto dto){ game.restorePlayer(dto.getPlayerId()); }
+    @MessageMapping("/setChooser")   public void setChooser(SetChooserDto dto){ game.setChooser(dto.getPlayerId(), dto.isNotify()); }
     @MessageMapping("/reset")        public void reset(SimpleDto ignored){ game.reset(); }
     @MessageMapping("/newGame")      public void newGame(SimpleDto ignored){ game.newGame(); }
 
@@ -47,4 +52,5 @@ public class OperatorWsController {
     @MessageMapping("/saveResults") public void saveResults(SimpleDto ignored){ game.saveResults(); }
 
     @MessageMapping("/operator/answerTimer") public void updateAnswerTimer(UpdateAnswerTimerDto dto){ game.updateAnswerTimer(dto.getSeconds()); }
+    @MessageMapping("/operator/manualEvent") public void manualEvent(ManualEventDto dto){ game.publishManualEvent(dto.getType(), dto.getPlayerId(), dto.getValue(), dto.getReactionMs()); }
 }

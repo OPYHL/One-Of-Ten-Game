@@ -4,6 +4,7 @@ const ph = document.getElementById('ph');
 const ti = document.getElementById('ti');
 const who = document.getElementById('who');
 const reaction = document.getElementById('reaction');
+const chooser = document.getElementById('chooser');
 const grid = document.getElementById('grid');
 const pb = document.getElementById('pb');
 
@@ -17,6 +18,15 @@ const btnSave      = document.getElementById('btnSave');
 const btnReset     = document.getElementById('btnReset');
 const btnNewGame   = document.getElementById('btnNewGame');
 const btnResetQuestions = document.getElementById('btnResetQuestions');
+const chooserSelect = document.getElementById('chooserSelect');
+const chooserNotify = document.getElementById('chooserNotify');
+const btnSetChooser = document.getElementById('btnSetChooser');
+const btnClearChooser = document.getElementById('btnClearChooser');
+const manualEventType = document.getElementById('manualEventType');
+const manualEventPlayer = document.getElementById('manualEventPlayer');
+const manualEventValue = document.getElementById('manualEventValue');
+const manualEventReaction = document.getElementById('manualEventReaction');
+const btnManualEvent = document.getElementById('btnManualEvent');
 
 const answerSlider = document.getElementById('answerSlider');
 const answerValue  = document.getElementById('answerValue');
@@ -185,6 +195,57 @@ if (btnResetQuestions){
   };
 }
 
+if (btnSetChooser){
+  btnSetChooser.onclick = () => {
+    if (!chooserSelect) return;
+    const raw = chooserSelect.value;
+    if (raw === ''){
+      alert('Wybierz gracza.');
+      return;
+    }
+    const id = parseInt(raw, 10);
+    if (!Number.isFinite(id)) return;
+    const notify = chooserNotify ? !!chooserNotify.checked : true;
+    send('/app/setChooser', { playerId: id, notify });
+  };
+}
+if (btnClearChooser){
+  btnClearChooser.onclick = () => {
+    send('/app/setChooser', { playerId: null, notify: false });
+  };
+}
+if (btnManualEvent){
+  btnManualEvent.onclick = () => {
+    const type = manualEventType ? manualEventType.value.trim() : '';
+    if (!type){
+      alert('Podaj typ zdarzenia.');
+      return;
+    }
+    const payload = { type };
+    if (manualEventPlayer){
+      const pid = manualEventPlayer.value.trim();
+      if (pid){
+        const num = Number(pid);
+        if (!Number.isFinite(num)){ alert('Nieprawidłowy ID gracza.'); return; }
+        payload.playerId = num;
+      }
+    }
+    if (manualEventValue){
+      const val = manualEventValue.value.trim();
+      if (val) payload.value = val;
+    }
+    if (manualEventReaction){
+      const raw = manualEventReaction.value.trim();
+      if (raw){
+        const num = Number(raw);
+        if (!Number.isFinite(num)){ alert('Nieprawidłowy czas reakcji.'); return; }
+        if (num >= 0) payload.reactionMs = num;
+      }
+    }
+    send('/app/operator/manualEvent', payload);
+  };
+}
+
 btnApprove.onclick   = () => send('/app/approveTarget', {accept:true});
 btnReject.onclick    = () => send('/app/approveTarget', {accept:false});
 
@@ -215,9 +276,26 @@ function render(){
 
   const p = st.players.find(x=>x.id===st.answeringId);
   who.textContent = p ? (p.id+'. '+(p.name||'')) : '—';
+  if (chooser){
+    const ch = st.players.find(x=>x.id===st.currentChooserId);
+    chooser.textContent = ch ? (ch.id + '. ' + (ch.name||'')) : '—';
+  }
 
   grid.innerHTML = '';
   const players = joinedPlayers(st.players);
+  if (chooserSelect){
+    const selected = chooserSelect.value;
+    const opts = ['<option value="">— wybierz —</option>'];
+    players.forEach(pl => {
+      const label = `${pl.id}. ${pl.name||''}`;
+      const sel = st.currentChooserId === pl.id ? 'selected' : '';
+      opts.push(`<option value="${pl.id}" ${sel}>${label}</option>`);
+    });
+    chooserSelect.innerHTML = opts.join('');
+    if (selected && !players.some(pl => String(pl.id) === selected)){
+      chooserSelect.value = '';
+    }
+  }
   if (!players.length){
     const empty = document.createElement('div');
     empty.className = 'card';
@@ -228,6 +306,8 @@ function render(){
   }
   players.forEach(pl => {
     const card = document.createElement('div'); card.className='card' + (pl.id===st.answeringId?' answering':'');
+    const disabledRestore = pl.eliminated ? '' : 'disabled';
+    const disabledEliminate = pl.eliminated ? 'disabled' : '';
     card.innerHTML = `
       <div class="row">
         <b>${pl.id}.</b>
@@ -243,6 +323,27 @@ function render(){
         <button onclick="judge(${pl.id}, true)">✓ Dobra</button>
         <button onclick="judge(${pl.id}, false)">✗ Zła</button>
       </div>
+      <div class="row" style="gap:8px; margin-top:8px; flex-wrap:wrap">
+        <label class="mini">Życia
+          <input class="input" type="number" min="0" value="${pl.lives}" onchange="setLives(${pl.id}, this.value)" style="width:70px">
+        </label>
+        <div class="row" style="gap:4px">
+          <button onclick="adjustLives(${pl.id}, 1)">+Ż</button>
+          <button onclick="adjustLives(${pl.id}, -1)">-Ż</button>
+        </div>
+        <label class="mini">Punkty
+          <input class="input" type="number" min="0" value="${pl.score}" onchange="setScore(${pl.id}, this.value)" style="width:70px">
+        </label>
+        <div class="row" style="gap:4px">
+          <button onclick="adjustScore(${pl.id}, 1)">+P</button>
+          <button onclick="adjustScore(${pl.id}, -1)">-P</button>
+        </div>
+      </div>
+      <div class="row" style="gap:8px; margin-top:8px; flex-wrap:wrap">
+        <button onclick="setChooser(${pl.id}, true)">Ustaw wybierającego</button>
+        <button onclick="restorePlayer(${pl.id})" ${disabledRestore}>Przywróć</button>
+        <button onclick="setEliminated(${pl.id}, true)" ${disabledEliminate}>Eliminuj</button>
+      </div>
     `;
     grid.appendChild(card);
   });
@@ -252,6 +353,31 @@ window.rename    = (id, name)   => send('/app/setName',{playerId:id, name, force
 window.setGender = (id, gender) => send('/app/setGender',{playerId:id, gender});
 window.setAns    = (id)         => send('/app/setAnswering',{playerId:id});
 window.judge     = (id, ok)     => send('/app/judge',{playerId:id, correct:ok});
+window.setLives  = (id, value)  => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return;
+  send('/app/setLives', { playerId: id, value: Math.max(0, Math.round(num)) });
+};
+window.adjustLives = (id, delta) => {
+  const player = st?.players?.find(p => p.id === id);
+  const current = Number(player?.lives ?? 0);
+  const next = Math.max(0, current + delta);
+  send('/app/setLives', { playerId: id, value: next });
+};
+window.setScore = (id, value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return;
+  send('/app/setScore', { playerId: id, value: Math.max(0, Math.round(num)) });
+};
+window.adjustScore = (id, delta) => {
+  const player = st?.players?.find(p => p.id === id);
+  const current = Number(player?.score ?? 0);
+  const next = Math.max(0, current + delta);
+  send('/app/setScore', { playerId: id, value: next });
+};
+window.setEliminated = (id, flag) => send('/app/setEliminated', { playerId: id, flag });
+window.restorePlayer = id => send('/app/restorePlayer', { playerId: id });
+window.setChooser = (id, notify = true) => send('/app/setChooser', { playerId: id, notify });
 
 function disableSetAnswering(state){
   return (state.phase==='BUZZING' || (timer.active)) ? 'disabled' : '';
