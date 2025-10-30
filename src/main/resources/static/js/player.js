@@ -3,6 +3,8 @@ import { loadInitialData, getAnswerTimerMs, setAnswerTimerMs } from '/js/dataSto
 import { getAvatarImage, getAvatarLabel, resolveAvatarImage, listAvatarOptions, isCustomAvatar } from '/js/avatarCatalog.js';
 
 const AVATAR_PLACEHOLDER = '/img/avatar-placeholder.svg';
+const CUSTOM_AVATAR_CARD_KEY = 'custom-photo';
+const CUSTOM_AVATAR_SIZE = 384;
 
 /* ====== DOM ====== */
 const qs = new URLSearchParams(location.search);
@@ -92,6 +94,7 @@ let focusedSeatIndex = (() => {
   return 0;
 })();
 let selectedAvatarKey = null;
+let selectedAvatarCardKey = null;
 let selectedAvatarImage = null;
 let selectedAvatarLabel = '';
 let seatTrackOffset = 0;
@@ -189,6 +192,43 @@ async function segmentCameraImage(videoEl){
   });
 }
 
+function smoothSegmentationMask(maskPixels, width, height){
+  const kernel = [
+    1, 4, 7, 4, 1,
+    4,16,26,16, 4,
+    7,26,41,26, 7,
+    4,16,26,16, 4,
+    1, 4, 7, 4, 1,
+  ];
+  const kernelSize = 5;
+  const kernelSum = 273;
+  const output = new Uint8ClampedArray(width * height);
+  for (let y = 0; y < height; y++){
+    for (let x = 0; x < width; x++){
+      let acc = 0;
+      for (let ky = 0; ky < kernelSize; ky++){
+        const sampleY = Math.min(height - 1, Math.max(0, y + ky - 2));
+        for (let kx = 0; kx < kernelSize; kx++){
+          const sampleX = Math.min(width - 1, Math.max(0, x + kx - 2));
+          const srcIndex = (sampleY * width + sampleX) * 4;
+          acc += kernel[ky * kernelSize + kx] * maskPixels[srcIndex];
+        }
+      }
+      output[y * width + x] = Math.min(255, Math.max(0, Math.round(acc / kernelSum)));
+    }
+  }
+  return output;
+}
+
+function featherAlpha(maskValue){
+  const normalized = Math.max(0, Math.min(1, maskValue / 255));
+  const expanded = Math.min(1, normalized * 1.1);
+  const eased = Math.pow(expanded, 1.35);
+  if (eased <= 0.28) return 0;
+  if (eased >= 0.82) return 255;
+  return Math.round(((eased - 0.28) / 0.54) * 255);
+}
+
 function compositeAvatarFromMask(results, videoEl){
   const width = videoEl.videoWidth || 640;
   const height = videoEl.videoHeight || 640;
@@ -208,23 +248,24 @@ function compositeAvatarFromMask(results, videoEl){
   const frame = srcCtx.getImageData(0, 0, width, height);
   const pixels = frame.data;
   const maskPixels = maskData.data;
+  const smoothedMask = smoothSegmentationMask(maskPixels, width, height);
 
-  for (let i = 0; i < pixels.length; i += 4){
-    const maskValue = maskPixels[i];
-    const boosted = Math.max(0, Math.min(255, maskValue * 1.1));
-    const alpha = boosted > 200 ? 255 : boosted < 40 ? 0 : boosted;
-    pixels[i + 3] = alpha;
+  for (let i = 0, p = 0; i < pixels.length; i += 4, p++){
+    const maskValue = smoothedMask[p];
+    pixels[i + 3] = featherAlpha(maskValue);
   }
   srcCtx.putImageData(frame, 0, 0);
 
   const squareSize = Math.min(width, height);
   const sx = (width - squareSize) / 2;
   const sy = (height - squareSize) / 2;
-  const targetSize = 512;
+  const targetSize = CUSTOM_AVATAR_SIZE;
   const output = document.createElement('canvas');
   output.width = targetSize;
   output.height = targetSize;
   const outCtx = output.getContext('2d');
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = 'high';
   outCtx.clearRect(0, 0, targetSize, targetSize);
   outCtx.drawImage(sourceCanvas, sx, sy, squareSize, squareSize, 0, 0, targetSize, targetSize);
 
@@ -249,13 +290,14 @@ function setSeatTrackPosition(target, smooth){
   }
 }
 
-function createAvatarCard({ value, image, label, extraClasses = '' }){
+function createAvatarCard({ cardKey, image, label, extraClasses = '', isCustom = false }){
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = `choiceCard avatarCard ${extraClasses}`.trim();
-  btn.dataset.avatarValue = value;
-  if (image) btn.dataset.avatarImg = image;
-  if (label) btn.dataset.avatarLabel = label;
+  btn.dataset.avatarCardKey = cardKey;
+  if (!isCustom && image) btn.dataset.avatarImg = image;
+  if (label && !isCustom) btn.dataset.avatarLabel = label;
+  if (isCustom) btn.classList.add('hasCustomImage');
   btn.setAttribute('aria-pressed', 'false');
 
   const thumb = document.createElement('img');
@@ -271,7 +313,7 @@ function createAvatarCard({ value, image, label, extraClasses = '' }){
 
   btn.appendChild(thumb);
   btn.appendChild(caption);
-  btn.addEventListener('click', () => selectAvatar(value));
+  btn.addEventListener('click', () => selectAvatar(cardKey));
   return btn;
 }
 
@@ -284,10 +326,11 @@ function rebuildAvatarGrid(opts = {}){
 
   if (customAvatarDataUrl){
     const customBtn = createAvatarCard({
-      value: customAvatarDataUrl,
+      cardKey: CUSTOM_AVATAR_CARD_KEY,
       image: customAvatarDataUrl,
       label: customAvatarLabel || 'Moje zdjęcie',
       extraClasses: 'isCustom',
+      isCustom: true,
     });
     avatarGrid.appendChild(customBtn);
     avatarCards.push(customBtn);
@@ -295,7 +338,7 @@ function rebuildAvatarGrid(opts = {}){
 
   options.forEach(option => {
     const card = createAvatarCard({
-      value: option.key,
+      cardKey: option.key,
       image: option.image,
       label: option.label,
     });
@@ -314,10 +357,11 @@ function rebuildAvatarGrid(opts = {}){
   cameraCard.addEventListener('click', openCameraModal);
   avatarGrid.appendChild(cameraCard);
 
-  const stillAvailable = avatarCards.some(card => card.dataset.avatarValue === selectedAvatarKey);
-  if (selectedAvatarKey && stillAvailable){
-    selectAvatar(selectedAvatarKey);
+  const stillAvailable = avatarCards.some(card => card.dataset.avatarCardKey === selectedAvatarCardKey);
+  if (selectedAvatarCardKey && stillAvailable){
+    selectAvatar(selectedAvatarCardKey);
   } else if (!stillAvailable){
+    selectedAvatarCardKey = null;
     selectedAvatarKey = null;
     selectedAvatarImage = null;
     selectedAvatarLabel = '';
@@ -407,13 +451,15 @@ function stopCamera(){
 
 function prepareCameraPreview(dataUrl){
   if (!cameraPreviewCanvas) return;
-  cameraPreviewCanvas.width = 512;
-  cameraPreviewCanvas.height = 512;
+  cameraPreviewCanvas.width = CUSTOM_AVATAR_SIZE;
+  cameraPreviewCanvas.height = CUSTOM_AVATAR_SIZE;
   const ctx = cameraPreviewCanvas.getContext('2d');
   if (ctx){
     const img = new Image();
     img.onload = () => {
       ctx.clearRect(0, 0, cameraPreviewCanvas.width, cameraPreviewCanvas.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, cameraPreviewCanvas.width, cameraPreviewCanvas.height);
     };
     img.src = dataUrl;
@@ -512,14 +558,11 @@ function applyCapturedAvatar(){
   if (!cameraHasCapture || !cameraCaptureDataUrl) return;
   customAvatarDataUrl = cameraCaptureDataUrl;
   customAvatarLabel = 'Moje zdjęcie';
+  selectedAvatarCardKey = CUSTOM_AVATAR_CARD_KEY;
   selectedAvatarKey = cameraCaptureDataUrl;
   selectedAvatarImage = cameraCaptureDataUrl;
-  selectedAvatarLabel = 'Moje zdjęcie';
+  selectedAvatarLabel = customAvatarLabel;
   rebuildAvatarGrid({ gender: genderSel?.value || myGender || 'MALE' });
-  updateAvatarPreview();
-  updateAvatarHint();
-  updateSummary();
-  updateStepButtons();
   closeCameraModal();
   showToast('Dodano zdjęcie jako avatar', 'ok');
 }
@@ -692,15 +735,31 @@ function selectGender(val){
   updateStepButtons();
 }
 
-function selectAvatar(value){
-  if (!value) return;
-  const card = avatarCards.find(c => c.dataset.avatarValue === value);
+function selectAvatar(cardKey){
+  if (!cardKey) return;
+  const card = avatarCards.find(c => c.dataset.avatarCardKey === cardKey);
   if (!card) return;
-  selectedAvatarKey = value;
-  selectedAvatarImage = card.dataset.avatarImg || getAvatarImage(value) || value;
-  selectedAvatarLabel = card.dataset.avatarLabel || getAvatarLabel(value) || card.querySelector('.choiceLabel')?.textContent?.trim() || '';
+
+  let avatarValue = cardKey;
+  let avatarImage = null;
+  let avatarLabel = card.dataset.avatarLabel || getAvatarLabel(cardKey) || card.querySelector('.choiceLabel')?.textContent?.trim() || '';
+
+  if (cardKey === CUSTOM_AVATAR_CARD_KEY){
+    if (!customAvatarDataUrl) return;
+    avatarValue = customAvatarDataUrl;
+    avatarImage = customAvatarDataUrl;
+    avatarLabel = customAvatarLabel || 'Moje zdjęcie';
+  } else {
+    avatarImage = card.dataset.avatarImg || getAvatarImage(cardKey) || resolveAvatarImage(cardKey, 'idle', genderSel?.value || myGender || 'MALE');
+  }
+
+  selectedAvatarCardKey = cardKey;
+  selectedAvatarKey = avatarValue;
+  selectedAvatarImage = avatarImage;
+  selectedAvatarLabel = avatarLabel;
+
   avatarCards.forEach(c => {
-    const active = c.dataset.avatarValue === value;
+    const active = c.dataset.avatarCardKey === cardKey;
     c.classList.toggle('selected', active);
     c.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
@@ -987,31 +1046,35 @@ const bus = connect({
             customAvatarDataUrl = avatarValue;
             customAvatarLabel = 'Moje zdjęcie';
           }
-          if (avatarValue !== selectedAvatarKey){
+          const expectedCardKey = isCustom ? CUSTOM_AVATAR_CARD_KEY : avatarValue;
+          const hasCard = avatarCards.some(c => c.dataset.avatarCardKey === expectedCardKey);
+          if (avatarValue !== selectedAvatarKey || selectedAvatarCardKey !== expectedCardKey){
             selectedAvatarKey = avatarValue;
-            if (avatarCards.some(c => c.dataset.avatarValue === avatarValue)){
-              selectAvatar(avatarValue);
+            selectedAvatarCardKey = expectedCardKey;
+            if (hasCard){
+              selectAvatar(expectedCardKey);
             } else {
               rebuildAvatarGrid({ gender: genderForAvatar });
             }
-          } else if (isCustom && !avatarCards.some(c => c.dataset.avatarValue === avatarValue)){
+          } else if (isCustom && !hasCard){
             rebuildAvatarGrid({ gender: genderForAvatar });
+          } else {
+            selectedAvatarImage = resolvedAvatarSrc;
+            selectedAvatarLabel = getAvatarLabel(avatarValue) || (isCustom ? 'Moje zdjęcie' : selectedAvatarLabel);
+            updateAvatarPreview();
+            updateAvatarHint();
+            updateSummary();
+            updateStepButtons();
           }
-        } else if (!selectedAvatarKey){
+        } else if (selectedAvatarKey){
+          selectedAvatarCardKey = null;
+          selectedAvatarKey = null;
           selectedAvatarImage = null;
           selectedAvatarLabel = '';
           avatarCards.forEach(c => {
             c.classList.remove('selected');
             c.setAttribute('aria-pressed', 'false');
           });
-          updateAvatarPreview();
-          updateAvatarHint();
-          updateSummary();
-          updateStepButtons();
-        }
-        if (avatarValue){
-          selectedAvatarImage = resolvedAvatarSrc;
-          selectedAvatarLabel = getAvatarLabel(avatarValue) || (isCustomAvatar(avatarValue) ? 'Moje zdjęcie' : selectedAvatarLabel);
           updateAvatarPreview();
           updateAvatarHint();
           updateSummary();
