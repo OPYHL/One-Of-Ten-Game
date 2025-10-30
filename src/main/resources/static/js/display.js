@@ -1,4 +1,5 @@
 import { connect } from '/js/ws.js';
+import { resolveAvatarImage } from '/js/avatarCatalog.js';
 
 /* ================= DOM ================= */
 const hudPlayers = document.getElementById('statPlayers');
@@ -237,15 +238,8 @@ const isJoined   = p => (typeof p.joined === 'boolean') ? p.joined : !looksLikeP
 const AVAILABLE_AVATARS = new Set(['female.png', 'male.png']);
 
 function avatarFor(p, mood){
-  const base = (p?.gender === 'FEMALE') ? 'female' : 'male';
-  const safeMood = ['idle', 'knowing', 'success', 'wrong'].includes(mood) ? mood : 'idle';
-  const variant = safeMood === 'idle' ? `${base}.png` : `${base}-${safeMood}.png`;
-
-  // Obecny zestaw grafik zawiera tylko bazowe avatary. Jeśli wariant
-  // tematyczny (np. -success) nie jest dostępny, wracamy do bazowego.
-  const file = AVAILABLE_AVATARS.has(variant) ? variant : `${base}.png`;
-
-  return `/img/${file}`;
+  if (!p) return resolveAvatarImage(null, mood, 'MALE');
+  return resolveAvatarImage(p.avatar || null, mood, p.gender);
 }
 
 /* ===== Layout siatki ===== */

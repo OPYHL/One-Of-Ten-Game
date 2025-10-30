@@ -1,4 +1,5 @@
 import { connect } from '/js/ws.js';
+import { resolveAvatarImage } from '/js/avatarCatalog.js';
 
 const btnStart    = document.getElementById('btnStart');
 const btnIntroDone= document.getElementById('btnIntroDone');
@@ -1212,7 +1213,7 @@ function render(){
   /* current answering */
   const p = answeringPlayer;
   if (p){
-    ansAv.src   = (p.gender==='FEMALE') ? '/img/female.png' : '/img/male.png';
+    ansAv.src   = resolveAvatarImage(p.avatar || null, 'idle', p.gender);
     ansName.textContent = `${p.id}. ${(p.name||'').trim()}`;
     ansSeat.textContent = `Stanowisko ${p.id}`;
   } else {

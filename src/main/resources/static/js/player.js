@@ -1,5 +1,6 @@
 import { connect } from '/js/ws.js';
 import { loadInitialData, getAnswerTimerMs, setAnswerTimerMs } from '/js/dataStore.js';
+import { getAvatarImage, getAvatarLabel, resolveAvatarImage } from '/js/avatarCatalog.js';
 
 /* ====== DOM ====== */
 const qs = new URLSearchParams(location.search);
@@ -13,9 +14,15 @@ const btnJoin   = document.getElementById('join');
 const btnKnow   = document.getElementById('know');
 
 const seatButtons = Array.from(document.querySelectorAll('[data-seat]'));
+const seatViewport = document.getElementById('seatViewport');
+const seatPrev = document.getElementById('seatPrev');
+const seatNext = document.getElementById('seatNext');
 const genderCards = Array.from(document.querySelectorAll('[data-gender]'));
 const avatarCards = Array.from(document.querySelectorAll('[data-avatar]'));
 const backButtons = Array.from(document.querySelectorAll('[data-back-step]'));
+
+genderCards.forEach(card => card.setAttribute('aria-pressed', 'false'));
+avatarCards.forEach(card => card.setAttribute('aria-pressed', 'false'));
 
 const seatHint = document.getElementById('seatHint');
 const nameHint = document.getElementById('nameHint');
@@ -24,9 +31,9 @@ const avatarHint = document.getElementById('avatarHint');
 const summarySeat = document.getElementById('summarySeat');
 const summaryName = document.getElementById('summaryName');
 const summaryGender = document.getElementById('summaryGender');
+const summaryAvatar = document.getElementById('summaryAvatar');
 const avatarPreview = document.getElementById('avatarPreview');
 const avatarPreviewImg = document.getElementById('avatarPreviewImg');
-const playerAvatarEl = document.getElementById('playerAvatar');
 
 const stepOrder = ['stepSeat','stepName','stepGender','stepAvatar','stepGame'];
 let currentStep = 'stepSeat';
@@ -64,8 +71,17 @@ let clockActive = false;
 let iAmOut = false;
 
 let selectedSeat = slotInput?.value ? parseInt(slotInput.value, 10) || null : null;
-let selectedAvatarTheme = null;
-const avatarThemes = ['classic','sunrise','forest','midnight'];
+let focusedSeatIndex = (() => {
+  if (!seatButtons.length) return 0;
+  if (Number.isInteger(selectedSeat)){
+    const idx = seatButtons.findIndex(btn => parseInt(btn.dataset.seat, 10) === selectedSeat);
+    if (idx >= 0) return idx;
+  }
+  return 0;
+})();
+let selectedAvatarKey = null;
+let selectedAvatarImage = null;
+let selectedAvatarLabel = '';
 
 function showStep(stepId){
   if (!stepId || !stepOrder.includes(stepId)) return;
@@ -88,16 +104,35 @@ function seatTakenByOther(id){
   return true;
 }
 
-function updateSeatButtons(){
-  seatButtons.forEach(btn => {
+function updateSeatButtons(opts={}){
+  const smooth = !!opts.smooth;
+  const total = seatButtons.length;
+  if (focusedSeatIndex >= total){
+    focusedSeatIndex = total > 0 ? total - 1 : 0;
+  }
+  seatButtons.forEach((btn, idx) => {
     const id = parseInt(btn.dataset.seat, 10);
     if (!Number.isInteger(id)) return;
     const taken = seatTakenByOther(id);
+    const distance = Math.abs(idx - focusedSeatIndex);
     btn.classList.toggle('selected', id === selectedSeat);
     btn.classList.toggle('taken', taken);
+    btn.classList.toggle('focus', idx === focusedSeatIndex);
+    btn.classList.toggle('adjacent', distance === 1);
+    btn.classList.toggle('faded', distance > 1);
     btn.setAttribute('aria-checked', id === selectedSeat ? 'true' : 'false');
     btn.setAttribute('aria-label', `Stanowisko ${id}${taken ? ' — zajęte' : ''}`);
+    btn.setAttribute('tabindex', idx === focusedSeatIndex ? '0' : '-1');
   });
+  if (seatPrev) seatPrev.disabled = focusedSeatIndex <= 0;
+  if (seatNext) seatNext.disabled = focusedSeatIndex >= (total - 1);
+  const focusBtn = seatButtons[focusedSeatIndex];
+  if (!focusBtn || !seatViewport) return;
+  const viewportWidth = seatViewport.clientWidth || 1;
+  const targetLeft = focusBtn.offsetLeft - (viewportWidth / 2 - focusBtn.offsetWidth / 2);
+  const maxScroll = Math.max(0, seatViewport.scrollWidth - viewportWidth);
+  const clamped = Math.max(0, Math.min(maxScroll, targetLeft));
+  seatViewport.scrollTo({ left: clamped, behavior: smooth ? 'smooth' : 'auto' });
 }
 
 function updateSeatHint(){
@@ -131,15 +166,15 @@ function updateGenderHint(){
     : 'Wybrałeś wersję męską avataru.';
 }
 
-function updateAvatarHint(theme){
+function updateAvatarHint(){
   if (!avatarHint) return;
-  if (!theme){
+  if (!selectedAvatarKey){
     avatarHint.textContent = 'Wybierz wygląd, a następnie dołącz do gry.';
     return;
   }
-  const card = avatarCards.find(c => c.dataset.avatar === theme);
-  const label = card?.querySelector('.choiceLabel')?.textContent?.trim();
-  avatarHint.textContent = label ? `Wybrano motyw „${label}”.` : 'Wybrano avatar.';
+  avatarHint.textContent = selectedAvatarLabel
+    ? `Wybrano avatar „${selectedAvatarLabel}”.`
+    : 'Wybrano avatar.';
 }
 
 function updateSummary(){
@@ -149,12 +184,20 @@ function updateSummary(){
     const val = genderSel?.value || '';
     summaryGender.textContent = val ? (val === 'FEMALE' ? 'Kobieta' : 'Mężczyzna') : '—';
   }
+  if (summaryAvatar) summaryAvatar.textContent = selectedAvatarLabel || '—';
 }
 
 function updateAvatarPreview(){
   if (!avatarPreviewImg) return;
-  const base = genderSel?.value === 'FEMALE' ? 'female' : 'male';
-  avatarPreviewImg.src = `/img/${base}.png`;
+  const genderForFallback = genderSel?.value || myGender || 'MALE';
+  const fallback = resolveAvatarImage(null, 'idle', genderForFallback);
+  const src = selectedAvatarKey
+    ? (selectedAvatarImage || resolveAvatarImage(selectedAvatarKey, 'idle', genderForFallback))
+    : fallback;
+  if (selectedAvatarKey) selectedAvatarImage = src;
+  avatarPreviewImg.src = src;
+  const altLabel = selectedAvatarLabel ? `Podgląd avataru ${selectedAvatarLabel}` : 'Podgląd avataru';
+  avatarPreviewImg.alt = altLabel;
 }
 
 function updateStepButtons(){
@@ -162,31 +205,17 @@ function updateStepButtons(){
   if (btnNext1) btnNext1.disabled = !selectedSeat;
   if (btnNext2) btnNext2.disabled = !nm;
   if (btnNext3) btnNext3.disabled = !genderSel?.value;
-  if (btnJoin) btnJoin.disabled = !selectedAvatarTheme || !nm || !selectedSeat;
+  if (btnJoin) btnJoin.disabled = !selectedAvatarKey || !nm || !selectedSeat;
 }
 
-function applyAvatarTheme(theme){
-  selectedAvatarTheme = theme || null;
-  avatarThemes.forEach(t => {
-    const cls = 'avatar-theme-' + t;
-    avatarPreview?.classList.remove(cls);
-    playerAvatarEl?.classList.remove(cls);
-  });
-  avatarCards.forEach(card => card.classList.toggle('selected', card.dataset.avatar === theme));
-  if (theme){
-    const cls = 'avatar-theme-' + theme;
-    avatarPreview?.classList.add(cls);
-    playerAvatarEl?.classList.add(cls);
-  }
-  updateAvatarHint(theme || null);
-  updateStepButtons();
-}
-
-function selectSeat(id){
+function selectSeat(id, opts={}){
   if (!Number.isInteger(id) || id < 1 || id > 10) return;
+  const smooth = opts.smooth !== undefined ? !!opts.smooth : true;
   selectedSeat = id;
   if (slotInput) slotInput.value = id;
-  updateSeatButtons();
+  const idx = seatButtons.findIndex(btn => parseInt(btn.dataset.seat, 10) === id);
+  if (idx >= 0) focusedSeatIndex = idx;
+  updateSeatButtons({smooth});
   updateSeatHint();
   updateSummary();
   updateStepButtons();
@@ -196,17 +225,34 @@ function selectGender(val){
   if (!val) return;
   if (genderSel) genderSel.value = val;
   myGender = val;
-  genderCards.forEach(card => card.classList.toggle('selected', card.dataset.gender === val));
+  genderCards.forEach(card => {
+    const active = card.dataset.gender === val;
+    card.classList.toggle('selected', active);
+    card.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
   updateGenderHint();
   updateAvatarPreview();
   updateSummary();
   updateStepButtons();
 }
 
-function selectAvatar(theme){
-  if (!theme) return;
-  applyAvatarTheme(theme);
+function selectAvatar(key){
+  if (!key) return;
+  const card = avatarCards.find(c => c.dataset.avatar === key);
+  if (!card) return;
+  selectedAvatarKey = key;
+  const genderForFallback = genderSel?.value || myGender || 'MALE';
+  selectedAvatarImage = getAvatarImage(key) || resolveAvatarImage(null, 'idle', genderForFallback);
+  selectedAvatarLabel = getAvatarLabel(key) || card.dataset.avatarLabel || card.querySelector('.choiceLabel')?.textContent?.trim() || '';
+  avatarCards.forEach(c => {
+    const active = c === card;
+    c.classList.toggle('selected', active);
+    c.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  updateAvatarPreview();
+  updateAvatarHint();
   updateSummary();
+  updateStepButtons();
 }
 
 seatButtons.forEach(btn => {
@@ -215,7 +261,36 @@ seatButtons.forEach(btn => {
     if (!Number.isInteger(id)) return;
     selectSeat(id);
   });
+  btn.addEventListener('keydown', ev => {
+    if (ev.key === 'ArrowRight'){
+      ev.preventDefault();
+      moveSeatFocus(1);
+      seatButtons[focusedSeatIndex]?.focus();
+    } else if (ev.key === 'ArrowLeft'){
+      ev.preventDefault();
+      moveSeatFocus(-1);
+      seatButtons[focusedSeatIndex]?.focus();
+    }
+  });
 });
+
+function moveSeatFocus(delta){
+  if (!seatButtons.length) return;
+  const nextIdx = Math.min(Math.max(focusedSeatIndex + delta, 0), seatButtons.length - 1);
+  const target = seatButtons[nextIdx];
+  if (!target) return;
+  const id = parseInt(target.dataset.seat, 10);
+  if (!Number.isInteger(id)) return;
+  selectSeat(id);
+  seatButtons[focusedSeatIndex]?.focus();
+}
+
+if (seatPrev){
+  seatPrev.addEventListener('click', () => moveSeatFocus(-1));
+}
+if (seatNext){
+  seatNext.addEventListener('click', () => moveSeatFocus(1));
+}
 
 genderCards.forEach(card => {
   card.addEventListener('click', () => selectGender(card.dataset.gender));
@@ -250,10 +325,10 @@ if (slotInput){
 }
 
 selectGender(myGender);
-applyAvatarTheme(selectedAvatarTheme);
 updateAvatarPreview();
+updateAvatarHint();
 if (Number.isInteger(selectedSeat)){
-  selectSeat(selectedSeat);
+  selectSeat(selectedSeat, {smooth:false});
 } else {
   updateSeatButtons();
   updateSeatHint();
@@ -412,6 +487,28 @@ const bus = connect({
     if (myId){
       const me = st.players.find(p=>p.id===myId);
       if (me){
+        const genderForAvatar = me.gender || myGender || 'MALE';
+        const newAvatarKey = me.avatar || selectedAvatarKey || null;
+        const resolvedAvatarSrc = resolveAvatarImage(newAvatarKey, 'idle', genderForAvatar);
+        if (newAvatarKey){
+          const avatarChanged = newAvatarKey !== selectedAvatarKey || resolvedAvatarSrc !== selectedAvatarImage;
+          if (avatarChanged){
+            selectedAvatarKey = newAvatarKey;
+            selectedAvatarLabel = getAvatarLabel(newAvatarKey) || selectedAvatarLabel;
+            selectedAvatarImage = resolvedAvatarSrc;
+            avatarCards.forEach(c => c.classList.toggle('selected', c.dataset.avatar === newAvatarKey));
+            updateAvatarPreview();
+            updateAvatarHint();
+            updateSummary();
+            updateStepButtons();
+          }
+        } else if (!selectedAvatarKey && resolvedAvatarSrc !== selectedAvatarImage){
+          selectedAvatarImage = resolvedAvatarSrc;
+          selectedAvatarLabel = '';
+          updateAvatarPreview();
+          updateSummary();
+        }
+        if (avImg) avImg.src = resolvedAvatarSrc;
         if (me.score !== myScore){
           scoreEl.textContent = me.score;
           scoreEl.parentElement.classList.add('scorePulse');
@@ -691,7 +788,7 @@ if (btnJoin){
       alert('Wybierz płeć.');
       return;
     }
-    if (!selectedAvatarTheme){
+    if (!selectedAvatarKey){
       alert('Wybierz avatar.');
       return;
     }
@@ -707,7 +804,10 @@ if (btnJoin){
     seatEl.textContent = 'Stanowisko ' + selectedSeat;
     bus.send('/app/setName', {playerId:selectedSeat, name:nm});
     bus.send('/app/setGender', {playerId:selectedSeat, gender:myGender});
-    avImg.src = myGender === 'FEMALE' ? '/img/female.png' : '/img/male.png';
+    bus.send('/app/setAvatar', {playerId:selectedSeat, avatar:selectedAvatarKey});
+    const resolvedAvatar = selectedAvatarImage || resolveAvatarImage(selectedAvatarKey, 'idle', myGender);
+    selectedAvatarImage = resolvedAvatar;
+    avImg.src = resolvedAvatar;
     showStep('stepGame');
     updateSeatButtons();
     updateSummary();
