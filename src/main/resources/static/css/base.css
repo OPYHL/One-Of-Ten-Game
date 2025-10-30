@@ -105,14 +105,19 @@ body.playerPage{
 }
 .stepAction.primary{ background:linear-gradient(135deg,#ff9b3d,#f76b1c); border-color:#ff9b3d; color:#1a120b; text-shadow:0 1px 0 rgba(255,255,255,.3); }
 .stepAction:disabled{ background:#1a2336; border-color:#1f2a42; box-shadow:none; }
-.seatCarousel{ display:flex; align-items:center; gap:18px; }
+.seatCarousel{ display:flex; align-items:center; justify-content:center; gap:18px; }
 .seatViewport{
-  flex:1 1 auto; overflow-x:auto; padding:8px 0; scroll-snap-type:x mandatory; position:relative;
-  mask-image:linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%);
+  flex:1 1 auto; max-width:min(440px, 100%);
+  overflow:hidden; padding:8px 0; position:relative;
+  mask-image:linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
 }
-.seatViewport::-webkit-scrollbar{ display:none; }
-.seatViewport{ -ms-overflow-style:none; scrollbar-width:none; }
-.seatTrack{ display:flex; gap:18px; padding:0 8px; }
+.seatTrack{
+  display:flex; gap:18px; padding:0 8px;
+  transform:translateX(calc(-1 * var(--seat-track-offset, 0px)));
+  transition:transform .45s cubic-bezier(.2,.8,.2,1);
+  will-change:transform;
+}
+.seatTrack.noTransition{ transition:none; }
 .seatCard{
   scroll-snap-align:center;
   min-width:140px; padding:18px; border-radius:22px; border:1px solid #273b5d;

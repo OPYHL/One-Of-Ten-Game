@@ -1,6 +1,6 @@
 import { connect } from '/js/ws.js';
 import { loadInitialData, getAnswerTimerMs, setAnswerTimerMs } from '/js/dataStore.js';
-import { getAvatarImage, getAvatarLabel, resolveAvatarImage } from '/js/avatarCatalog.js';
+import { getAvatarImage, getAvatarLabel, resolveAvatarImage, listAvatarOptions } from '/js/avatarCatalog.js';
 
 /* ====== DOM ====== */
 const qs = new URLSearchParams(location.search);
@@ -15,14 +15,15 @@ const btnKnow   = document.getElementById('know');
 
 const seatButtons = Array.from(document.querySelectorAll('[data-seat]'));
 const seatViewport = document.getElementById('seatViewport');
+const seatTrack = document.getElementById('seatTrack');
 const seatPrev = document.getElementById('seatPrev');
 const seatNext = document.getElementById('seatNext');
 const genderCards = Array.from(document.querySelectorAll('[data-gender]'));
-const avatarCards = Array.from(document.querySelectorAll('[data-avatar]'));
+const avatarGrid = document.getElementById('avatarGrid');
+let avatarCards = [];
 const backButtons = Array.from(document.querySelectorAll('[data-back-step]'));
 
 genderCards.forEach(card => card.setAttribute('aria-pressed', 'false'));
-avatarCards.forEach(card => card.setAttribute('aria-pressed', 'false'));
 
 const seatHint = document.getElementById('seatHint');
 const nameHint = document.getElementById('nameHint');
@@ -82,6 +83,78 @@ let focusedSeatIndex = (() => {
 let selectedAvatarKey = null;
 let selectedAvatarImage = null;
 let selectedAvatarLabel = '';
+let seatTrackOffset = 0;
+
+function normalizeGender(value){
+  return (value || '').toUpperCase() === 'FEMALE' ? 'FEMALE' : 'MALE';
+}
+
+function setSeatTrackPosition(target, smooth){
+  if (!seatTrack || !seatViewport) return;
+  const trackWidth = seatTrack.scrollWidth || seatTrack.offsetWidth || 0;
+  const viewportWidth = seatViewport.clientWidth || 0;
+  const maxScroll = Math.max(0, trackWidth - viewportWidth);
+  const clamped = Math.max(0, Math.min(maxScroll, target));
+  if (!smooth){
+    seatTrack.classList.add('noTransition');
+  } else {
+    seatTrack.classList.remove('noTransition');
+  }
+  seatTrack.style.setProperty('--seat-track-offset', `${clamped}px`);
+  seatTrackOffset = clamped;
+  if (!smooth){
+    requestAnimationFrame(() => seatTrack.classList.remove('noTransition'));
+  }
+}
+
+function rebuildAvatarGrid(opts = {}){
+  if (!avatarGrid) return;
+  const gender = normalizeGender(opts.gender || genderSel?.value || myGender || 'MALE');
+  const options = listAvatarOptions(gender);
+  avatarGrid.innerHTML = '';
+  avatarCards = options.map(option => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'choiceCard avatarCard';
+    btn.dataset.avatar = option.key;
+    btn.dataset.avatarImg = option.image;
+    btn.dataset.avatarLabel = option.label;
+    btn.setAttribute('aria-pressed', 'false');
+
+    const thumb = document.createElement('img');
+    thumb.className = 'avatarThumb';
+    thumb.loading = 'lazy';
+    thumb.src = option.image;
+    thumb.alt = `Podgląd awatara ${option.label}`;
+
+    const label = document.createElement('div');
+    label.className = 'choiceLabel';
+    label.textContent = option.label;
+
+    btn.appendChild(thumb);
+    btn.appendChild(label);
+    btn.addEventListener('click', () => selectAvatar(option.key));
+    avatarGrid.appendChild(btn);
+    return btn;
+  });
+
+  const stillAvailable = options.some(opt => opt.key === selectedAvatarKey);
+  if (selectedAvatarKey && stillAvailable){
+    selectAvatar(selectedAvatarKey);
+  } else if (!stillAvailable){
+    selectedAvatarKey = null;
+    selectedAvatarImage = null;
+    selectedAvatarLabel = '';
+    avatarCards.forEach(card => {
+      card.classList.remove('selected');
+      card.setAttribute('aria-pressed', 'false');
+    });
+    updateAvatarPreview();
+    updateAvatarHint();
+    updateSummary();
+    updateStepButtons();
+  }
+}
 
 function showStep(stepId){
   if (!stepId || !stepOrder.includes(stepId)) return;
@@ -90,6 +163,9 @@ function showStep(stepId){
     if (el) el.style.display = id === stepId ? 'block' : 'none';
   });
   currentStep = stepId;
+  if (stepId === 'stepAvatar'){
+    rebuildAvatarGrid();
+  }
 }
 
 function seatTakenByOther(id){
@@ -127,12 +203,18 @@ function updateSeatButtons(opts={}){
   if (seatPrev) seatPrev.disabled = focusedSeatIndex <= 0;
   if (seatNext) seatNext.disabled = focusedSeatIndex >= (total - 1);
   const focusBtn = seatButtons[focusedSeatIndex];
-  if (!focusBtn || !seatViewport) return;
-  const viewportWidth = seatViewport.clientWidth || 1;
-  const targetLeft = focusBtn.offsetLeft - (viewportWidth / 2 - focusBtn.offsetWidth / 2);
-  const maxScroll = Math.max(0, seatViewport.scrollWidth - viewportWidth);
-  const clamped = Math.max(0, Math.min(maxScroll, targetLeft));
-  seatViewport.scrollTo({ left: clamped, behavior: smooth ? 'smooth' : 'auto' });
+  if (!focusBtn) return;
+  if (seatViewport && seatTrack){
+    const viewportWidth = seatViewport.clientWidth || 1;
+    const targetLeft = focusBtn.offsetLeft - (viewportWidth / 2 - focusBtn.offsetWidth / 2);
+    setSeatTrackPosition(targetLeft, smooth);
+  } else if (seatViewport){
+    const viewportWidth = seatViewport.clientWidth || 1;
+    const targetLeft = focusBtn.offsetLeft - (viewportWidth / 2 - focusBtn.offsetWidth / 2);
+    const maxScroll = Math.max(0, seatViewport.scrollWidth - viewportWidth);
+    const clamped = Math.max(0, Math.min(maxScroll, targetLeft));
+    seatViewport.scrollTo({ left: clamped, behavior: smooth ? 'smooth' : 'auto' });
+  }
 }
 
 function updateSeatHint(){
@@ -230,6 +312,7 @@ function selectGender(val){
     card.classList.toggle('selected', active);
     card.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
+  rebuildAvatarGrid({ gender: val });
   updateGenderHint();
   updateAvatarPreview();
   updateSummary();
@@ -296,10 +379,6 @@ genderCards.forEach(card => {
   card.addEventListener('click', () => selectGender(card.dataset.gender));
 });
 
-avatarCards.forEach(card => {
-  card.addEventListener('click', () => selectAvatar(card.dataset.avatar));
-});
-
 backButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const target = btn.dataset.backStep;
@@ -336,6 +415,7 @@ if (Number.isInteger(selectedSeat)){
 updateNameHint();
 updateSummary();
 updateStepButtons();
+rebuildAvatarGrid();
 showStep(currentStep);
 
 function updateClockProgress(pct){
@@ -487,6 +567,9 @@ const bus = connect({
     if (myId){
       const me = st.players.find(p=>p.id===myId);
       if (me){
+        if (me.gender && me.gender !== myGender){
+          selectGender(me.gender);
+        }
         const genderForAvatar = me.gender || myGender || 'MALE';
         const newAvatarKey = me.avatar || selectedAvatarKey || null;
         const resolvedAvatarSrc = resolveAvatarImage(newAvatarKey, 'idle', genderForAvatar);
