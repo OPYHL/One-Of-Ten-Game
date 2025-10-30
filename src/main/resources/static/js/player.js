@@ -409,8 +409,14 @@ updateAvatarHint();
 if (Number.isInteger(selectedSeat)){
   selectSeat(selectedSeat, {smooth:false});
 } else {
-  updateSeatButtons();
-  updateSeatHint();
+  const initialFocusBtn = seatButtons[focusedSeatIndex];
+  const initialSeatId = initialFocusBtn ? parseInt(initialFocusBtn.dataset.seat, 10) : null;
+  if (Number.isInteger(initialSeatId) && !seatTakenByOther(initialSeatId)){
+    selectSeat(initialSeatId, {smooth:false});
+  } else {
+    updateSeatButtons();
+    updateSeatHint();
+  }
 }
 updateNameHint();
 updateSummary();
