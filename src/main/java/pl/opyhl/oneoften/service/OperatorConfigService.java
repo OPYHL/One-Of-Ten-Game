@@ -24,7 +24,7 @@ public class OperatorConfigService {
             var answer = new pl.opyhl.oneoften.model.config.TimerSlider();
             answer.setMinSeconds(3);
             answer.setMaxSeconds(15);
-            answer.setDefaultSeconds(5);
+            answer.setDefaultSeconds(10);
             answer.setStepSeconds(1);
             var cooldown = new pl.opyhl.oneoften.model.config.TimerSlider();
             cooldown.setDefaultSeconds(3);
