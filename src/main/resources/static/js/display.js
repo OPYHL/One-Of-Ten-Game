@@ -1,4 +1,5 @@
 import { connect } from '/js/ws.js';
+import { resolveAvatarImage } from '/js/avatarCatalog.js';
 
 /* ================= DOM ================= */
 const hudPlayers = document.getElementById('statPlayers');
@@ -235,14 +236,8 @@ const normName   = p => (p?.name||'').trim();
 const looksLikePlaceholder = p => { const nm = normName(p); return !nm || nm.toLowerCase()===`gracz ${p.id}`; };
 const isJoined   = p => (typeof p.joined === 'boolean') ? p.joined : !looksLikePlaceholder(p);
 function avatarFor(p, mood){
-  const base = (p.gender === 'FEMALE') ? 'female' : 'male';
-  const map = {
-    idle:    `/img/${base}.png`,
-    knowing: `/img/${base}-knowing.png`,
-    success: `/img/${base}-success.png`,
-    wrong:   `/img/${base}-wrong.png`
-  };
-  return map[mood] || map.idle;
+  if (!p) return resolveAvatarImage(null, mood, 'MALE');
+  return resolveAvatarImage(p.avatar || null, mood, p.gender);
 }
 
 /* ===== Layout siatki ===== */

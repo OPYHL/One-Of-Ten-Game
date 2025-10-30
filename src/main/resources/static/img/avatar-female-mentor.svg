@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" fill="none">
+  <defs>
+    <linearGradient id="mentor_face" x1="160" y1="88" x2="160" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9D9C4"/>
+      <stop offset="1" stop-color="#E8B292"/>
+    </linearGradient>
+    <linearGradient id="mentor_dress" x1="160" y1="214" x2="160" y2="306" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C54B6A"/>
+      <stop offset="1" stop-color="#8B2547"/>
+    </linearGradient>
+    <radialGradient id="mentor_shadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(160 258) scale(110 46)">
+      <stop stop-color="#000" stop-opacity="0.22"/>
+      <stop offset="1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="160" cy="258" rx="110" ry="46" fill="url(#mentor_shadow)" opacity="0.32"/>
+  <path d="M228 250c-6-38-30-62-68-62s-62 24-68 62c20 22 46 32 68 32s48-10 68-32z" fill="url(#mentor_dress)"/>
+  <path d="M160 94c-44 0-70 32-70 78 0 46 32 72 70 72s70-26 70-72c0-46-26-78-70-78z" fill="url(#mentor_face)"/>
+  <path d="M120 166c16 10 28 14 40 14s24-4 40-14c-2 24-18 40-40 40s-38-16-40-40z" fill="#E0A583" opacity="0.5"/>
+  <ellipse cx="136" cy="162" rx="9" ry="12" fill="#2B2B2B"/>
+  <ellipse cx="184" cy="162" rx="9" ry="12" fill="#2B2B2B"/>
+  <circle cx="134" cy="160" r="3" fill="#FFF" opacity="0.55"/>
+  <circle cx="186" cy="160" r="3" fill="#FFF" opacity="0.55"/>
+  <path d="M144 190c6 6 12 8 16 8s10-2 16-8" stroke="#A55C48" stroke-width="5" stroke-linecap="round"/>
+  <path d="M108 138c4-40 30-62 52-62s44 16 54 46c10 4 20 2 26-4-12-40-40-66-80-66s-68 26-80 66c8 6 18 8 28 4z" fill="#55273B"/>
+  <path d="M232 142c-8 46-36 70-72 70s-64-24-72-70c4-48 34-74 72-74s68 26 72 74z" fill="#693047" opacity="0.55"/>
+  <path d="M112 244c14 6 30 8 48 8s34-2 48-8c-16 20-32 30-48 30s-32-10-48-30z" fill="#A43C5A" opacity="0.85"/>
+  <path d="M160 236c-18 0-32 8-32 18s14 16 32 16 32-6 32-16-14-18-32-18z" fill="#8F3453"/>
+  <path d="M160 88c-24 0-46 12-60 34 10-52 32-74 60-74s50 22 60 74c-14-22-36-34-60-34z" fill="#6D314A"/>
+</svg>

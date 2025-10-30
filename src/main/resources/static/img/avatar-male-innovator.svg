@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" fill="none">
+  <defs>
+    <linearGradient id="innovator_face" x1="160" y1="90" x2="160" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3D7BF"/>
+      <stop offset="1" stop-color="#E2B08C"/>
+    </linearGradient>
+    <linearGradient id="innovator_hoodie" x1="160" y1="212" x2="160" y2="304" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3A1F6F"/>
+      <stop offset="1" stop-color="#1C0F3D"/>
+    </linearGradient>
+    <radialGradient id="innovator_shadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(160 260) scale(108 46)">
+      <stop stop-color="#000" stop-opacity="0.25"/>
+      <stop offset="1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="160" cy="260" rx="108" ry="46" fill="url(#innovator_shadow)" opacity="0.35"/>
+  <path d="M228 252c-6-38-30-62-68-62s-62 24-68 62c18 22 50 32 68 32s50-10 68-32z" fill="url(#innovator_hoodie)"/>
+  <path d="M160 98c-44 0-70 30-70 76 0 46 30 72 70 72s70-26 70-72c0-46-26-76-70-76z" fill="url(#innovator_face)"/>
+  <path d="M116 174c14 8 28 12 44 12s30-4 44-12c0 28-20 48-44 48s-44-20-44-48z" fill="#D7A17A" opacity="0.5"/>
+  <ellipse cx="134" cy="162" rx="10" ry="13" fill="#2F2F2F"/>
+  <ellipse cx="186" cy="162" rx="10" ry="13" fill="#2F2F2F"/>
+  <circle cx="132" cy="160" r="3" fill="#FFF" opacity="0.5"/>
+  <circle cx="184" cy="160" r="3" fill="#FFF" opacity="0.5"/>
+  <path d="M148 192c4 6 8 8 12 8s8-2 12-8" stroke="#8C5A3E" stroke-width="5" stroke-linecap="round"/>
+  <path d="M136 206c6 8 14 12 24 12s18-4 24-12" stroke="#693F2B" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
+  <path d="M120 132c0-34 20-60 60-60 26 0 48 12 56 32-2 12-10 20-22 20-16-24-36-30-54-20-18-10-34-6-40 12z" fill="#2A1D3C"/>
+  <path d="M232 140c-8 42-36 64-72 64s-64-22-72-64c0-46 30-70 72-70s72 24 72 70z" fill="#2E2341" opacity="0.5"/>
+  <path d="M100 246c16-26 34-38 60-38s44 12 60 38c-20 14-40 20-60 20s-40-6-60-20z" fill="#2A154C" opacity="0.85"/>
+  <path d="M160 90c-26 0-50 12-62 34 12-52 34-74 62-74s50 22 62 74c-12-22-36-34-62-34z" fill="#3D2B55"/>
+  <path d="M160 230c-22 0-38 8-38 18s16 16 38 16 38-6 38-16-16-18-38-18z" fill="#28134C"/>
+</svg>

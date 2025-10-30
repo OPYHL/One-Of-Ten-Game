@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" fill="none">
+  <defs>
+    <linearGradient id="fin_face" x1="160" y1="90" x2="160" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7DCC7"/>
+      <stop offset="1" stop-color="#E4B89A"/>
+    </linearGradient>
+    <linearGradient id="fin_jacket" x1="160" y1="214" x2="160" y2="306" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F8B89"/>
+      <stop offset="1" stop-color="#0F4D57"/>
+    </linearGradient>
+    <radialGradient id="fin_shadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(160 260) scale(108 46)">
+      <stop stop-color="#000" stop-opacity="0.24"/>
+      <stop offset="1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="160" cy="260" rx="108" ry="46" fill="url(#fin_shadow)" opacity="0.3"/>
+  <path d="M228 252c-6-36-30-60-68-60s-62 24-68 60c18 22 46 32 68 32s50-10 68-32z" fill="url(#fin_jacket)"/>
+  <path d="M160 96c-44 0-70 32-70 78 0 46 32 72 70 72s70-26 70-72c0-46-26-78-70-78z" fill="url(#fin_face)"/>
+  <path d="M118 170c18 10 30 14 42 14s24-4 42-14c-2 26-18 42-42 42s-40-16-42-42z" fill="#DEA684" opacity="0.5"/>
+  <ellipse cx="138" cy="164" rx="9" ry="12" fill="#2B2B2B"/>
+  <ellipse cx="182" cy="164" rx="9" ry="12" fill="#2B2B2B"/>
+  <circle cx="136" cy="162" r="3" fill="#FFF" opacity="0.55"/>
+  <circle cx="184" cy="162" r="3" fill="#FFF" opacity="0.55"/>
+  <path d="M146 192c6 6 12 8 16 8s10-2 16-8" stroke="#A35C4A" stroke-width="5" stroke-linecap="round"/>
+  <path d="M108 140c6-38 28-60 52-60 20 0 38 10 46 32 12 6 22 4 28-2-12-36-38-58-74-58s-62 22-74 58c8 6 18 8 24 2z" fill="#27474D"/>
+  <path d="M232 146c-10 44-36 66-72 66s-62-22-72-66c4-48 34-72 72-72s68 24 72 72z" fill="#2A5E63" opacity="0.5"/>
+  <path d="M112 246c14 8 30 10 48 10s34-2 48-10c-16 20-32 30-48 30s-32-10-48-30z" fill="#166C6C" opacity="0.85"/>
+  <path d="M160 234c-18 0-30 10-30 20s12 16 30 16 30-6 30-16-12-20-30-20z" fill="#145C5C"/>
+  <path d="M160 90c-20 0-42 12-56 32 12-48 32-68 56-68s44 20 56 68c-14-20-36-32-56-32z" fill="#2E5A61"/>
+</svg>
