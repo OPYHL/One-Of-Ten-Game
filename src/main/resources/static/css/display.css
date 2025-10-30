@@ -229,7 +229,7 @@ body.waiting-mode #gridWrap{ display:none; }
   box-shadow:0 30px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.03);
   padding:32px 36px;
   display:grid; grid-template-columns:auto minmax(0,1fr);
-  align-items:center; gap:36px;
+  align-items:stretch; gap:36px;
   pointer-events:auto; position:relative;
   overflow:hidden;
 }
@@ -276,24 +276,30 @@ body.waiting-mode #gridWrap{ display:none; }
   flex-direction:column;
   gap:22px;
   align-items:flex-start;
+  padding-right:calc(200px + 72px);
+  position:relative;
 }
 #stage .stage-header{
   display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
+  align-items:flex-start;
+  justify-content:flex-start;
   gap:24px;
   width:100%;
   flex-wrap:wrap;
+  position:relative;
 }
 #stage .stage-meta{
-  position:static;
-  transform:none;
+  position:absolute;
+  top:50%;
+  right:36px;
+  transform:translateY(-50%);
   display:flex;
   flex-direction:column;
   align-items:flex-end;
   justify-content:center;
   gap:16px;
-  min-width:200px;
+  min-width:0;
+  width:200px;
 }
 #stage .stage-name{
   flex:1 1 auto; min-width:0;
@@ -301,7 +307,7 @@ body.waiting-mode #gridWrap{ display:none; }
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 #stage .stage-score{
-  width:100%;
+  width:auto;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -343,7 +349,7 @@ body.waiting-mode #gridWrap{ display:none; }
 #stage .stage-info{
   width:100%;
   display:flex;
-  align-items:flex-end;
+  align-items:flex-start;
   gap:28px;
   flex-wrap:wrap;
 }
@@ -589,12 +595,14 @@ body.waiting-mode #gridWrap{ display:none; }
 .ptsBox{
   position:absolute; left:12px; bottom:10px; display:flex; align-items:center; gap:10px;
   background:rgba(12,22,41,.6); border:1px solid #20314d; padding:6px 10px; border-radius:12px;
+  transition:opacity .18s ease, transform .18s ease;
 }
 .ptsBox .medal{ width:20px; height:20px; display:grid; place-items:center }
 .ptsBox .medal svg{ width:20px; height:20px; fill:#ffcc4d; filter:drop-shadow(0 3px 10px rgba(255,204,77,.4)) }
 .ptsBox .value{ font:900 16px/1 Inter,system-ui,sans-serif; color:#eaf2ff }
 .ptsBox .value.scoreBump{ animation:scoreBump .45s ease }
 @keyframes scoreBump{ 50%{ transform:scale(1.22) } }
+.card.answering .ptsBox{ opacity:0; transform:translateY(6px); }
 
 /* ==================== PASEK CZASU – FULL WIDTH ==================== */
 #timebarWrap{
@@ -636,12 +644,12 @@ body.waiting-mode #gridWrap{ display:none; }
   #stage .stage-avatar-frame{ width:132px; height:132px; }
   #stage .stage-avatar img{ width:92px; height:92px }
   #stage .stage-avatar-fallback{ font-size:42px; }
-  #stage .stage-body{ align-items:center; text-align:center; gap:22px; }
-  #stage .stage-header{ flex-direction:column; align-items:center; gap:14px }
+  #stage .stage-body{ align-items:center; text-align:center; gap:22px; padding-right:0; }
+  #stage .stage-header{ flex-direction:column; align-items:center; gap:14px; padding-right:0; }
   #stage .stage-name{ white-space:normal; font-size:28px }
-  #stage .stage-meta{ flex-direction:column; align-items:center; gap:12px; width:100%; }
+  #stage .stage-meta{ position:static; transform:none; flex-direction:column; align-items:center; gap:12px; width:100%; }
   #stage .stage-score{ width:100%; justify-content:center; font-size:16px }
-  #stage .stage-info{ width:100%; flex-direction:column; align-items:center; gap:18px; }
+  #stage .stage-info{ width:100%; flex-direction:column; align-items:center; gap:18px; padding-right:0; }
   #stage .stage-lives{ width:100%; align-items:center; text-align:center; }
   #stage .stage-lives::before{ text-align:center; }
   #stage .stage-timer{ width:100%; max-width:360px; margin-left:0; }
