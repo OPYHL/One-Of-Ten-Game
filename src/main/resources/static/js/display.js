@@ -689,9 +689,13 @@ function showStage(p, phase){
   const isAnswering = phase === 'ANSWERING';
   stageTimer?.classList.toggle('hidden', !isAnswering);
   stageCd.classList.toggle('hidden', !isAnswering);
+  stage.classList.toggle('answering', isAnswering);
+  stage.classList.toggle('answered', !isAnswering);
 }
 function hideStage(){
   stage.classList.remove('show');
+  stage.classList.remove('answering');
+  stage.classList.remove('answered');
   stageJudge.className = 'stage-judge';
   stageJudge.textContent = '';
   stageTimer?.classList.add('hidden');
