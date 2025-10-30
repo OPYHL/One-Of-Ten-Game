@@ -39,14 +39,41 @@
     </div>
 
     <div class="card">
-        <div class="row" style="justify-content:space-between">
+        <div class="row" style="justify-content:space-between; flex-wrap:wrap; gap:12px">
             <div><b>Aktualny odpowiadający:</b> <span id="who">—</span></div>
+            <div><b>Aktualny wybierający:</b> <span id="chooser">—</span></div>
             <div><b>Reakcja:</b> <span id="reaction">—</span></div>
         </div>
         <div class="progressWrap" style="position:relative; top:auto; left:auto; right:auto; bottom:auto; margin-top:8px">
             <div id="pb" class="progressBar"></div>
         </div>
         <div class="mini" id="answerMini">W ANSWERING pasek pokazuje upływ 10 s. W BUZZING czekamy na „Znam odpowiedź!”.</div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">Awaryjne sterowanie</h3>
+        <div class="row" style="gap:8px; flex-wrap:wrap; align-items:flex-end">
+            <label class="mini" style="display:flex; flex-direction:column; gap:4px">
+                Wybierający
+                <select id="chooserSelect" class="input" style="min-width:160px">
+                    <option value="">— wybierz —</option>
+                </select>
+            </label>
+            <label class="mini" style="display:flex; align-items:center; gap:6px">
+                <input type="checkbox" id="chooserNotify" checked>
+                Wyślij SELECT_START
+            </label>
+            <button id="btnSetChooser">Ustaw wybierającego</button>
+            <button id="btnClearChooser">Wyczyść</button>
+        </div>
+        <div class="mini" style="margin-top:12px">Ręczne zdarzenie (wysyłane na wszystkie urządzenia)</div>
+        <div class="row" style="gap:8px; flex-wrap:wrap; margin-top:6px">
+            <input id="manualEventType" class="input" type="text" placeholder="Typ zdarzenia" style="min-width:140px">
+            <input id="manualEventPlayer" class="input" type="number" min="1" placeholder="ID gracza" style="width:120px">
+            <input id="manualEventValue" class="input" type="text" placeholder="Wartość" style="min-width:160px">
+            <input id="manualEventReaction" class="input" type="number" min="0" placeholder="Czas reakcji (ms)" style="width:140px">
+            <button id="btnManualEvent">Wyślij zdarzenie</button>
+        </div>
     </div>
 
     <div id="grid" class="grid" style="grid-template-columns:repeat(5,1fr)"></div>
