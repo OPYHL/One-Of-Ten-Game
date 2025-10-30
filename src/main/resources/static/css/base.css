@@ -158,22 +158,28 @@ body.playerPage{
 .carouselNav.next::before{ transform:rotate(45deg); }
 .carouselNav:disabled{ opacity:.25; cursor:not-allowed; }
 .choiceGrid{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); }
+.choiceGrid--gender{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 .choiceCard{
   border-radius:20px; border:1px solid #273b5d; background:linear-gradient(135deg, rgba(21,33,56,.95), rgba(11,17,30,.95));
-  padding:20px 18px; display:grid; gap:14px; justify-items:center; cursor:pointer;
-  transition:.2s transform ease, .2s box-shadow ease; color:#e7f1ff;
+  padding:22px 20px; display:flex; flex-direction:column; align-items:center; gap:16px;
+  cursor:pointer; transition:.2s transform ease, .2s box-shadow ease; color:#e7f1ff;
 }
+.genderCard{ padding:26px 20px; }
 .choiceCard .choiceLabel{ font-weight:700; letter-spacing:.2px; }
 .choiceCard .choiceIcon{
   width:86px; height:86px; border-radius:22px; border:1px solid rgba(64,92,142,.7);
   background:radial-gradient(circle at 50% 25%, rgba(255,255,255,.12), rgba(12,18,30,.95)); position:relative;
+  display:grid; place-items:center; overflow:hidden;
 }
 .choiceCard .choiceIcon::after{
   content:""; position:absolute; inset:18px; border-radius:50%;
   background:radial-gradient(circle at 50% 30%, rgba(255,255,255,.7), rgba(255,255,255,0)); opacity:.3;
 }
+.genderCard .choiceIcon{ width:104px; height:104px; border-radius:28px; }
+.genderCard .choiceIcon::after{ display:none; }
 .choiceCard .choiceIcon.female{ background:linear-gradient(160deg, rgba(255,102,171,.45), rgba(107,60,162,.35)); }
 .choiceCard .choiceIcon.male{ background:linear-gradient(160deg, rgba(74,163,255,.45), rgba(34,92,188,.35)); }
+.choiceGenderImg{ width:72%; height:72%; object-fit:contain; filter:drop-shadow(0 12px 26px rgba(0,0,0,.55)); }
 .avatarCard{ padding:22px 20px; background:linear-gradient(145deg, rgba(23,34,58,.95), rgba(10,14,24,.96)); }
 .avatarCard .avatarThumb{
   width:96px; height:96px; border-radius:28px; border:1px solid rgba(68,96,152,.55);
@@ -189,7 +195,8 @@ body.playerPage{
   display:grid; place-items:center; background:linear-gradient(145deg, rgba(27,40,71,.92), rgba(9,14,26,.92));
   box-shadow:0 16px 45px rgba(0,0,0,.45);
 }
-.avatarPreview img{ width:76%; height:76%; object-fit:contain; filter:drop-shadow(0 16px 24px rgba(0,0,0,.45)); }
+.avatarPreview img{ width:76%; height:76%; object-fit:contain; filter:drop-shadow(0 16px 24px rgba(0,0,0,.45)); transition:.2s opacity ease; }
+.avatarPreview img.isPlaceholder{ opacity:.7; filter:drop-shadow(0 8px 16px rgba(0,0,0,.4)); }
 .summaryList{
   display:grid; gap:14px; font-size:15px; background:rgba(12,18,30,.65);
   border:1px solid rgba(48,69,109,.4); border-radius:20px; padding:20px 22px;
@@ -340,6 +347,7 @@ body.playerPage{
   .seatGrid{ grid-template-columns:repeat(auto-fit,minmax(72px,1fr)); }
   .seatButton{ height:64px; font-size:22px; }
   .choiceGrid{ grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
+  .choiceGrid--gender{ grid-template-columns:1fr; }
   .avatarPreviewWrap{ grid-template-columns:1fr; }
   .avatarPreview{ max-width:260px; margin:0 auto; }
   .playerGrid{ grid-template-columns:92px 1fr; gap:16px }

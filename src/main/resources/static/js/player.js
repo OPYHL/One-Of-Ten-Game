@@ -2,6 +2,8 @@ import { connect } from '/js/ws.js';
 import { loadInitialData, getAnswerTimerMs, setAnswerTimerMs } from '/js/dataStore.js';
 import { getAvatarImage, getAvatarLabel, resolveAvatarImage, listAvatarOptions } from '/js/avatarCatalog.js';
 
+const AVATAR_PLACEHOLDER = '/img/avatar-placeholder.svg';
+
 /* ====== DOM ====== */
 const qs = new URLSearchParams(location.search);
 const slotInput = document.getElementById('slot'); if (qs.get('slot')) slotInput.value = qs.get('slot');
@@ -272,13 +274,18 @@ function updateSummary(){
 function updateAvatarPreview(){
   if (!avatarPreviewImg) return;
   const genderForFallback = genderSel?.value || myGender || 'MALE';
-  const fallback = resolveAvatarImage(null, 'idle', genderForFallback);
-  const src = selectedAvatarKey
+  const hasSelection = !!selectedAvatarKey;
+  const src = hasSelection
     ? (selectedAvatarImage || resolveAvatarImage(selectedAvatarKey, 'idle', genderForFallback))
-    : fallback;
-  if (selectedAvatarKey) selectedAvatarImage = src;
+    : AVATAR_PLACEHOLDER;
+  if (hasSelection && !selectedAvatarImage){
+    selectedAvatarImage = src;
+  }
   avatarPreviewImg.src = src;
-  const altLabel = selectedAvatarLabel ? `Podgląd avataru ${selectedAvatarLabel}` : 'Podgląd avataru';
+  avatarPreviewImg.classList.toggle('isPlaceholder', !hasSelection);
+  const altLabel = hasSelection && selectedAvatarLabel
+    ? `Podgląd avataru ${selectedAvatarLabel}`
+    : 'Podgląd avataru';
   avatarPreviewImg.alt = altLabel;
 }
 
@@ -324,8 +331,7 @@ function selectAvatar(key){
   const card = avatarCards.find(c => c.dataset.avatar === key);
   if (!card) return;
   selectedAvatarKey = key;
-  const genderForFallback = genderSel?.value || myGender || 'MALE';
-  selectedAvatarImage = getAvatarImage(key) || resolveAvatarImage(null, 'idle', genderForFallback);
+  selectedAvatarImage = getAvatarImage(key) || AVATAR_PLACEHOLDER;
   selectedAvatarLabel = getAvatarLabel(key) || card.dataset.avatarLabel || card.querySelector('.choiceLabel')?.textContent?.trim() || '';
   avatarCards.forEach(c => {
     const active = c === card;
@@ -578,7 +584,9 @@ const bus = connect({
         }
         const genderForAvatar = me.gender || myGender || 'MALE';
         const newAvatarKey = me.avatar || selectedAvatarKey || null;
-        const resolvedAvatarSrc = resolveAvatarImage(newAvatarKey, 'idle', genderForAvatar);
+        const resolvedAvatarSrc = newAvatarKey
+          ? resolveAvatarImage(newAvatarKey, 'idle', genderForAvatar)
+          : AVATAR_PLACEHOLDER;
         if (newAvatarKey){
           const avatarChanged = newAvatarKey !== selectedAvatarKey || resolvedAvatarSrc !== selectedAvatarImage;
           if (avatarChanged){
@@ -591,11 +599,17 @@ const bus = connect({
             updateSummary();
             updateStepButtons();
           }
-        } else if (!selectedAvatarKey && resolvedAvatarSrc !== selectedAvatarImage){
-          selectedAvatarImage = resolvedAvatarSrc;
+        } else if (!selectedAvatarKey){
+          selectedAvatarImage = null;
           selectedAvatarLabel = '';
+          avatarCards.forEach(c => {
+            c.classList.remove('selected');
+            c.setAttribute('aria-pressed', 'false');
+          });
           updateAvatarPreview();
+          updateAvatarHint();
           updateSummary();
+          updateStepButtons();
         }
         if (avImg) avImg.src = resolvedAvatarSrc;
         if (me.score !== myScore){
@@ -894,7 +908,9 @@ if (btnJoin){
     bus.send('/app/setName', {playerId:selectedSeat, name:nm});
     bus.send('/app/setGender', {playerId:selectedSeat, gender:myGender});
     bus.send('/app/setAvatar', {playerId:selectedSeat, avatar:selectedAvatarKey});
-    const resolvedAvatar = selectedAvatarImage || resolveAvatarImage(selectedAvatarKey, 'idle', myGender);
+    const resolvedAvatar = selectedAvatarKey
+      ? (selectedAvatarImage || resolveAvatarImage(selectedAvatarKey, 'idle', myGender))
+      : AVATAR_PLACEHOLDER;
     selectedAvatarImage = resolvedAvatar;
     avImg.src = resolvedAvatar;
     showStep('stepGame');
