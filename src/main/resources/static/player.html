@@ -193,6 +193,29 @@
     </div>
 </div>
 
+<div class="cameraModal" id="cameraModal" aria-hidden="true">
+    <div class="cameraDialog" role="dialog" aria-modal="true" aria-labelledby="cameraTitle">
+        <button type="button" class="cameraClose" id="cameraClose" aria-label="Zamknij podgląd aparatu"></button>
+        <div class="cameraHeader">
+            <div class="cameraIcon"></div>
+            <div>
+                <div class="cameraSubtitle">Zrób zdjęcie</div>
+                <div class="cameraTitle" id="cameraTitle">Własny avatar</div>
+            </div>
+        </div>
+        <div class="cameraViewport">
+            <video id="cameraVideo" playsinline autoplay muted></video>
+            <canvas id="cameraPreview" class="cameraPreview" hidden></canvas>
+        </div>
+        <div class="cameraStatus" id="cameraStatus"></div>
+        <div class="cameraControls">
+            <button type="button" class="cameraAction primary" id="cameraCapture">Zrób zdjęcie</button>
+            <button type="button" class="cameraAction" id="cameraRetake" disabled>Powtórz</button>
+            <button type="button" class="cameraAction success" id="cameraUse" disabled>Użyj jako avatar</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script type="module" src="/js/player.js"></script>

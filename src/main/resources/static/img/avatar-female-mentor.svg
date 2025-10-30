@@ -1,18 +1,30 @@
-<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="120" cy="120" r="112" stroke="#1F2A44" stroke-width="8" stroke-opacity="0.12"/>
-  <path d="M66 188C66 158.281 91.2812 133 123 133H117C148.719 133 174 158.281 174 188V204H66V188Z" fill="#3E6C7B"/>
-  <path d="M78 118C78 96.804 95.804 79 117 79H123C144.196 79 162 96.804 162 118V134C162 155.196 144.196 173 123 173H117C95.804 173 78 155.196 78 134V118Z" fill="#F7CCB0"/>
-  <path d="M74 120C74 92 96 68 120 68C144 68 166 92 166 120V126C166 138.15 156.15 148 144 148H96C83.8497 148 74 138.15 74 126V120Z" fill="#5B3E2F"/>
-  <path d="M70 118C70 88 94 60 122 60H118C146 60 170 88 170 118V122C170 126.418 166.418 130 162 130H78C73.5817 130 70 126.418 70 122V118Z" fill="#6F4A39"/>
-  <path d="M120 64C92 64 72 90 72 118H168C168 90 148 64 120 64Z" fill="#7D533F"/>
-  <path d="M90 94C92 82 104 72 120 72C136 72 148 82 150 94" stroke="#4A3124" stroke-width="10" stroke-linecap="round"/>
-  <ellipse cx="98" cy="126" rx="9" ry="10" fill="#1D253C"/>
-  <ellipse cx="142" cy="126" rx="9" ry="10" fill="#1D253C"/>
-  <circle cx="98" cy="122" r="4" fill="white"/>
-  <circle cx="142" cy="122" r="4" fill="white"/>
-  <path d="M110 152C116.5 158 123.5 158 130 152" stroke="#CA7A59" stroke-width="5" stroke-linecap="round"/>
-  <path d="M100 110C108 106 132 106 140 110" stroke="#3D2A1F" stroke-width="6" stroke-linecap="round"/>
-  <path d="M88 182L108 158H132L152 182V204H88V182Z" fill="#4F8897"/>
-  <path d="M114 150H126L130 166H110L114 150Z" fill="#F9DDBD"/>
-  <path d="M108 168H132" stroke="#F8E8D4" stroke-width="6" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" fill="none">
+  <defs>
+    <linearGradient id="mentor_face" x1="160" y1="88" x2="160" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9D9C4"/>
+      <stop offset="1" stop-color="#E8B292"/>
+    </linearGradient>
+    <linearGradient id="mentor_dress" x1="160" y1="214" x2="160" y2="306" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C54B6A"/>
+      <stop offset="1" stop-color="#8B2547"/>
+    </linearGradient>
+    <radialGradient id="mentor_shadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(160 258) scale(110 46)">
+      <stop stop-color="#000" stop-opacity="0.22"/>
+      <stop offset="1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="160" cy="258" rx="110" ry="46" fill="url(#mentor_shadow)" opacity="0.32"/>
+  <path d="M228 250c-6-38-30-62-68-62s-62 24-68 62c20 22 46 32 68 32s48-10 68-32z" fill="url(#mentor_dress)"/>
+  <path d="M160 94c-44 0-70 32-70 78 0 46 32 72 70 72s70-26 70-72c0-46-26-78-70-78z" fill="url(#mentor_face)"/>
+  <path d="M120 166c16 10 28 14 40 14s24-4 40-14c-2 24-18 40-40 40s-38-16-40-40z" fill="#E0A583" opacity="0.5"/>
+  <ellipse cx="136" cy="162" rx="9" ry="12" fill="#2B2B2B"/>
+  <ellipse cx="184" cy="162" rx="9" ry="12" fill="#2B2B2B"/>
+  <circle cx="134" cy="160" r="3" fill="#FFF" opacity="0.55"/>
+  <circle cx="186" cy="160" r="3" fill="#FFF" opacity="0.55"/>
+  <path d="M144 190c6 6 12 8 16 8s10-2 16-8" stroke="#A55C48" stroke-width="5" stroke-linecap="round"/>
+  <path d="M108 138c4-40 30-62 52-62s44 16 54 46c10 4 20 2 26-4-12-40-40-66-80-66s-68 26-80 66c8 6 18 8 28 4z" fill="#55273B"/>
+  <path d="M232 142c-8 46-36 70-72 70s-64-24-72-70c4-48 34-74 72-74s68 26 72 74z" fill="#693047" opacity="0.55"/>
+  <path d="M112 244c14 6 30 8 48 8s34-2 48-8c-16 20-32 30-48 30s-32-10-48-30z" fill="#A43C5A" opacity="0.85"/>
+  <path d="M160 236c-18 0-32 8-32 18s14 16 32 16 32-6 32-16-14-18-32-18z" fill="#8F3453"/>
+  <path d="M160 88c-24 0-46 12-60 34 10-52 32-74 60-74s50 22 60 74c-14-22-36-34-60-34z" fill="#6D314A"/>
 </svg>

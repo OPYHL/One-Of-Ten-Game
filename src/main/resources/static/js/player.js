@@ -1,6 +1,6 @@
 import { connect } from '/js/ws.js';
 import { loadInitialData, getAnswerTimerMs, setAnswerTimerMs } from '/js/dataStore.js';
-import { getAvatarImage, getAvatarLabel, resolveAvatarImage, listAvatarOptions } from '/js/avatarCatalog.js';
+import { getAvatarImage, getAvatarLabel, resolveAvatarImage, listAvatarOptions, isCustomAvatar } from '/js/avatarCatalog.js';
 
 const AVATAR_PLACEHOLDER = '/img/avatar-placeholder.svg';
 
@@ -23,6 +23,15 @@ const seatNext = document.getElementById('seatNext');
 const genderCards = Array.from(document.querySelectorAll('[data-gender]'));
 const avatarGrid = document.getElementById('avatarGrid');
 let avatarCards = [];
+const cameraModal = document.getElementById('cameraModal');
+const cameraDialog = cameraModal ? cameraModal.querySelector('.cameraDialog') : null;
+const cameraVideo = document.getElementById('cameraVideo');
+const cameraPreviewCanvas = document.getElementById('cameraPreview');
+const cameraStatus = document.getElementById('cameraStatus');
+const cameraCaptureBtn = document.getElementById('cameraCapture');
+const cameraRetakeBtn = document.getElementById('cameraRetake');
+const cameraUseBtn = document.getElementById('cameraUse');
+const cameraCloseBtn = document.getElementById('cameraClose');
 const backButtons = Array.from(document.querySelectorAll('[data-back-step]'));
 
 genderCards.forEach(card => card.setAttribute('aria-pressed', 'false'));
@@ -86,9 +95,140 @@ let selectedAvatarKey = null;
 let selectedAvatarImage = null;
 let selectedAvatarLabel = '';
 let seatTrackOffset = 0;
+let customAvatarDataUrl = null;
+let customAvatarLabel = 'Moje zdjęcie';
+let cameraStream = null;
+let cameraModalOpen = false;
+let cameraHasCapture = false;
+let cameraProcessing = false;
+let cameraCaptureDataUrl = null;
+let cameraReady = false;
+let selfieSegmentationInstance = null;
+let selfieSegmentationPromise = null;
+const loadedScripts = new Map();
+let cameraKeydownHandler = null;
 
 function normalizeGender(value){
   return (value || '').toUpperCase() === 'FEMALE' ? 'FEMALE' : 'MALE';
+}
+
+function loadScriptOnce(url){
+  if (loadedScripts.has(url)) return loadedScripts.get(url);
+  const promise = new Promise((resolve, reject) => {
+    const existing = Array.from(document.getElementsByTagName('script')).find(s => s.src === url);
+    if (existing && existing.dataset.loaded === 'true'){
+      resolve();
+      return;
+    }
+    const script = existing || document.createElement('script');
+    const cleanup = () => {
+      script.removeEventListener('load', onLoad);
+      script.removeEventListener('error', onError);
+    };
+    function onLoad(){
+      cleanup();
+      script.dataset.loaded = 'true';
+      resolve();
+    }
+    function onError(){
+      cleanup();
+      reject(new Error('Nie udało się wczytać biblioteki: ' + url));
+    }
+    script.addEventListener('load', onLoad);
+    script.addEventListener('error', onError);
+    if (!existing){
+      script.async = true;
+      script.src = url;
+      document.head.appendChild(script);
+    }
+  });
+  loadedScripts.set(url, promise);
+  promise.catch(() => loadedScripts.delete(url));
+  return promise;
+}
+
+async function ensureSelfieSegmentation(){
+  if (selfieSegmentationInstance) return selfieSegmentationInstance;
+  if (!selfieSegmentationPromise){
+    selfieSegmentationPromise = (async () => {
+      await loadScriptOnce('https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js');
+      const SelfieSegmentationCtor = window.SelfieSegmentation?.SelfieSegmentation || window.SelfieSegmentation;
+      if (typeof SelfieSegmentationCtor !== 'function'){
+        throw new Error('Biblioteka SelfieSegmentation nie jest dostępna');
+      }
+      const instance = new SelfieSegmentationCtor({
+        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
+      });
+      instance.setOptions({ modelSelection: 1 });
+      if (typeof instance.initialize === 'function'){
+        await instance.initialize();
+      }
+      selfieSegmentationInstance = instance;
+      return instance;
+    })();
+    selfieSegmentationPromise.catch(() => {
+      selfieSegmentationInstance = null;
+      selfieSegmentationPromise = null;
+    });
+  }
+  return selfieSegmentationPromise;
+}
+
+async function segmentCameraImage(videoEl){
+  const segmenter = await ensureSelfieSegmentation();
+  return new Promise((resolve, reject) => {
+    const cleanup = () => segmenter.onResults(() => {});
+    segmenter.onResults(results => {
+      cleanup();
+      resolve(results);
+    });
+    segmenter.send({ image: videoEl }).catch(err => {
+      cleanup();
+      reject(err);
+    });
+  });
+}
+
+function compositeAvatarFromMask(results, videoEl){
+  const width = videoEl.videoWidth || 640;
+  const height = videoEl.videoHeight || 640;
+  const sourceCanvas = document.createElement('canvas');
+  sourceCanvas.width = width;
+  sourceCanvas.height = height;
+  const srcCtx = sourceCanvas.getContext('2d');
+  srcCtx.drawImage(videoEl, 0, 0, width, height);
+
+  const maskCanvas = document.createElement('canvas');
+  maskCanvas.width = width;
+  maskCanvas.height = height;
+  const maskCtx = maskCanvas.getContext('2d');
+  maskCtx.drawImage(results.segmentationMask, 0, 0, width, height);
+
+  const maskData = maskCtx.getImageData(0, 0, width, height);
+  const frame = srcCtx.getImageData(0, 0, width, height);
+  const pixels = frame.data;
+  const maskPixels = maskData.data;
+
+  for (let i = 0; i < pixels.length; i += 4){
+    const maskValue = maskPixels[i];
+    const boosted = Math.max(0, Math.min(255, maskValue * 1.1));
+    const alpha = boosted > 200 ? 255 : boosted < 40 ? 0 : boosted;
+    pixels[i + 3] = alpha;
+  }
+  srcCtx.putImageData(frame, 0, 0);
+
+  const squareSize = Math.min(width, height);
+  const sx = (width - squareSize) / 2;
+  const sy = (height - squareSize) / 2;
+  const targetSize = 512;
+  const output = document.createElement('canvas');
+  output.width = targetSize;
+  output.height = targetSize;
+  const outCtx = output.getContext('2d');
+  outCtx.clearRect(0, 0, targetSize, targetSize);
+  outCtx.drawImage(sourceCanvas, sx, sy, squareSize, squareSize, 0, 0, targetSize, targetSize);
+
+  return output.toDataURL('image/png');
 }
 
 function setSeatTrackPosition(target, smooth){
@@ -109,38 +249,72 @@ function setSeatTrackPosition(target, smooth){
   }
 }
 
+function createAvatarCard({ value, image, label, extraClasses = '' }){
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `choiceCard avatarCard ${extraClasses}`.trim();
+  btn.dataset.avatarValue = value;
+  if (image) btn.dataset.avatarImg = image;
+  if (label) btn.dataset.avatarLabel = label;
+  btn.setAttribute('aria-pressed', 'false');
+
+  const thumb = document.createElement('img');
+  thumb.className = 'avatarThumb';
+  thumb.loading = 'lazy';
+  thumb.decoding = 'async';
+  thumb.src = image || AVATAR_PLACEHOLDER;
+  thumb.alt = label ? `Podgląd awatara ${label}` : 'Podgląd awatara';
+
+  const caption = document.createElement('div');
+  caption.className = 'choiceLabel';
+  caption.textContent = label || 'Avatar';
+
+  btn.appendChild(thumb);
+  btn.appendChild(caption);
+  btn.addEventListener('click', () => selectAvatar(value));
+  return btn;
+}
+
 function rebuildAvatarGrid(opts = {}){
   if (!avatarGrid) return;
   const gender = normalizeGender(opts.gender || genderSel?.value || myGender || 'MALE');
   const options = listAvatarOptions(gender);
   avatarGrid.innerHTML = '';
-  avatarCards = options.map(option => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'choiceCard avatarCard';
-    btn.dataset.avatar = option.key;
-    btn.dataset.avatarImg = option.image;
-    btn.dataset.avatarLabel = option.label;
-    btn.setAttribute('aria-pressed', 'false');
+  avatarCards = [];
 
-    const thumb = document.createElement('img');
-    thumb.className = 'avatarThumb';
-    thumb.loading = 'lazy';
-    thumb.src = option.image;
-    thumb.alt = `Podgląd awatara ${option.label}`;
+  if (customAvatarDataUrl){
+    const customBtn = createAvatarCard({
+      value: customAvatarDataUrl,
+      image: customAvatarDataUrl,
+      label: customAvatarLabel || 'Moje zdjęcie',
+      extraClasses: 'isCustom',
+    });
+    avatarGrid.appendChild(customBtn);
+    avatarCards.push(customBtn);
+  }
 
-    const label = document.createElement('div');
-    label.className = 'choiceLabel';
-    label.textContent = option.label;
-
-    btn.appendChild(thumb);
-    btn.appendChild(label);
-    btn.addEventListener('click', () => selectAvatar(option.key));
-    avatarGrid.appendChild(btn);
-    return btn;
+  options.forEach(option => {
+    const card = createAvatarCard({
+      value: option.key,
+      image: option.image,
+      label: option.label,
+    });
+    avatarGrid.appendChild(card);
+    avatarCards.push(card);
   });
 
-  const stillAvailable = options.some(opt => opt.key === selectedAvatarKey);
+  const cameraCard = document.createElement('button');
+  cameraCard.type = 'button';
+  cameraCard.className = 'choiceCard avatarCard avatarCameraCard';
+  cameraCard.setAttribute('aria-pressed', 'false');
+  cameraCard.innerHTML = `
+    <div class="avatarCameraIcon" aria-hidden="true"></div>
+    <div class="choiceLabel">Zrób zdjęcie</div>
+  `;
+  cameraCard.addEventListener('click', openCameraModal);
+  avatarGrid.appendChild(cameraCard);
+
+  const stillAvailable = avatarCards.some(card => card.dataset.avatarValue === selectedAvatarKey);
   if (selectedAvatarKey && stillAvailable){
     selectAvatar(selectedAvatarKey);
   } else if (!stillAvailable){
@@ -156,6 +330,198 @@ function rebuildAvatarGrid(opts = {}){
     updateSummary();
     updateStepButtons();
   }
+}
+
+function setCameraStatus(text){
+  if (cameraStatus) cameraStatus.textContent = text || '';
+}
+
+function updateCameraControls(){
+  if (cameraCaptureBtn) cameraCaptureBtn.disabled = !cameraReady || cameraProcessing;
+  if (cameraRetakeBtn) cameraRetakeBtn.disabled = !cameraHasCapture || cameraProcessing;
+  if (cameraUseBtn) cameraUseBtn.disabled = !cameraHasCapture || cameraProcessing;
+}
+
+function resetCameraPreview(){
+  cameraHasCapture = false;
+  cameraCaptureDataUrl = null;
+  if (cameraPreviewCanvas){
+    const ctx = cameraPreviewCanvas.getContext('2d');
+    if (ctx){
+      ctx.clearRect(0, 0, cameraPreviewCanvas.width || 0, cameraPreviewCanvas.height || 0);
+    }
+    cameraPreviewCanvas.hidden = true;
+  }
+  if (cameraVideo){
+    cameraVideo.hidden = false;
+  }
+}
+
+function focusCameraCard(){
+  const card = avatarGrid?.querySelector('.avatarCameraCard');
+  if (card && typeof card.focus === 'function') card.focus();
+}
+
+async function startCamera(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    cameraReady = false;
+    setCameraStatus('Twoje urządzenie nie pozwala na użycie aparatu w przeglądarce.');
+    updateCameraControls();
+    return;
+  }
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    if (cameraVideo){
+      cameraVideo.srcObject = cameraStream;
+      cameraVideo.playsInline = true;
+      cameraVideo.muted = true;
+      await cameraVideo.play().catch(()=>{});
+      cameraVideo.hidden = false;
+    }
+    cameraReady = true;
+    setCameraStatus('Ustaw się w kadrze i kliknij „Zrób zdjęcie”.');
+  } catch (err) {
+    console.warn('Nie udało się włączyć aparatu', err);
+    cameraReady = false;
+    setCameraStatus('Nie udało się włączyć aparatu. Sprawdź uprawnienia.');
+    stopCamera();
+  }
+  updateCameraControls();
+}
+
+function stopCamera(){
+  if (cameraStream){
+    cameraStream.getTracks().forEach(track => track.stop());
+  }
+  cameraStream = null;
+  cameraReady = false;
+  if (cameraVideo){
+    cameraVideo.srcObject = null;
+    if (typeof cameraVideo.pause === 'function') cameraVideo.pause();
+  }
+  updateCameraControls();
+}
+
+function prepareCameraPreview(dataUrl){
+  if (!cameraPreviewCanvas) return;
+  cameraPreviewCanvas.width = 512;
+  cameraPreviewCanvas.height = 512;
+  const ctx = cameraPreviewCanvas.getContext('2d');
+  if (ctx){
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, cameraPreviewCanvas.width, cameraPreviewCanvas.height);
+      ctx.drawImage(img, 0, 0, cameraPreviewCanvas.width, cameraPreviewCanvas.height);
+    };
+    img.src = dataUrl;
+  }
+  cameraPreviewCanvas.hidden = false;
+  if (cameraVideo) cameraVideo.hidden = true;
+}
+
+async function openCameraModal(){
+  if (!cameraModal || cameraModalOpen) return;
+  cameraModalOpen = true;
+  document.body.classList.add('camera-open');
+  cameraModal.classList.add('show');
+  cameraModal.removeAttribute('aria-hidden');
+  resetCameraPreview();
+  cameraProcessing = false;
+  updateCameraControls();
+  setCameraStatus('Łączenie z aparatem…');
+  await startCamera();
+  if (!cameraKeydownHandler){
+    cameraKeydownHandler = ev => {
+      if (ev.key === 'Escape'){
+        ev.preventDefault();
+        closeCameraModal();
+        focusCameraCard();
+      }
+    };
+  }
+  document.addEventListener('keydown', cameraKeydownHandler);
+  setTimeout(() => cameraCaptureBtn?.focus(), 80);
+}
+
+function closeCameraModal(){
+  if (!cameraModalOpen) return;
+  cameraModalOpen = false;
+  stopCamera();
+  resetCameraPreview();
+  cameraProcessing = false;
+  cameraHasCapture = false;
+  updateCameraControls();
+  setCameraStatus('');
+  if (cameraModal){
+    cameraModal.classList.remove('show');
+    cameraModal.setAttribute('aria-hidden', 'true');
+  }
+  document.body.classList.remove('camera-open');
+  if (cameraKeydownHandler){
+    document.removeEventListener('keydown', cameraKeydownHandler);
+  }
+}
+
+async function captureCameraPhoto(){
+  if (!cameraModalOpen || cameraProcessing) return;
+  if (!cameraVideo || !cameraReady){
+    setCameraStatus('Poczekaj, aż aparat będzie gotowy.');
+    return;
+  }
+  if (!cameraVideo.videoWidth || !cameraVideo.videoHeight){
+    setCameraStatus('Chwila… obraz jeszcze się ustawia.');
+    return;
+  }
+  cameraProcessing = true;
+  cameraHasCapture = false;
+  updateCameraControls();
+  setCameraStatus('Usuwanie tła ze zdjęcia…');
+  try {
+    const results = await segmentCameraImage(cameraVideo);
+    const dataUrl = compositeAvatarFromMask(results, cameraVideo);
+    cameraCaptureDataUrl = dataUrl;
+    cameraHasCapture = true;
+    prepareCameraPreview(dataUrl);
+    setCameraStatus('Podgląd gotowy. Jeśli Ci odpowiada, wybierz „Użyj jako avatar”.');
+  } catch (err) {
+    console.error('Błąd podczas segmentacji zdjęcia', err);
+    cameraHasCapture = false;
+    cameraCaptureDataUrl = null;
+    setCameraStatus('Nie udało się przetworzyć zdjęcia. Spróbuj ponownie.');
+    resetCameraPreview();
+  } finally {
+    cameraProcessing = false;
+    updateCameraControls();
+  }
+}
+
+function handleCameraRetake(){
+  if (!cameraModalOpen) return;
+  cameraHasCapture = false;
+  cameraCaptureDataUrl = null;
+  resetCameraPreview();
+  setCameraStatus('Ustaw się ponownie w kadrze i spróbuj jeszcze raz.');
+  updateCameraControls();
+  setTimeout(() => cameraCaptureBtn?.focus(), 50);
+}
+
+function applyCapturedAvatar(){
+  if (!cameraHasCapture || !cameraCaptureDataUrl) return;
+  customAvatarDataUrl = cameraCaptureDataUrl;
+  customAvatarLabel = 'Moje zdjęcie';
+  selectedAvatarKey = cameraCaptureDataUrl;
+  selectedAvatarImage = cameraCaptureDataUrl;
+  selectedAvatarLabel = 'Moje zdjęcie';
+  rebuildAvatarGrid({ gender: genderSel?.value || myGender || 'MALE' });
+  updateAvatarPreview();
+  updateAvatarHint();
+  updateSummary();
+  updateStepButtons();
+  closeCameraModal();
+  showToast('Dodano zdjęcie jako avatar', 'ok');
 }
 
 function showStep(stepId){
@@ -326,15 +692,15 @@ function selectGender(val){
   updateStepButtons();
 }
 
-function selectAvatar(key){
-  if (!key) return;
-  const card = avatarCards.find(c => c.dataset.avatar === key);
+function selectAvatar(value){
+  if (!value) return;
+  const card = avatarCards.find(c => c.dataset.avatarValue === value);
   if (!card) return;
-  selectedAvatarKey = key;
-  selectedAvatarImage = getAvatarImage(key) || AVATAR_PLACEHOLDER;
-  selectedAvatarLabel = getAvatarLabel(key) || card.dataset.avatarLabel || card.querySelector('.choiceLabel')?.textContent?.trim() || '';
+  selectedAvatarKey = value;
+  selectedAvatarImage = card.dataset.avatarImg || getAvatarImage(value) || value;
+  selectedAvatarLabel = card.dataset.avatarLabel || getAvatarLabel(value) || card.querySelector('.choiceLabel')?.textContent?.trim() || '';
   avatarCards.forEach(c => {
-    const active = c === card;
+    const active = c.dataset.avatarValue === value;
     c.classList.toggle('selected', active);
     c.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
@@ -392,6 +758,33 @@ backButtons.forEach(btn => {
   });
 });
 
+if (cameraCloseBtn){
+  cameraCloseBtn.addEventListener('click', () => {
+    closeCameraModal();
+    focusCameraCard();
+  });
+}
+if (cameraCaptureBtn){
+  cameraCaptureBtn.addEventListener('click', captureCameraPhoto);
+}
+if (cameraRetakeBtn){
+  cameraRetakeBtn.addEventListener('click', handleCameraRetake);
+}
+if (cameraUseBtn){
+  cameraUseBtn.addEventListener('click', () => {
+    applyCapturedAvatar();
+    if (btnJoin) btnJoin.focus();
+  });
+}
+if (cameraModal){
+  cameraModal.addEventListener('click', ev => {
+    if (ev.target === cameraModal){
+      closeCameraModal();
+      focusCameraCard();
+    }
+  });
+}
+
 if (nameInput){
   nameInput.addEventListener('input', () => {
     updateNameHint();
@@ -429,6 +822,7 @@ updateSummary();
 updateStepButtons();
 rebuildAvatarGrid();
 showStep(currentStep);
+updateCameraControls();
 
 function updateClockProgress(pct){
   const clamped = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct)) : 0;
@@ -583,21 +977,25 @@ const bus = connect({
           selectGender(me.gender);
         }
         const genderForAvatar = me.gender || myGender || 'MALE';
-        const newAvatarKey = me.avatar || selectedAvatarKey || null;
-        const resolvedAvatarSrc = newAvatarKey
-          ? resolveAvatarImage(newAvatarKey, 'idle', genderForAvatar)
+        const avatarValue = me.avatar || null;
+        const resolvedAvatarSrc = avatarValue
+          ? resolveAvatarImage(avatarValue, 'idle', genderForAvatar)
           : AVATAR_PLACEHOLDER;
-        if (newAvatarKey){
-          const avatarChanged = newAvatarKey !== selectedAvatarKey || resolvedAvatarSrc !== selectedAvatarImage;
-          if (avatarChanged){
-            selectedAvatarKey = newAvatarKey;
-            selectedAvatarLabel = getAvatarLabel(newAvatarKey) || selectedAvatarLabel;
-            selectedAvatarImage = resolvedAvatarSrc;
-            avatarCards.forEach(c => c.classList.toggle('selected', c.dataset.avatar === newAvatarKey));
-            updateAvatarPreview();
-            updateAvatarHint();
-            updateSummary();
-            updateStepButtons();
+        if (avatarValue){
+          const isCustom = isCustomAvatar(avatarValue);
+          if (isCustom){
+            customAvatarDataUrl = avatarValue;
+            customAvatarLabel = 'Moje zdjęcie';
+          }
+          if (avatarValue !== selectedAvatarKey){
+            selectedAvatarKey = avatarValue;
+            if (avatarCards.some(c => c.dataset.avatarValue === avatarValue)){
+              selectAvatar(avatarValue);
+            } else {
+              rebuildAvatarGrid({ gender: genderForAvatar });
+            }
+          } else if (isCustom && !avatarCards.some(c => c.dataset.avatarValue === avatarValue)){
+            rebuildAvatarGrid({ gender: genderForAvatar });
           }
         } else if (!selectedAvatarKey){
           selectedAvatarImage = null;
@@ -606,6 +1004,14 @@ const bus = connect({
             c.classList.remove('selected');
             c.setAttribute('aria-pressed', 'false');
           });
+          updateAvatarPreview();
+          updateAvatarHint();
+          updateSummary();
+          updateStepButtons();
+        }
+        if (avatarValue){
+          selectedAvatarImage = resolvedAvatarSrc;
+          selectedAvatarLabel = getAvatarLabel(avatarValue) || (isCustomAvatar(avatarValue) ? 'Moje zdjęcie' : selectedAvatarLabel);
           updateAvatarPreview();
           updateAvatarHint();
           updateSummary();

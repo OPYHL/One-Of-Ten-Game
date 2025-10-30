@@ -62,16 +62,19 @@ export const AVATAR_CATALOG = {
 };
 
 export function getAvatarLabel(key){
+  if (isCustomAvatar(key)) return 'Moje zdjęcie';
   return AVATAR_CATALOG[key]?.label || '';
 }
 
 export function getAvatarImage(key, mood = 'idle'){
+  if (isCustomAvatar(key)) return key;
   const entry = AVATAR_CATALOG[key];
   if (!entry) return null;
   return entry.images[mood] || entry.images.idle || null;
 }
 
 export function resolveAvatarImage(key, mood = 'idle', gender = 'MALE'){
+  if (isCustomAvatar(key)) return key;
   const image = getAvatarImage(key, mood);
   if (image) return image;
   const normalizedGender = (gender || '').toUpperCase() === 'FEMALE' ? 'FEMALE' : 'MALE';
@@ -90,4 +93,9 @@ export function listAvatarOptions(gender = 'MALE'){
       label: value.label,
       image: value.images.idle,
     }));
+}
+
+export function isCustomAvatar(value){
+  if (!value || typeof value !== 'string') return false;
+  return value.startsWith('data:image/');
 }
