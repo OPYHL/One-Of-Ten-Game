@@ -3,421 +3,521 @@
     "MATEMATYKA": [
       {
         "question": "Ile to 2 + 5?",
-        "answer": "7"
+        "answer": "7",
+        "annotation": ""
       },
       {
         "question": "Ile to 9 - 4?",
-        "answer": "5"
+        "answer": "5",
+        "annotation": ""
       },
       {
         "question": "Jaka jest połowa liczby 10?",
-        "answer": "5"
+        "answer": "5",
+        "annotation": ""
       },
       {
         "question": "Ile to 3 × 3?",
-        "answer": "9"
+        "answer": "9",
+        "annotation": ""
       },
       {
         "question": "Ile dni ma tydzień?",
-        "answer": "7"
+        "answer": "7",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik 12 : 3?",
-        "answer": "4"
+        "answer": "4",
+        "annotation": ""
       },
       {
         "question": "Ile to 6 + 6?",
-        "answer": "12"
+        "answer": "12",
+        "annotation": ""
       },
       {
         "question": "Jaki jest następny numer po 19?",
-        "answer": "20"
+        "answer": "20",
+        "annotation": ""
       },
       {
         "question": "Ile kątów ma trójkąt?",
-        "answer": "3"
+        "answer": "3",
+        "annotation": ""
       },
       {
         "question": "Ile centymetrów ma metr?",
-        "answer": "100"
+        "answer": "100",
+        "annotation": ""
       }
     ],
     "FIZYKA": [
       {
         "question": "Jak nazywa się siła przyciągająca przedmioty do Ziemi?",
-        "answer": "Grawitacja"
+        "answer": "Grawitacja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się urządzenie do mierzenia temperatury?",
-        "answer": "Termometr"
+        "answer": "Termometr",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko powstawania tęczy?",
-        "answer": "Rozszczepienie światła"
+        "answer": "Rozszczepienie światła",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się jednostka czasu krótsza od minuty?",
-        "answer": "Sekunda"
+        "answer": "Sekunda",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zmiana stanu skupienia z cieczy w gaz?",
-        "answer": "Parowanie"
+        "answer": "Parowanie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się źródło światła widoczne w nocy na niebie?",
-        "answer": "Księżyc"
+        "answer": "Księżyc",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się urządzenie świecące w pokoju po włączeniu?",
-        "answer": "Lampa"
+        "answer": "Lampa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się metal przyciągany przez magnes?",
-        "answer": "Żelazo"
+        "answer": "Żelazo",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się wielkość opisująca szybkość poruszania się ciała?",
-        "answer": "Prędkość"
+        "answer": "Prędkość",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko, dzięki któremu igła kompasu wskazuje północ?",
-        "answer": "Magnetyzm"
+        "answer": "Magnetyzm",
+        "annotation": ""
       }
     ],
     "BIOLOGIA": [
       {
         "question": "Jak nazywa się proces, w którym rośliny wykorzystują światło do produkcji pokarmu?",
-        "answer": "Fotosynteza"
+        "answer": "Fotosynteza",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się dom psa?",
-        "answer": "Buda"
+        "answer": "Buda",
+        "annotation": ""
       },
       {
         "question": "Ile nóg ma pająk?",
-        "answer": "Osiem"
+        "answer": "Osiem",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się młode krowy?",
-        "answer": "Cielę"
+        "answer": "Cielę",
+        "annotation": ""
       },
       {
         "question": "Która pora roku następuje po zimie?",
-        "answer": "Wiosna"
+        "answer": "Wiosna",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się organ, który pompuje krew w naszym ciele?",
-        "answer": "Serce"
+        "answer": "Serce",
+        "annotation": ""
       },
       {
         "question": "Które owady produkują miód?",
-        "answer": "Pszczoły"
+        "answer": "Pszczoły",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zielony barwnik w liściach roślin?",
-        "answer": "Chlorofil"
+        "answer": "Chlorofil",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się część rośliny rosnąca w glebie?",
-        "answer": "Korzeń"
+        "answer": "Korzeń",
+        "annotation": ""
       },
       {
         "question": "Jaki ptak nie potrafi latać i żyje na Antarktydzie?",
-        "answer": "Pingwin"
+        "answer": "Pingwin",
+        "annotation": ""
       }
     ],
     "CHEMIA": [
       {
         "question": "Jak nazywa się woda w stanie gazowym?",
-        "answer": "Para wodna"
+        "answer": "Para wodna",
+        "annotation": ""
       },
       {
         "question": "Co otrzymamy, gdy rozpuścimy sól w wodzie?",
-        "answer": "Roztwór"
+        "answer": "Roztwór",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się najprostszy pierwiastek chemiczny?",
-        "answer": "Wodór"
+        "answer": "Wodór",
+        "annotation": ""
       },
       {
         "question": "Jakie jest chemiczne oznaczenie tlenu?",
-        "answer": "O"
+        "answer": "O",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się stały stan skupienia wody?",
-        "answer": "Lód"
+        "answer": "Lód",
+        "annotation": ""
       },
       {
         "question": "Co robi papierek lakmusowy w obecności kwasu?",
-        "answer": "Czerwienieje"
+        "answer": "Czerwienieje",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się sól kuchenną w chemii?",
-        "answer": "Chlorek sodu"
+        "answer": "Chlorek sodu",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się proces zmiany cieczy w stałą?",
-        "answer": "Krzepnięcie"
+        "answer": "Krzepnięcie",
+        "annotation": ""
       },
       {
         "question": "Jakiego koloru jest typowy płomień świeczki?",
-        "answer": "Żółto-pomarańczowy"
+        "answer": "Żółto-pomarańczowy",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się gaz lżejszy od powietrza, którym napełnia się balony?",
-        "answer": "Hel"
+        "answer": "Hel",
+        "annotation": ""
       }
     ],
     "GEOGRAFIA": [
       {
         "question": "Jak nazywa się największy ocean na Ziemi?",
-        "answer": "Ocean Spokojny"
+        "answer": "Ocean Spokojny",
+        "annotation": ""
       },
       {
         "question": "Na jakim kontynencie leży Polska?",
-        "answer": "Europa"
+        "answer": "Europa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się najdłuższa rzeka w Polsce?",
-        "answer": "Wisła"
+        "answer": "Wisła",
+        "annotation": ""
       },
       {
         "question": "Który kierunek na kompasie jest przeciwny do północy?",
-        "answer": "Południe"
+        "answer": "Południe",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się najwyższy szczyt Tatr?",
-        "answer": "Rysy"
+        "answer": "Rysy",
+        "annotation": ""
       },
       {
         "question": "Jakie morze oblewa północne wybrzeże Polski?",
-        "answer": "Morze Bałtyckie"
+        "answer": "Morze Bałtyckie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się stolica Francji?",
-        "answer": "Paryż"
+        "answer": "Paryż",
+        "annotation": ""
       },
       {
         "question": "W jakiej strefie klimatycznej leży Sahara?",
-        "answer": "Zwrotnikowej"
+        "answer": "Zwrotnikowej",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się największa wyspa na świecie?",
-        "answer": "Grenlandia"
+        "answer": "Grenlandia",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się pustynia w południowej części Afryki?",
-        "answer": "Kalahari"
+        "answer": "Kalahari",
+        "annotation": ""
       }
     ],
     "HISTORIA": [
       {
         "question": "Kto był pierwszym królem Polski?",
-        "answer": "Bolesław Chrobry"
+        "answer": "Bolesław Chrobry",
+        "annotation": ""
       },
       {
         "question": "W którym roku wybuchła II wojna światowa?",
-        "answer": "1939"
+        "answer": "1939",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się pierwsza stolica Polski?",
-        "answer": "Gniezno"
+        "answer": "Gniezno",
+        "annotation": ""
       },
       {
         "question": "W którym roku uchwalono Konstytucję 3 maja?",
-        "answer": "1791"
+        "answer": "1791",
+        "annotation": ""
       },
       {
         "question": "Kto był przywódcą Solidarności i późniejszym prezydentem Polski?",
-        "answer": "Lech Wałęsa"
+        "answer": "Lech Wałęsa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się król, który zwyciężył pod Wiedniem w 1683 roku?",
-        "answer": "Jan III Sobieski"
+        "answer": "Jan III Sobieski",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się włoski podróżnik, który w 1492 roku odkrył Amerykę?",
-        "answer": "Krzysztof Kolumb"
+        "answer": "Krzysztof Kolumb",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się kronikarz autor \"Kroniki polskiej\"?",
-        "answer": "Gall Anonim"
+        "answer": "Gall Anonim",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się słynna bitwa stoczona w 1410 roku między Polską a Krzyżakami?",
-        "answer": "Bitwa pod Grunwaldem"
+        "answer": "Bitwa pod Grunwaldem",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się unia łącząca Koronę Polską i Wielkie Księstwo Litewskie?",
-        "answer": "Unia Lubelska"
+        "answer": "Unia Lubelska",
+        "annotation": ""
       }
     ],
     "JĘZYK POLSKI": [
       {
         "question": "Jak nazywa się część zdania odpowiadająca na pytanie \"kto? co?\"?",
-        "answer": "Podmiot"
+        "answer": "Podmiot",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się część mowy opisująca czynność?",
-        "answer": "Czasownik"
+        "answer": "Czasownik",
+        "annotation": ""
       },
       {
         "question": "Jaką literą zapisujemy imiona?",
-        "answer": "Wielką"
+        "answer": "Wielką",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się przeciwieństwo wyrazu \"duży\"?",
-        "answer": "Mały"
+        "answer": "Mały",
+        "annotation": ""
       },
       {
         "question": "Które słowo jest synonimem \"piękny\"?",
-        "answer": "Ładny"
+        "answer": "Ładny",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się znak kończący pytanie?",
-        "answer": "Znak zapytania"
+        "answer": "Znak zapytania",
+        "annotation": ""
       },
       {
         "question": "Co tworzą wyrazy rymujące się w wierszu?",
-        "answer": "Rym"
+        "answer": "Rym",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się gatunek literacki opowiadający krótką historię z morałem?",
-        "answer": "Bajka"
+        "answer": "Bajka",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zbiór liter w ustalonej kolejności?",
-        "answer": "Alfabet"
+        "answer": "Alfabet",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się autor \"Pana Tadeusza\"?",
-        "answer": "Adam Mickiewicz"
+        "answer": "Adam Mickiewicz",
+        "annotation": ""
       }
     ],
     "SPORT": [
       {
         "question": "Ilu zawodników gra jednocześnie w drużynie piłki nożnej na boisku?",
-        "answer": "Jedenastu"
+        "answer": "Jedenastu",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się dyscyplina, w której używa się rakiet i lotki?",
-        "answer": "Badminton"
+        "answer": "Badminton",
+        "annotation": ""
       },
       {
         "question": "W jakim sporcie zdobywa się kosze?",
-        "answer": "Koszykówka"
+        "answer": "Koszykówka",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się polski skoczek narciarski, który zdobył cztery Kryształowe Kule?",
-        "answer": "Adam Małysz"
+        "answer": "Adam Małysz",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się sport, w którym pływa się stylem dowolnym?",
-        "answer": "Pływanie"
+        "answer": "Pływanie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się gra z użyciem rakiety i piłki na korcie trawiastym?",
-        "answer": "Tenis"
+        "answer": "Tenis",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się popularny sport zimowy z użyciem deski?",
-        "answer": "Snowboard"
+        "answer": "Snowboard",
+        "annotation": ""
       },
       {
         "question": "Ile punktów zdobywa się za rzut za trzy w koszykówce?",
-        "answer": "Trzy"
+        "answer": "Trzy",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się przerwa w meczu koszykówki na żądanie trenera?",
-        "answer": "Time-out"
+        "answer": "Time-out",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się sport, w którym rzuca się włócznią?",
-        "answer": "Rzut oszczepem"
+        "answer": "Rzut oszczepem",
+        "annotation": ""
       }
     ],
     "SZTUKA": [
       {
         "question": "Jak nazywa się technika malowania wodnymi farbami na papierze?",
-        "answer": "Akwarela"
+        "answer": "Akwarela",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się osoba tworząca rzeźby?",
-        "answer": "Rzeźbiarz"
+        "answer": "Rzeźbiarz",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się słynny obraz Leonarda da Vinci przedstawiający tajemniczo uśmiechniętą kobietę?",
-        "answer": "Mona Lisa"
+        "answer": "Mona Lisa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się teatr, w którym aktorzy śpiewają zamiast mówić?",
-        "answer": "Opera"
+        "answer": "Opera",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się krótka forma teatralna dla dzieci z kukłami?",
-        "answer": "Teatr lalek"
+        "answer": "Teatr lalek",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się sztuka ozdabiania ścian kolorowymi obrazami?",
-        "answer": "Mural"
+        "answer": "Mural",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się artysta tworzący muzykę?",
-        "answer": "Kompozytor"
+        "answer": "Kompozytor",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się tradycyjny taniec góralski?",
-        "answer": "Zbójnicki"
+        "answer": "Zbójnicki",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się instrument klawiszowy z czarno-białymi klawiszami?",
-        "answer": "Fortepian"
+        "answer": "Fortepian",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się osoba kierująca orkiestrą?",
-        "answer": "Dyrygent"
+        "answer": "Dyrygent",
+        "annotation": ""
       }
     ],
     "TECHNOLOGIA": [
       {
         "question": "Jak nazywa się urządzenie służące do wykonywania połączeń głosowych na odległość?",
-        "answer": "Telefon"
+        "answer": "Telefon",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się przenośny komputer?",
-        "answer": "Laptop"
+        "answer": "Laptop",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się miejsce w internecie, gdzie wpisujemy adres strony?",
-        "answer": "Pasek adresu"
+        "answer": "Pasek adresu",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się popularny system operacyjny w smartfonach?",
-        "answer": "Android"
+        "answer": "Android",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się urządzenie do drukowania dokumentów?",
-        "answer": "Drukarka"
+        "answer": "Drukarka",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się chmura usług Google do przechowywania plików?",
-        "answer": "Google Drive"
+        "answer": "Google Drive",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się symbol @ w adresie e-mail?",
-        "answer": "Małpa"
+        "answer": "Małpa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się sieć łącząca komputery w domu?",
-        "answer": "Wi-Fi"
+        "answer": "Wi-Fi",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się rodzaj pamięci przenośnej w formie małego pendrive'a?",
-        "answer": "Pamięć USB"
+        "answer": "Pamięć USB",
+        "annotation": ""
       },
       {
         "question": "Jak nazywają się małe graficzne znaki używane w wiadomościach internetowych do wyrażania emocji?",
-        "answer": "Emoji"
+        "answer": "Emoji",
+        "annotation": ""
       }
     ]
   },
@@ -425,421 +525,521 @@
     "MATEMATYKA": [
       {
         "question": "Ile to 12 × 8?",
-        "answer": "96"
+        "answer": "96",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik działania 45 - 19?",
-        "answer": "26"
+        "answer": "26",
+        "annotation": ""
       },
       {
         "question": "Ile wynosi pierwiastek kwadratowy z 81?",
-        "answer": "9"
+        "answer": "9",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik 144 : 12?",
-        "answer": "12"
+        "answer": "12",
+        "annotation": ""
       },
       {
         "question": "Ile to 2,5 + 3,5?",
-        "answer": "6"
+        "answer": "6",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik działania 3² + 4²?",
-        "answer": "25"
+        "answer": "25",
+        "annotation": ""
       },
       {
         "question": "Ile wynosi 10% z 250?",
-        "answer": "25"
+        "answer": "25",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik 7 × 14?",
-        "answer": "98"
+        "answer": "98",
+        "annotation": ""
       },
       {
         "question": "Ile to 1000 - 275?",
-        "answer": "725"
+        "answer": "725",
+        "annotation": ""
       },
       {
         "question": "Jaka jest suma kątów w trójkącie?",
-        "answer": "180 stopni"
+        "answer": "180 stopni",
+        "annotation": ""
       }
     ],
     "FIZYKA": [
       {
         "question": "Jak nazywa się jednostka siły w układzie SI?",
-        "answer": "Niuton"
+        "answer": "Niuton",
+        "annotation": ""
       },
       {
         "question": "Jaką nazwę nosi prawo opisujące zależność napięcia i natężenia w obwodzie elektrycznym?",
-        "answer": "Prawo Ohma"
+        "answer": "Prawo Ohma",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zmiana stanu skupienia z ciała stałego w gaz?",
-        "answer": "Sublimacja"
+        "answer": "Sublimacja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się prędkość, której nie może przekroczyć światło w próżni?",
-        "answer": "Prędkość światła"
+        "answer": "Prędkość światła",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się energia związana z ruchem ciała?",
-        "answer": "Energia kinetyczna"
+        "answer": "Energia kinetyczna",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się wielkość opisująca ilość materii w ciele?",
-        "answer": "Masa"
+        "answer": "Masa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko odchylania światła w pryzmacie?",
-        "answer": "Załamanie światła"
+        "answer": "Załamanie światła",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się urządzenie wytwarzające prąd w rowerze?",
-        "answer": "Prądnica"
+        "answer": "Prądnica",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się ciśnienie wywierane przez powietrze atmosferyczne?",
-        "answer": "Ciśnienie atmosferyczne"
+        "answer": "Ciśnienie atmosferyczne",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko zmiany częstotliwości dźwięku przy ruchu źródła?",
-        "answer": "Efekt Dopplera"
+        "answer": "Efekt Dopplera",
+        "annotation": ""
       }
     ],
     "BIOLOGIA": [
       {
         "question": "Jak nazywa się proces pobierania tlenu i oddawania dwutlenku węgla przez organizm?",
-        "answer": "Oddychanie komórkowe"
+        "answer": "Oddychanie komórkowe",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się podstawowa jednostka budulcowa organizmu?",
-        "answer": "Komórka"
+        "answer": "Komórka",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się tkanka przewodząca wodę w roślinach?",
-        "answer": "Drewno"
+        "answer": "Drewno",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się układ odpowiedzialny za krążenie krwi?",
-        "answer": "Układ krwionośny"
+        "answer": "Układ krwionośny",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się związek przenoszący informację genetyczną?",
-        "answer": "DNA"
+        "answer": "DNA",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się proces przejścia larwy owada w postać dorosłą?",
-        "answer": "Metamorfoza"
+        "answer": "Metamorfoza",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się organ odpowiedzialny za filtrowanie krwi z toksyn?",
-        "answer": "Nerki"
+        "answer": "Nerki",
+        "annotation": ""
       },
       {
         "question": "Jak nazywają się rośliny, które co roku wyrastają z cebul?",
-        "answer": "Rośliny cebulowe"
+        "answer": "Rośliny cebulowe",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się proces powstawania owoców z kwiatów?",
-        "answer": "Zapylanie"
+        "answer": "Zapylanie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się układ odpowiadający za ruch ciała?",
-        "answer": "Układ mięśniowy"
+        "answer": "Układ mięśniowy",
+        "annotation": ""
       }
     ],
     "CHEMIA": [
       {
         "question": "Jak nazywa się liczba określająca liczbę protonów w jądrze atomowym?",
-        "answer": "Liczba atomowa"
+        "answer": "Liczba atomowa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się cząsteczka złożona z atomów dwóch różnych pierwiastków?",
-        "answer": "Związek chemiczny"
+        "answer": "Związek chemiczny",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się reakcja, w której substancja oddaje elektrony?",
-        "answer": "Utlenianie"
+        "answer": "Utlenianie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się skala służąca do pomiaru kwasowości roztworów?",
-        "answer": "Skala pH"
+        "answer": "Skala pH",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się mieszanina metali z innymi pierwiastkami?",
-        "answer": "Stop"
+        "answer": "Stop",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się kwas występujący w soku z cytryn?",
-        "answer": "Kwas cytrynowy"
+        "answer": "Kwas cytrynowy",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się gaz wydzielający się podczas reakcji kwasu z metalem?",
-        "answer": "Wodór"
+        "answer": "Wodór",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się reakcja, w której powstaje woda i sól?",
-        "answer": "Reakcja zobojętniania"
+        "answer": "Reakcja zobojętniania",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się proces rozdzielania mieszaniny na frakcje naftowe?",
-        "answer": "Destylacja"
+        "answer": "Destylacja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się twardy, bezbarwny dioksyd węgla stosowany w gaśnicach śniegowych?",
-        "answer": "Suchy lód"
+        "answer": "Suchy lód",
+        "annotation": ""
       }
     ],
     "GEOGRAFIA": [
       {
         "question": "Jak nazywa się najdłuższa rzeka świata?",
-        "answer": "Nil"
+        "answer": "Nil",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się najwyższy szczyt na Ziemi?",
-        "answer": "Mount Everest"
+        "answer": "Mount Everest",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się stolica Kanady?",
-        "answer": "Ottawa"
+        "answer": "Ottawa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się największa pustynia gorąca na świecie?",
-        "answer": "Sahara"
+        "answer": "Sahara",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się cieśnina oddzielająca Europę od Afryki?",
-        "answer": "Cieśnina Gibraltarska"
+        "answer": "Cieśnina Gibraltarska",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się kraj leżący na dwóch kontynentach: Europie i Azji?",
-        "answer": "Turcja"
+        "answer": "Turcja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się stolica Australii?",
-        "answer": "Canberra"
+        "answer": "Canberra",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się największe jezioro w Afryce?",
-        "answer": "Jezioro Wiktorii"
+        "answer": "Jezioro Wiktorii",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się łańcuch górski rozciągający się w Ameryce Południowej?",
-        "answer": "Andy"
+        "answer": "Andy",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się rzeka przepływająca przez Londyn?",
-        "answer": "Tamiza"
+        "answer": "Tamiza",
+        "annotation": ""
       }
     ],
     "HISTORIA": [
       {
         "question": "Jak nazywał się pierwszy władca Polski koronowany na króla w 1025 roku?",
-        "answer": "Bolesław Chrobry"
+        "answer": "Bolesław Chrobry",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się wódz Związku Radzieckiego podczas II wojny światowej?",
-        "answer": "Józef Stalin"
+        "answer": "Józef Stalin",
+        "annotation": ""
       },
       {
         "question": "Jak nazywało się powstanie w Warszawie w 1944 roku?",
-        "answer": "Powstanie Warszawskie"
+        "answer": "Powstanie Warszawskie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się polski król, który wprowadził wolną elekcję?",
-        "answer": "Zygmunt II August"
+        "answer": "Zygmunt II August",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się unia zawarta w 1385 roku między Polską a Litwą?",
-        "answer": "Unia w Krewie"
+        "answer": "Unia w Krewie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się pierwszy prezydent USA?",
-        "answer": "George Washington"
+        "answer": "George Washington",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się dynastia panująca w Polsce w XVII wieku po Jagiellonach?",
-        "answer": "Wazowie"
+        "answer": "Wazowie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się polski astronom, autor teorii heliocentrycznej?",
-        "answer": "Mikołaj Kopernik"
+        "answer": "Mikołaj Kopernik",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się liga państw greckich dowodzona przez Spartę?",
-        "answer": "Związek Peloponeski"
+        "answer": "Związek Peloponeski",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się rewolucja, która obaliła monarchię we Francji w 1789 roku?",
-        "answer": "Rewolucja Francuska"
+        "answer": "Rewolucja Francuska",
+        "annotation": ""
       }
     ],
     "LITERATURA": [
       {
         "question": "Jak nazywał się autor \"Quo vadis\"?",
-        "answer": "Henryk Sienkiewicz"
+        "answer": "Henryk Sienkiewicz",
+        "annotation": ""
       },
       {
         "question": "Jak ma na imię główny bohater \"Małego Księcia\"?",
-        "answer": "Mały Książę"
+        "answer": "Mały Książę",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się cykl powieści o wiedźminie?",
-        "answer": "Saga o Wiedźminie"
+        "answer": "Saga o Wiedźminie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się autorka \"Ani z Zielonego Wzgórza\"?",
-        "answer": "Lucy Maud Montgomery"
+        "answer": "Lucy Maud Montgomery",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się dramat Szekspira o sporze dwóch rodów w Weronie?",
-        "answer": "Romeo i Julia"
+        "answer": "Romeo i Julia",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się główny bohater \"Latarnika\" Sienkiewicza?",
-        "answer": "Skawiński"
+        "answer": "Skawiński",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się autor wiersza \"Lokomotywa\"?",
-        "answer": "Julian Tuwim"
+        "answer": "Julian Tuwim",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się powieść Elizy Orzeszkowej o powstaniu styczniowym?",
-        "answer": "Nad Niemnem"
+        "answer": "Nad Niemnem",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się bohaterka powieści \"Noce i dnie\" Marii Dąbrowskiej?",
-        "answer": "Barbara Niechcic"
+        "answer": "Barbara Niechcic",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się powieść George'a Orwella o totalitarnym państwie?",
-        "answer": "Rok 1984"
+        "answer": "Rok 1984",
+        "annotation": ""
       }
     ],
     "SPORT": [
       {
         "question": "Jak nazywa się turniej tenisowy rozgrywany na kortach Wimbledonu?",
-        "answer": "Wimbledon"
+        "answer": "Wimbledon",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się jedyny polski kierowca, który wygrał wyścig Formuły 1?",
-        "answer": "Robert Kubica"
+        "answer": "Robert Kubica",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się liga koszykówki w Stanach Zjednoczonych?",
-        "answer": "NBA"
+        "answer": "NBA",
+        "annotation": ""
       },
       {
         "question": "Ile okrążeń liczy wyścig żużlowy?",
-        "answer": "Cztery"
+        "answer": "Cztery",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się dyscyplina, w której używa się krążka i kija?",
-        "answer": "Hokej na lodzie"
+        "answer": "Hokej na lodzie",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się bieg na dystansie 42 kilometrów?",
-        "answer": "Maraton"
+        "answer": "Maraton",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się polska lekkoatletka, mistrzyni olimpijska w rzucie młotem z 2012 roku?",
-        "answer": "Anita Włodarczyk"
+        "answer": "Anita Włodarczyk",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się formacja ustawienia w piłce nożnej 4-4-2?",
-        "answer": "Czterech obrońców, czterech pomocników i dwóch napastników"
+        "answer": "Czterech obrońców, czterech pomocników i dwóch napastników",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zasada wskazująca pozycję spaloną w piłce nożnej?",
-        "answer": "Spalony"
+        "answer": "Spalony",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się najważniejsza impreza sportowa odbywająca się co cztery lata?",
-        "answer": "Igrzyska Olimpijskie"
+        "answer": "Igrzyska Olimpijskie",
+        "annotation": ""
       }
     ],
     "SZTUKA": [
       {
         "question": "Jak nazywa się technika zdobienia ścian małymi kawałkami kolorowych kamieni?",
-        "answer": "Mozaika"
+        "answer": "Mozaika",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się styl architektoniczny katedry Notre-Dame w Paryżu?",
-        "answer": "Gotyk"
+        "answer": "Gotyk",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się hiszpański malarz, twórca \"Guerniki\"?",
-        "answer": "Pablo Picasso"
+        "answer": "Pablo Picasso",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się epoka, w której tworzył Michał Anioł?",
-        "answer": "Renesans"
+        "answer": "Renesans",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się technika rzeźbiarska polegająca na wydobywaniu postaci z bloku kamienia?",
-        "answer": "Rzeźba w kamieniu"
+        "answer": "Rzeźba w kamieniu",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się sztuka układania kwiatów w Japonii?",
-        "answer": "Ikebana"
+        "answer": "Ikebana",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się włoska opera narodowa?",
-        "answer": "Opera włoska"
+        "answer": "Opera włoska",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się polska reżyserka zdobywczyni Oscara za film \"Ida\"?",
-        "answer": "Agnieszka Holland"
+        "answer": "Agnieszka Holland",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się styl w sztuce charakteryzujący się dynamicznymi liniami i bogatą dekoracją w XVII wieku?",
-        "answer": "Barok"
+        "answer": "Barok",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się obraz Jana Matejki przedstawiający Bitwę pod Grunwaldem?",
-        "answer": "Bitwa pod Grunwaldem"
+        "answer": "Bitwa pod Grunwaldem",
+        "annotation": ""
       }
     ],
     "TECHNOLOGIA": [
       {
         "question": "Jak nazywa się urządzenie przetwarzające dane w systemie komputerowym?",
-        "answer": "Procesor"
+        "answer": "Procesor",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się standard bezprzewodowego przesyłania danych na krótkie odległości?",
-        "answer": "Bluetooth"
+        "answer": "Bluetooth",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się system operacyjny wydany przez firmę Apple na komputery osobiste?",
-        "answer": "macOS"
+        "answer": "macOS",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się język znaczników używany do tworzenia stron internetowych?",
-        "answer": "HTML"
+        "answer": "HTML",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się urządzenie służące do przechowywania danych w chmurze firmy Microsoft?",
-        "answer": "OneDrive"
+        "answer": "OneDrive",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się jednostka informacji równa 1024 megabajtom?",
-        "answer": "Gigabajt"
+        "answer": "Gigabajt",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się skrót określający rzeczywistość rozszerzoną?",
-        "answer": "AR"
+        "answer": "AR",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się szyfrowany protokół przesyłania stron internetowych?",
-        "answer": "HTTPS"
+        "answer": "HTTPS",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się program antywirusowy firmy Avast?",
-        "answer": "Avast Antivirus"
+        "answer": "Avast Antivirus",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się popularna platforma do prowadzenia wideokonferencji?",
-        "answer": "Zoom"
+        "answer": "Zoom",
+        "annotation": ""
       }
     ]
   },
@@ -847,211 +1047,261 @@
     "MATEMATYKA": [
       {
         "question": "Ile wynosi suma kątów wewnętrznych pięciokąta?",
-        "answer": "540 stopni"
+        "answer": "540 stopni",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się funkcja odwrotna do logarytmu?",
-        "answer": "Eksponenta"
+        "answer": "Eksponenta",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik działania 7! (silnia siedem)?",
-        "answer": "5040"
+        "answer": "5040",
+        "annotation": ""
       },
       {
         "question": "Ile wynosi wartość sinusa 90 stopni?",
-        "answer": "1"
+        "answer": "1",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wzór na pole koła?",
-        "answer": "πr²"
+        "answer": "πr²",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się liczba, która dzieli się tylko przez 1 i samą siebie?",
-        "answer": "Liczba pierwsza"
+        "answer": "Liczba pierwsza",
+        "annotation": ""
       },
       {
         "question": "Jaki jest wynik równania 2^5?",
-        "answer": "32"
+        "answer": "32",
+        "annotation": ""
       },
       {
         "question": "Ile wynosi pochodna funkcji x²?",
-        "answer": "2x"
+        "answer": "2x",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się metoda rozwiązywania układów równań liniowych za pomocą wyznaczników?",
-        "answer": "Metoda Cramera"
+        "answer": "Metoda Cramera",
+        "annotation": ""
       },
       {
         "question": "Ile wynosi suma ciągu arytmetycznego 2, 5, 8, 11, 14?",
-        "answer": "40"
+        "answer": "40",
+        "annotation": ""
       }
     ],
     "FIZYKA": [
       {
         "question": "Jak nazywa się równanie opisujące równoważność masy i energii?",
-        "answer": "E = mc²"
+        "answer": "E = mc²",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko emisji elektronów z metalu pod wpływem światła?",
-        "answer": "Zjawisko fotoelektryczne"
+        "answer": "Zjawisko fotoelektryczne",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się jednostka ładunku elektrycznego?",
-        "answer": "Kulomb"
+        "answer": "Kulomb",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się prawo opisujące ciśnienie gazu doskonałego?",
-        "answer": "Równanie stanu gazu doskonałego"
+        "answer": "Równanie stanu gazu doskonałego",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się cząstka elementarna bez ładunku elektrycznego w jądrze atomowym?",
-        "answer": "Neutron"
+        "answer": "Neutron",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko przewodzenia prądu bez oporu w niskich temperaturach?",
-        "answer": "Nadprzewodnictwo"
+        "answer": "Nadprzewodnictwo",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się oddziaływanie przenoszone przez fotony?",
-        "answer": "Oddziaływanie elektromagnetyczne"
+        "answer": "Oddziaływanie elektromagnetyczne",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się jednostka częstotliwości drgań?",
-        "answer": "Herc"
+        "answer": "Herc",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się prawo opisujące indukcję elektromagnetyczną?",
-        "answer": "Prawo Faradaya"
+        "answer": "Prawo Faradaya",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko rozszerzania ciał pod wpływem wzrostu temperatury?",
-        "answer": "Rozszerzalność cieplna"
+        "answer": "Rozszerzalność cieplna",
+        "annotation": ""
       }
     ],
     "BIOLOGIA": [
       {
         "question": "Jak nazywa się proces powielania cząsteczki DNA?",
-        "answer": "Replikacja"
+        "answer": "Replikacja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się struktura w komórce odpowiedzialna za produkcję energii?",
-        "answer": "Mitochondrium"
+        "answer": "Mitochondrium",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko przenoszenia wody w roślinie wbrew sile grawitacji?",
-        "answer": "Transpiracja"
+        "answer": "Transpiracja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się nauka o dziedziczeniu cech?",
-        "answer": "Genetyka"
+        "answer": "Genetyka",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się pigment odpowiedzialny za barwę skóry człowieka?",
-        "answer": "Melanina"
+        "answer": "Melanina",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się proces powstawania gamet?",
-        "answer": "Mejoza"
+        "answer": "Mejoza",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się kompleks białkowy transportujący protony w błonie komórkowej mitochondrium?",
-        "answer": "Łańcuch oddechowy"
+        "answer": "Łańcuch oddechowy",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się faza podziału komórki, w której chromosomy ustawiają się w płaszczyźnie równikowej?",
-        "answer": "Metafaza"
+        "answer": "Metafaza",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się hormon regulujący poziom cukru we krwi?",
-        "answer": "Insulina"
+        "answer": "Insulina",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się część mózgu odpowiedzialna za równowagę i koordynację ruchów?",
-        "answer": "Móżdżek"
+        "answer": "Móżdżek",
+        "annotation": ""
       }
     ],
     "CHEMIA": [
       {
         "question": "Jak nazywa się typ wiązania chemicznego powstającego przez wspólne pary elektronowe?",
-        "answer": "Wiązanie kowalencyjne"
+        "answer": "Wiązanie kowalencyjne",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się prawo określające stosunki mas reagentów w reakcji?",
-        "answer": "Prawo stałych stosunków"
+        "answer": "Prawo stałych stosunków",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się energia potrzebna do zainicjowania reakcji chemicznej?",
-        "answer": "Energia aktywacji"
+        "answer": "Energia aktywacji",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się związek organiczny zawierający grupę -COOH?",
-        "answer": "Kwas karboksylowy"
+        "answer": "Kwas karboksylowy",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się katalizator w organizmach żywych?",
-        "answer": "Enzym"
+        "answer": "Enzym",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się proces utleniania alkoholu do aldehydu?",
-        "answer": "Dehydrogenacja"
+        "answer": "Dehydrogenacja",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się odmiana węgla o strukturze sześciennej?",
-        "answer": "Diament"
+        "answer": "Diament",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się mieszanina ciekłych węglowodorów stosowana jako paliwo lotnicze?",
-        "answer": "Nafta"
+        "answer": "Nafta",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się zjawisko, w którym cząsteczki przechodzą z roztworu przez półprzepuszczalną błonę?",
-        "answer": "Osmoza"
+        "answer": "Osmoza",
+        "annotation": ""
       },
       {
         "question": "Jak nazywa się liczba określająca liczbę cząsteczek w jednym molu substancji?",
-        "answer": "Liczba Avogadra"
+        "answer": "Liczba Avogadra",
+        "annotation": ""
       }
     ],
     "HISTORIA": [
       {
         "question": "Jak nazywa się pokój kończący I wojnę światową podpisany w 1919 roku?",
-        "answer": "Traktat Wersalski"
+        "answer": "Traktat Wersalski",
+        "annotation": ""
       },
       {
         "question": "Jak nazywało się powstanie niewolników pod wodzą Spartakusa?",
-        "answer": "Powstanie Spartakusa"
+        "answer": "Powstanie Spartakusa",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się przywódca Francji, który został cesarzem w 1804 roku?",
-        "answer": "Napoleon Bonaparte"
+        "answer": "Napoleon Bonaparte",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się konferencja w 1945 roku ustalająca powojenny porządek świata?",
-        "answer": "Konferencja jałtańska"
+        "answer": "Konferencja jałtańska",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się pierwszy król z dynastii Piastów koronowany w 1076 roku?",
-        "answer": "Bolesław Śmiały"
+        "answer": "Bolesław Śmiały",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się unia personalna Polski z Saksonią w XVIII wieku?",
-        "answer": "Unia polsko-saska"
+        "answer": "Unia polsko-saska",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się tajna organizacja polska walcząca podczas zaborów o niepodległość?",
-        "answer": "Towarzystwo Patriotyczne"
+        "answer": "Towarzystwo Patriotyczne",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się traktat kończący wojny napoleońskie w 1815 roku?",
-        "answer": "Pokój paryski"
+        "answer": "Pokój paryski",
+        "annotation": ""
       },
       {
         "question": "Jak nazywała się bitwa, w której Hannibal pokonał Rzymian w 216 p.n.e.?",
-        "answer": "Bitwa pod Kannami"
+        "answer": "Bitwa pod Kannami",
+        "annotation": ""
       },
       {
         "question": "Jak nazywał się polski król, który wprowadził reformy znane jako \"Sejm Czteroletni\"?",
-        "answer": "Stanisław August Poniatowski"
+        "answer": "Stanisław August Poniatowski",
+        "annotation": ""
       }
     ]
   }

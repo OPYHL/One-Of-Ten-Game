@@ -235,6 +235,8 @@ const escapeHtml = s => (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').r
 const normName   = p => (p?.name||'').trim();
 const looksLikePlaceholder = p => { const nm = normName(p); return !nm || nm.toLowerCase()===`gracz ${p.id}`; };
 const isJoined   = p => (typeof p.joined === 'boolean') ? p.joined : !looksLikePlaceholder(p);
+const AVAILABLE_AVATARS = new Set(['female.png', 'male.png']);
+
 function avatarFor(p, mood){
   if (!p) return resolveAvatarImage(null, mood, 'MALE');
   return resolveAvatarImage(p.avatar || null, mood, p.gender);
@@ -675,8 +677,9 @@ function showStage(p, phase){
   if (stageLives){
     const livesRaw = typeof p.lives === 'number' ? p.lives : 3;
     const lives = Math.max(0, Math.min(3, livesRaw));
-    let html = '';
+    let html = '<div class="stage-hearts">';
     for (let i=0;i<3;i++){ html += heartsSvg(i >= lives, 'stage'); }
+    html += '</div>';
     stageLives.innerHTML = html;
   }
 
@@ -686,9 +689,13 @@ function showStage(p, phase){
   const isAnswering = phase === 'ANSWERING';
   stageTimer?.classList.toggle('hidden', !isAnswering);
   stageCd.classList.toggle('hidden', !isAnswering);
+  stage.classList.toggle('answering', isAnswering);
+  stage.classList.toggle('answered', !isAnswering);
 }
 function hideStage(){
   stage.classList.remove('show');
+  stage.classList.remove('answering');
+  stage.classList.remove('answered');
   stageJudge.className = 'stage-judge';
   stageJudge.textContent = '';
   stageTimer?.classList.add('hidden');
